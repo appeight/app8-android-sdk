@@ -117,15 +117,13 @@ internal object IconKind : ComponentKind {
             when (val model = props?.model) {
                 is IconProperties.Model.Symbol -> {
                     val name = node.string(model.name) ?: model.name
-                    val glyph = MaterialSymbols.resolve(LocalContext.current, name)
-                    if (glyph == null) {
-                        node.runtime.diagnostics.warn("icon.unmapped", "SF Symbol '$name' has no Material Symbol (${node.id})")
-                    } else {
+                    val glyph = MaterialSymbols.resolve(LocalContext.current, name, node.runtime.diagnostics, node.id)
+                    if (glyph != null) {
                         val pt = pointSize(node).toFloat()
                         // Material glyphs fill their em box; SF glyphs are ~1.2× the point size.
                         val size = env.textSize(pt * 1.2f)
                         BasicText(
-                            glyph.name,
+                            glyph.text,
                             // Centred on the box and never clipped by it: one em tall, as the
                             // Material glyph fills its em box (an SF symbol overflows its frame too).
                             modifier = Modifier.wrapContentSize(Alignment.Center, unbounded = true),

@@ -1,0 +1,22 @@
+# Material Symbols (Rounded) names bundled in addition to the values of
+# src/main/assets/a8/sf-to-material.json. One name per line; `#` starts a comment.
+# Add a name here when the engine draws it itself or a host names it in an
+# `android` override, then run scripts/subset-icons.py and commit the font and
+# src/main/assets/a8/material-codepoints.json.
+
+# Engine chrome (drawn by name, not through the SF table)
+arrow_back      # top app bar back button
+check           # selected item in a menu picker
+unfold_more     # menu picker indicator
+close           # search field clear (SF xmark)
+search          # search field and button (SF magnifyingglass)
+
+# Common Android chrome for `android` overrides
+arrow_forward
+chevron_left
+chevron_right
+expand_less
+expand_more
+menu
+more_horiz
+more_vert
