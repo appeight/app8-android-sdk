@@ -1,0 +1,68 @@
+name: Release
+
+# Pushing a version tag (`0.4.0`; `v0.4.0` is accepted too) publishes that version to
+# GitHub Packages and creates the GitHub release. `/release` pushes the tag; the annotated
+# tag's message becomes the release notes.
+on:
+  push:
+    tags: ["v*", "[0-9]*"]
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write # GitHub release
+  packages: write # GitHub Packages
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # checkout can leave a shallow, dereferenced tag; fetch the annotated tag object for its notes.
+      - name: Fetch the annotated tag
+        run: git fetch --force --no-tags origin "refs/tags/$TAG:refs/tags/$TAG"
+
+      - name: Tag equals EngineVersion.CURRENT; app8-dsl tag exists
+        run: scripts/check-version.sh --release "$TAG"
+
+      - name: Check out app8-dsl at dsl.lock
+        run: scripts/fetch-dsl.sh --strict "$GITHUB_WORKSPACE/../app8-dsl"
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: true
+
+      - name: Verify
+        run: ./gradlew :engine-core:test :engine:testDebugUnitTest apiCheck
+
+      - name: Publish to GitHub Packages
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew publish
+
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "Release $TAG already exists; leaving it as is"
+            exit 0
+          fi
+          git tag -l --format='%(contents)' "$TAG" > notes.md
+          if [ -s notes.md ]; then
+            gh release create "$TAG" --verify-tag --title "$TAG" --notes-file notes.md --latest
+          else
+            gh release create "$TAG" --verify-tag --title "$TAG" --generate-notes --latest
+          fi
