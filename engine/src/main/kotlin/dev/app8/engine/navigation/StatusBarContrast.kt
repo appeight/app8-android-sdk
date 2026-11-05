@@ -27,7 +27,8 @@ import kotlin.coroutines.resume
  * Status bar icons that stay readable over the content beneath them, like the iOS 26
  * status bar (a light screen in a dark-appearance app gets dark icons). Starts from the
  * appearance, then samples the pixels under the status bar whenever the visible screen
- * changes or loading settles. The navigation bar follows the appearance.
+ * changes, loading settles or a top bar turns opaque / transparent on scroll
+ * ([FlowController.chromeEpoch]). The navigation bar follows the appearance.
  */
 @Composable
 internal fun AdaptiveSystemBars(flow: FlowController, dark: Boolean, pendingWork: StateFlow<Int>) {
@@ -35,7 +36,7 @@ internal fun AdaptiveSystemBars(flow: FlowController, dark: Boolean, pendingWork
     val window = view.context.findActivity()?.window ?: return
     val pending by pendingWork.collectAsState()
     val top = flow.layers.map { it.stack.entries.lastOrNull()?.id }
-    LaunchedEffect(top, dark, pending == 0) {
+    LaunchedEffect(top, dark, pending == 0, flow.chromeEpoch) {
         val controller = WindowCompat.getInsetsController(window, view)
         controller.isAppearanceLightNavigationBars = !dark
         controller.isAppearanceLightStatusBars = !dark
