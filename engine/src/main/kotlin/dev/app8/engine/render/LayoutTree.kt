@@ -89,7 +89,11 @@ internal object LayoutTree {
  * area (shoppu-web `render/solve.ts`). Re-rendering a screen whose layout inputs did not
  * change, or switching back to a tab, skips the solver.
  */
-internal class SolveCache(private val maxEntries: Int = 1024) {
+internal class SolveCache(
+    private val maxEntries: Int = 1024,
+    /** Broken required constraints of each fresh solve (cache hits are not reported again). */
+    private val onConflicts: (List<dev.app8.engine.core.layout.LayoutConflict>) -> Unit = {},
+) {
     private val cache = object : LinkedHashMap<String, Solved>(64, 0.75f, true) {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Solved>?) = size > maxEntries
     }
@@ -104,6 +108,7 @@ internal class SolveCache(private val maxEntries: Int = 1024) {
         cache[key]?.let { hits++; return it }
         misses++
         val r = solveLayout(tree, bounds, safeArea, keyboardHeight = keyboardHeight, scale = scale)
+        if (r.conflicts.isNotEmpty()) onConflicts(r.conflicts)
         val local = HashMap<String, Frame>(r.frames.size)
         for (k in r.frames.keys) r.localFrame(k)?.let { local[k] = it }
         return Solved(local, r.frames, r.contentSizes, safeArea, r.contentHeight).also { cache[key] = it }

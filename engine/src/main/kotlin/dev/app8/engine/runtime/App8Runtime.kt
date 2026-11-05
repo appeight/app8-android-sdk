@@ -71,7 +71,18 @@ internal class App8Runtime(
 
     val warnedNames = HashSet<String>()
 
-    val solveCache = dev.app8.engine.render.SolveCache()
+    /**
+     * `layout.conflict` (UIKit's "Unable to simultaneously satisfy constraints"): a required
+     * constraint that contradicts the others is broken, and the views it relates are named.
+     */
+    val solveCache = dev.app8.engine.render.SolveCache { conflicts ->
+        for (c in conflicts) {
+            diagnostics.warn(
+                "layout.conflict",
+                "Unable to simultaneously satisfy constraints between [${c.views.joinToString(", ")}]; breaking `${c.constraint}`",
+            )
+        }
+    }
 
     val imageLoader: coil3.ImageLoader by lazy { buildImageLoader(this) }
 
