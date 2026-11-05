@@ -1,0 +1,31 @@
+{
+  "type": "tabBarScreen",
+  "id": "tabs",
+  "flowId": "main",
+  "content": {
+    "tabs": [
+      {
+        "id": "shop",
+        "label": "Shop",
+        "icon": "text.magnifyingglass",
+        "screen": "shop"
+      },
+      {
+        "id": "cart",
+        "label": "Cart",
+        "icon": "basket",
+        "screen": "cart",
+        "badge": "{{sum(map(cart, item.quantity))}}"
+      },
+      {
+        "id": "account",
+        "label": "Account",
+        "icon": "person.crop.circle",
+        "screen": "account"
+      }
+    ],
+    "initialTab": "shop",
+    "tintColor": "#214E38",
+    "unselectedColor": "#000000"
+  }
+}

@@ -1,0 +1,825 @@
+{
+  "type": "screen",
+  "id": "cart",
+  "flowId": "main",
+  "content": {
+    "navigationBar": {
+      "hidden": true
+    },
+    "style": {
+      "material": [
+        {
+          "id": "cartBackground",
+          "type": "fill",
+          "content": {
+            "solid": "#FFFFFF"
+          }
+        }
+      ]
+    },
+    "children": [
+      {
+        "id": "cartTitle",
+        "type": "label",
+        "content": {
+          "properties": {
+            "text": "{{sum(map(cart, item.quantity))}} {{sum(map(cart, item.quantity)) == 1 ? 'ITEM' : 'ITEMS'}} IN CART"
+          },
+          "style": {
+            "text": {
+              "id": "cartHeader"
+            }
+          },
+          "layout": {
+            "constraints": [
+              {
+                "type": "top",
+                "target": "safeArea",
+                "constant": 16
+              },
+              {
+                "type": "leading",
+                "target": "superview",
+                "constant": 16
+              },
+              {
+                "type": "trailing",
+                "target": "superview",
+                "constant": -16
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "shippingProgress",
+        "type": "shape",
+        "content": {
+          "properties": {
+            "kind": "bar",
+            "progress": "{{min(sum(map(cart, item.unitPrice * item.quantity)) / 35, 1)}}",
+            "lineWidth": 8,
+            "lineCap": "butt",
+            "strokeColor": "#214E38",
+            "trackColor": "#D3D7D0"
+          },
+          "layout": {
+            "height": 8,
+            "constraints": [
+              {
+                "type": "top",
+                "target": "cartTitle",
+                "attribute": "bottom",
+                "constant": 14
+              },
+              {
+                "type": "leading",
+                "target": "superview",
+                "constant": 16
+              },
+              {
+                "type": "trailing",
+                "target": "superview",
+                "constant": -16
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "shippingMessage",
+        "type": "label",
+        "content": {
+          "properties": {
+            "text": "{{sum(map(cart, item.unitPrice * item.quantity)) >= 35 ? 'You get FREE shipping' : 'Add ' + formatCurrency(35 - sum(map(cart, item.unitPrice * item.quantity)), 'GBP') + ' more for FREE shipping'}}"
+          },
+          "style": {
+            "text": {
+              "id": "cartBody"
+            }
+          },
+          "layout": {
+            "constraints": [
+              {
+                "type": "top",
+                "target": "shippingProgress",
+                "attribute": "bottom",
+                "constant": 12
+              },
+              {
+                "type": "leading",
+                "target": "superview",
+                "constant": 16
+              },
+              {
+                "type": "trailing",
+                "target": "superview",
+                "constant": -16
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "headerDivider",
+        "type": "view",
+        "content": {
+          "style": {
+            "material": [
+              {
+                "id": "headerDividerFill",
+                "type": "fill",
+                "content": {
+                  "solid": "#00000026"
+                }
+              }
+            ]
+          },
+          "layout": {
+            "height": 0.5,
+            "constraints": [
+              {
+                "type": "top",
+                "target": "shippingMessage",
+                "attribute": "bottom",
+                "constant": 16
+              },
+              {
+                "type": "leading",
+                "target": "superview"
+              },
+              {
+                "type": "trailing",
+                "target": "superview"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cartLines",
+        "type": "collection",
+        "content": {
+          "properties": {
+            "data": "{{cart}}",
+            "layout": {
+              "type": "vertical",
+              "itemSpacing": 0,
+              "estimatedItemHeight": 152,
+              "showsScrollIndicator": false
+            }
+          },
+          "template": {
+            "id": "cartLine",
+            "type": "view",
+            "content": {
+              "layout": {
+                "height": 152
+              },
+              "children": [
+                {
+                  "id": "lineImage",
+                  "type": "image",
+                  "content": {
+                    "properties": {
+                      "type": "remoteAsset",
+                      "name": "{{item.image}}",
+                      "url": "{{item.imageUrl}}"
+                    },
+                    "style": {
+                      "contentMode": "scaleAspectFill",
+                      "material": [
+                        {
+                          "id": "lineImageFill",
+                          "type": "fill",
+                          "content": {
+                            "solid": "#F2F4EC"
+                          }
+                        }
+                      ]
+                    },
+                    "layout": {
+                      "width": 96,
+                      "height": 120,
+                      "constraints": [
+                        {
+                          "type": "top",
+                          "target": "superview",
+                          "constant": 16
+                        },
+                        {
+                          "type": "leading",
+                          "target": "superview",
+                          "constant": 16
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "id": "linePrice",
+                  "type": "label",
+                  "content": {
+                    "properties": {
+                      "text": "{{formatCurrency(item.unitPrice * item.quantity, 'GBP')}}"
+                    },
+                    "style": {
+                      "text": {
+                        "id": "cartLineText"
+                      }
+                    },
+                    "layout": {
+                      "constraints": [
+                        {
+                          "type": "top",
+                          "target": "superview",
+                          "constant": 16
+                        },
+                        {
+                          "type": "trailing",
+                          "target": "superview",
+                          "constant": -16
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "id": "lineTitle",
+                  "type": "label",
+                  "content": {
+                    "properties": {
+                      "text": "{{item.title}}"
+                    },
+                    "style": {
+                      "text": {
+                        "id": "cartLineTitle"
+                      }
+                    },
+                    "layout": {
+                      "constraints": [
+                        {
+                          "type": "top",
+                          "target": "superview",
+                          "constant": 16
+                        },
+                        {
+                          "type": "leading",
+                          "target": "lineImage",
+                          "attribute": "trailing",
+                          "constant": 14
+                        },
+                        {
+                          "type": "trailing",
+                          "target": "linePrice",
+                          "attribute": "leading",
+                          "constant": -10
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "id": "lineVariant",
+                  "type": "label",
+                  "content": {
+                    "properties": {
+                      "text": "{{item.variant}}"
+                    },
+                    "style": {
+                      "text": {
+                        "id": "cartLineMuted"
+                      }
+                    },
+                    "layout": {
+                      "constraints": [
+                        {
+                          "type": "top",
+                          "target": "lineTitle",
+                          "attribute": "bottom",
+                          "constant": 6
+                        },
+                        {
+                          "type": "leading",
+                          "target": "lineTitle",
+                          "attribute": "leading"
+                        },
+                        {
+                          "type": "trailing",
+                          "target": "superview",
+                          "constant": -16
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "id": "lineMinus",
+                  "type": "button",
+                  "content": {
+                    "properties": {
+                      "text": "−"
+                    },
+                    "style": {
+                      "text": {
+                        "id": "cardButtonText",
+                        "type": "text"
+                      },
+                      "material": [
+                        {
+                          "id": "lineMinusOutline",
+                          "type": "outline",
+                          "content": {
+                            "lineWidth": 0.5,
+                            "position": "inside",
+                            "fill": {
+                              "solid": "#000000"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "actions": {
+                      "tap": {
+                        "type": "incrementArrayItem",
+                        "variableName": "cart",
+                        "matchBy": "key",
+                        "value": "{{item.key}}",
+                        "by": -1
+                      }
+                    },
+                    "layout": {
+                      "width": 36,
+                      "height": 36,
+                      "constraints": [
+                        {
+                          "type": "bottom",
+                          "target": "lineImage",
+                          "attribute": "bottom"
+                        },
+                        {
+                          "type": "leading",
+                          "target": "lineTitle",
+                          "attribute": "leading"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "id": "lineQuantity",
+                  "type": "label",
+                  "content": {
+                    "properties": {
+                      "text": "{{item.quantity}}"
+                    },
+                    "style": {
+                      "text": {
+                        "id": "cartQuantity"
+                      }
+                    },
+                    "layout": {
+                      "width": 36,
+                      "constraints": [
+                        {
+                          "type": "centerY",
+                          "target": "lineMinus"
+                        },
+                        {
+                          "type": "leading",
+                          "target": "lineMinus",
+                          "attribute": "trailing"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "id": "linePlus",
+                  "type": "button",
+                  "content": {
+                    "properties": {
+                      "text": "+"
+                    },
+                    "style": {
+                      "text": {
+                        "id": "cardButtonText",
+                        "type": "text"
+                      },
+                      "material": [
+                        {
+                          "id": "linePlusOutline",
+                          "type": "outline",
+                          "content": {
+                            "lineWidth": 0.5,
+                            "position": "inside",
+                            "fill": {
+                              "solid": "#000000"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "actions": {
+                      "tap": {
+                        "type": "incrementArrayItem",
+                        "variableName": "cart",
+                        "matchBy": "key",
+                        "value": "{{item.key}}",
+                        "by": 1
+                      }
+                    },
+                    "layout": {
+                      "width": 36,
+                      "height": 36,
+                      "constraints": [
+                        {
+                          "type": "centerY",
+                          "target": "lineMinus"
+                        },
+                        {
+                          "type": "leading",
+                          "target": "lineQuantity",
+                          "attribute": "trailing"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "id": "lineRemove",
+                  "type": "button",
+                  "content": {
+                    "properties": {
+                      "text": "Remove"
+                    },
+                    "style": {
+                      "text": {
+                        "id": "cartLink",
+                        "type": "text"
+                      }
+                    },
+                    "actions": {
+                      "tap": {
+                        "type": "toggleArrayValue",
+                        "variableName": "cart",
+                        "matchBy": "key",
+                        "value": "{{item.key}}"
+                      }
+                    },
+                    "layout": {
+                      "height": 36,
+                      "constraints": [
+                        {
+                          "type": "centerY",
+                          "target": "lineMinus"
+                        },
+                        {
+                          "type": "trailing",
+                          "target": "superview",
+                          "constant": -16
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "id": "lineDivider",
+                  "type": "view",
+                  "content": {
+                    "style": {
+                      "material": [
+                        {
+                          "id": "lineDividerFill",
+                          "type": "fill",
+                          "content": {
+                            "solid": "#00000026"
+                          }
+                        }
+                      ]
+                    },
+                    "layout": {
+                      "height": 0.5,
+                      "constraints": [
+                        {
+                          "type": "leading",
+                          "target": "superview",
+                          "constant": 16
+                        },
+                        {
+                          "type": "trailing",
+                          "target": "superview",
+                          "constant": -16
+                        },
+                        {
+                          "type": "bottom",
+                          "target": "superview"
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "layout": {
+            "constraints": [
+              {
+                "type": "top",
+                "target": "headerDivider",
+                "attribute": "bottom"
+              },
+              {
+                "type": "leading",
+                "target": "superview"
+              },
+              {
+                "type": "trailing",
+                "target": "superview"
+              },
+              {
+                "type": "bottom",
+                "target": "cartFooter",
+                "attribute": "top"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cartEmpty",
+        "type": "label",
+        "content": {
+          "properties": {
+            "text": "Your cart is empty",
+            "isHidden": "{{cart.length > 0}}"
+          },
+          "style": {
+            "text": {
+              "id": "cartLineMuted"
+            }
+          },
+          "layout": {
+            "constraints": [
+              {
+                "type": "centerX",
+                "target": "superview"
+              },
+              {
+                "type": "centerY",
+                "target": "superview"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cartFooter",
+        "type": "view",
+        "content": {
+          "properties": {
+            "isHidden": "{{cart.length == 0}}"
+          },
+          "style": {
+            "material": [
+              {
+                "id": "cartFooterFill",
+                "type": "fill",
+                "content": {
+                  "solid": "#FFFFFF"
+                }
+              }
+            ]
+          },
+          "layout": {
+            "constraints": [
+              {
+                "type": "leading",
+                "target": "superview"
+              },
+              {
+                "type": "trailing",
+                "target": "superview"
+              },
+              {
+                "type": "bottom",
+                "target": "safeArea",
+                "constant": -8
+              }
+            ]
+          },
+          "children": [
+            {
+              "id": "footerDivider",
+              "type": "view",
+              "content": {
+                "style": {
+                  "material": [
+                    {
+                      "id": "footerDividerFill",
+                      "type": "fill",
+                      "content": {
+                        "solid": "#00000026"
+                      }
+                    }
+                  ]
+                },
+                "layout": {
+                  "height": 0.5,
+                  "constraints": [
+                    {
+                      "type": "top",
+                      "target": "superview"
+                    },
+                    {
+                      "type": "leading",
+                      "target": "superview"
+                    },
+                    {
+                      "type": "trailing",
+                      "target": "superview"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "id": "subtotalLabel",
+              "type": "label",
+              "content": {
+                "properties": {
+                  "text": "subtotal"
+                },
+                "style": {
+                  "text": {
+                    "id": "cartBody"
+                  }
+                },
+                "layout": {
+                  "constraints": [
+                    {
+                      "type": "top",
+                      "target": "superview",
+                      "constant": 14
+                    },
+                    {
+                      "type": "leading",
+                      "target": "superview",
+                      "constant": 16
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "id": "subtotalValue",
+              "type": "label",
+              "content": {
+                "properties": {
+                  "text": "{{formatCurrency(sum(map(cart, item.unitPrice * item.quantity)), 'GBP')}}"
+                },
+                "style": {
+                  "text": {
+                    "id": "cartBody"
+                  }
+                },
+                "layout": {
+                  "constraints": [
+                    {
+                      "type": "centerY",
+                      "target": "subtotalLabel"
+                    },
+                    {
+                      "type": "trailing",
+                      "target": "superview",
+                      "constant": -16
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "id": "subtotalNote",
+              "type": "label",
+              "content": {
+                "properties": {
+                  "text": "*shipping, taxes, and discounts calculated at checkout."
+                },
+                "style": {
+                  "text": {
+                    "id": "cartLineMuted"
+                  }
+                },
+                "layout": {
+                  "constraints": [
+                    {
+                      "type": "top",
+                      "target": "subtotalLabel",
+                      "attribute": "bottom",
+                      "constant": 8
+                    },
+                    {
+                      "type": "leading",
+                      "target": "superview",
+                      "constant": 16
+                    },
+                    {
+                      "type": "trailing",
+                      "target": "superview",
+                      "constant": -16
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "id": "checkout",
+              "type": "button",
+              "content": {
+                "properties": {
+                  "text": "CHECKOUT"
+                },
+                "style": {
+                  "text": {
+                    "id": "primaryButtonText",
+                    "type": "text"
+                  },
+                  "material": [
+                    {
+                      "id": "checkoutFill",
+                      "type": "fill",
+                      "content": {
+                        "solid": "#214E38"
+                      }
+                    }
+                  ]
+                },
+                "layout": {
+                  "height": 52,
+                  "constraints": [
+                    {
+                      "type": "top",
+                      "target": "subtotalNote",
+                      "attribute": "bottom",
+                      "constant": 16
+                    },
+                    {
+                      "type": "leading",
+                      "target": "superview",
+                      "constant": 16
+                    },
+                    {
+                      "type": "trailing",
+                      "target": "superview",
+                      "constant": -16
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "id": "continueShopping",
+              "type": "button",
+              "content": {
+                "properties": {
+                  "text": "continue shopping"
+                },
+                "style": {
+                  "text": {
+                    "id": "cartLink",
+                    "type": "text"
+                  }
+                },
+                "actions": {
+                  "tap": {
+                    "type": "selectTab",
+                    "tabId": "shop"
+                  }
+                },
+                "layout": {
+                  "height": 40,
+                  "constraints": [
+                    {
+                      "type": "top",
+                      "target": "checkout",
+                      "attribute": "bottom",
+                      "constant": 4
+                    },
+                    {
+                      "type": "centerX",
+                      "target": "superview"
+                    },
+                    {
+                      "type": "bottom",
+                      "target": "superview"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

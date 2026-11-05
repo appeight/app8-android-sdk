@@ -1,0 +1,44 @@
+{
+  "type": "screen",
+  "id": "account",
+  "flowId": "main",
+  "content": {
+    "navigationBar": { "hidden": true },
+    "style": {
+      "material": [
+        { "id": "accountBackground", "type": "fill", "content": { "solid": "#FFFFFF" } }
+      ]
+    },
+    "children": [
+      {
+        "id": "accountTitle",
+        "type": "label",
+        "content": {
+          "properties": { "text": "Account" },
+          "style": { "text": { "id": "sectionTitle" } },
+          "layout": {
+            "constraints": [
+              { "type": "top", "target": "safeArea", "constant": 20 },
+              { "type": "leading", "target": "superview", "constant": 10 },
+              { "type": "trailing", "target": "superview", "constant": -10 }
+            ]
+          }
+        }
+      },
+      {
+        "id": "accountSignIn",
+        "type": "label",
+        "content": {
+          "properties": { "text": "Sign in to see your orders" },
+          "style": { "text": { "id": "cardVariant" } },
+          "layout": {
+            "constraints": [
+              { "type": "centerX", "target": "superview" },
+              { "type": "centerY", "target": "superview" }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}
