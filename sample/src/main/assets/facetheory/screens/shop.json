@@ -1,0 +1,171 @@
+{
+  "type": "screen",
+  "id": "shop",
+  "flowId": "main",
+  "content": {
+    "navigationBar": {
+      "search": {
+        "placeholder": "Search or ask a question",
+        "bindVariable": "searchQuery",
+        "placement": "integrated",
+        "tintColor": "#214E38",
+        "fillsBar": true
+      }
+    },
+    "style": {
+      "material": [
+        {
+          "id": "shopBackground",
+          "type": "fill",
+          "content": {
+            "solid": "#FFFFFF"
+          }
+        }
+      ]
+    },
+    "variables": {
+      "sections": {
+        "type": "array",
+        "source": "datasources/shopSections"
+      },
+      "searchQuery": {
+        "type": "string",
+        "initialValue": ""
+      }
+    },
+    "children": [
+      {
+        "id": "sectionList",
+        "type": "collection",
+        "content": {
+          "properties": {
+            "data": "{{sections}}",
+            "layout": {
+              "type": "vertical",
+              "itemSpacing": 30,
+              "estimatedItemHeight": 480,
+              "showsScrollIndicator": false,
+              "contentInsets": {
+                "top": 23,
+                "bottom": 40
+              }
+            }
+          },
+          "template": {
+            "id": "shopSection",
+            "type": "view",
+            "content": {
+              "layout": {
+                "height": 480
+              },
+              "children": [
+                {
+                  "id": "sectionTitle",
+                  "type": "label",
+                  "content": {
+                    "properties": {
+                      "text": "{{item.title}}"
+                    },
+                    "style": {
+                      "text": {
+                        "id": "sectionTitle"
+                      }
+                    },
+                    "layout": {
+                      "constraints": [
+                        {
+                          "type": "top",
+                          "target": "superview"
+                        },
+                        {
+                          "type": "leading",
+                          "target": "superview",
+                          "constant": 10
+                        },
+                        {
+                          "type": "trailing",
+                          "target": "superview",
+                          "constant": -10
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "id": "productRow",
+                  "type": "collection",
+                  "content": {
+                    "properties": {
+                      "data": "{{item.products}}",
+                      "layout": {
+                        "type": "horizontal",
+                        "itemWidth": 240,
+                        "itemHeight": 430,
+                        "itemSpacing": 10,
+                        "showsScrollIndicator": false,
+                        "contentInsets": {
+                          "left": 10,
+                          "right": 10
+                        }
+                      },
+                      "templateName": "ProductCard"
+                    },
+                    "layout": {
+                      "height": 430,
+                      "constraints": [
+                        {
+                          "type": "top",
+                          "target": "sectionTitle",
+                          "attribute": "bottom",
+                          "constant": 20
+                        },
+                        {
+                          "type": "leading",
+                          "target": "superview"
+                        },
+                        {
+                          "type": "trailing",
+                          "target": "superview"
+                        }
+                      ]
+                    },
+                    "actions": {
+                      "onItemTap": {
+                        "type": "navigation",
+                        "nextScreen": "product",
+                        "presentation": "push",
+                        "params": {
+                          "product": "{{item}}"
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "layout": {
+            "constraints": [
+              {
+                "type": "top",
+                "target": "superview"
+              },
+              {
+                "type": "leading",
+                "target": "superview"
+              },
+              {
+                "type": "trailing",
+                "target": "superview"
+              },
+              {
+                "type": "bottom",
+                "target": "superview"
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

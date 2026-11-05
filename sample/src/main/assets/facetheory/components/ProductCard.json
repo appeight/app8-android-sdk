@@ -1,0 +1,231 @@
+{
+  "id": "ProductCard",
+  "type": "view",
+  "content": {
+    "children": [
+      {
+        "id": "productImage",
+        "type": "image",
+        "content": {
+          "properties": {
+            "type": "remoteAsset",
+            "name": "{{item.image}}",
+            "url": "{{item.imageUrl}}"
+          },
+          "style": {
+            "contentMode": "scaleAspectFill",
+            "material": [
+              {
+                "id": "productImageFill",
+                "type": "fill",
+                "content": {
+                  "solid": "#F2F4EC"
+                }
+              }
+            ]
+          },
+          "layout": {
+            "height": 299.43,
+            "constraints": [
+              {
+                "type": "top",
+                "target": "superview"
+              },
+              {
+                "type": "leading",
+                "target": "superview"
+              },
+              {
+                "type": "trailing",
+                "target": "superview"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "productTitle",
+        "type": "label",
+        "content": {
+          "properties": {
+            "text": "{{item.title}}"
+          },
+          "style": {
+            "text": {
+              "id": "cardText"
+            }
+          },
+          "layout": {
+            "constraints": [
+              {
+                "type": "top",
+                "target": "productImage",
+                "attribute": "bottom",
+                "constant": 16
+              },
+              {
+                "type": "leading",
+                "target": "superview"
+              },
+              {
+                "type": "trailing",
+                "target": "superview"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "productPrice",
+        "type": "label",
+        "content": {
+          "properties": {
+            "text": "{{item.price}}"
+          },
+          "style": {
+            "text": {
+              "id": "cardText"
+            }
+          },
+          "layout": {
+            "constraints": [
+              {
+                "type": "top",
+                "target": "productTitle",
+                "attribute": "bottom",
+                "constant": 4
+              },
+              {
+                "type": "leading",
+                "target": "superview"
+              },
+              {
+                "type": "trailing",
+                "target": "superview"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "productVariant",
+        "type": "label",
+        "content": {
+          "properties": {
+            "text": "{{item.variant}}"
+          },
+          "style": {
+            "text": {
+              "id": "cardVariant"
+            }
+          },
+          "layout": {
+            "constraints": [
+              {
+                "type": "top",
+                "target": "productPrice",
+                "attribute": "bottom",
+                "constant": 8
+              },
+              {
+                "type": "leading",
+                "target": "superview"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "productVariantChevron",
+        "type": "icon",
+        "content": {
+          "properties": {
+            "type": "symbol",
+            "name": "chevron.up.chevron.down",
+            "isHidden": "{{!item.hasVariants}}"
+          },
+          "style": {
+            "tint": "#00000080",
+            "symbolFontSize": 11
+          },
+          "layout": {
+            "constraints": [
+              {
+                "type": "leading",
+                "target": "productVariant",
+                "attribute": "trailing",
+                "constant": 10
+              },
+              {
+                "type": "centerY",
+                "target": "productVariant"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "addToBag",
+        "type": "button",
+        "content": {
+          "properties": {
+            "text": "ADD TO BAG"
+          },
+          "style": {
+            "text": {
+              "id": "cardButtonText",
+              "type": "text"
+            },
+            "material": [
+              {
+                "id": "addToBagOutline",
+                "type": "outline",
+                "content": {
+                  "lineWidth": 0.5,
+                  "position": "inside",
+                  "fill": {
+                    "solid": "#000000"
+                  }
+                }
+              }
+            ]
+          },
+          "layout": {
+            "height": 40,
+            "constraints": [
+              {
+                "type": "leading",
+                "target": "superview"
+              },
+              {
+                "type": "trailing",
+                "target": "superview"
+              },
+              {
+                "type": "bottom",
+                "target": "superview"
+              }
+            ]
+          },
+          "actions": {
+            "tap": {
+              "type": "incrementArrayItem",
+              "variableName": "cart",
+              "matchBy": "key",
+              "by": 1,
+              "value": {
+                "key": "{{item.handle}}|{{item.variant}}",
+                "handle": "{{item.handle}}",
+                "title": "{{item.title}}",
+                "variant": "{{item.variant}}",
+                "image": "{{item.image}}",
+                "imageUrl": "{{item.imageUrl}}",
+                "unitPrice": "{{item.priceValue}}"
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}

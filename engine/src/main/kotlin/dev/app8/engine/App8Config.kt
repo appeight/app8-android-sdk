@@ -1,0 +1,22 @@
+package dev.app8.engine
+
+import dev.app8.engine.events.App8AnalyticsConfig
+
+/** Instance options fixed at creation. Mutable per-instance settings live on [App8Instance]. */
+public data class App8Config(
+    /** Which auto analytics events fire. */
+    val analytics: App8AnalyticsConfig = App8AnalyticsConfig(),
+    /** Initial appearance override; [UserInterfaceStyle.UNSPECIFIED] follows the app, then the system. */
+    val userInterfaceStyle: UserInterfaceStyle = UserInterfaceStyle.UNSPECIFIED,
+    /** Initial locale override (BCP 47); null follows the device. */
+    val locale: String? = null,
+    /** Engine log level. */
+    val logLevel: App8LogLevel = App8LogLevel.NONE,
+    /** Device floor check. Tests and tooling may relax it; production hosts keep the default. */
+    val enforcePlatformFloor: Boolean = true,
+)
+
+/** iOS `UIUserInterfaceStyle`. */
+public enum class UserInterfaceStyle { UNSPECIFIED, LIGHT, DARK }
+
+public enum class App8LogLevel { NONE, ERROR, WARNING, DEBUG }
