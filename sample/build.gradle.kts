@@ -14,6 +14,11 @@ android {
         versionCode = 1
         versionName = "0.4.0"
     }
+    buildTypes {
+        // Debug-signed so `installRelease` works for frame-time measurements (debuggable
+        // Compose builds run several times slower and say nothing about real jank).
+        release { signingConfig = signingConfigs.getByName("debug") }
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

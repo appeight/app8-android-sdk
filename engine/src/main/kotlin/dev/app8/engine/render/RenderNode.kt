@@ -36,8 +36,21 @@ internal class RenderNode(
     lateinit var children: List<RenderNode>
         internal set
 
-    /** The DSL state (`states`, `setState`, `triggers`); null = base content. */
-    var stateName: String? by mutableStateOf((base as? StatefulContent)?.defaultStateName)
+    /**
+     * The DSL state (`states`, `setState`, `triggers`); null = base content. A `{{…}}`
+     * `defaultStateName` is a state binding (iOS `setupStateBinding`): evaluated here for the
+     * first frame, then kept in sync by [NodeView].
+     */
+    var stateName: String? by mutableStateOf(initialStateName())
+
+    /** The `defaultStateName` expression, when it is one. */
+    val stateBinding: String? get() = (base as? StatefulContent)?.defaultStateName?.takeIf { it.contains("{{") }
+
+    private fun initialStateName(): String? {
+        val raw = (base as? StatefulContent)?.defaultStateName ?: return null
+        if (!raw.contains("{{")) return raw
+        return runCatching { session.runtime.propertyResolver.resolveToString(raw, scope.untracked) }.getOrNull()?.takeIf { it.isNotEmpty() }
+    }
 
     /** The content with the current state's overrides applied (reads [stateName]). */
     val content: EntityContent get() = applyState(base, stateName)
@@ -79,6 +92,18 @@ internal class RenderNode(
             )
         }
 
+        /** The initial state's `childStates` (as `setState` applies them later). */
+        @Suppress("UNCHECKED_CAST")
+        private fun applyChildStates(node: RenderNode, name: String) {
+            val state = (node.baseContent as? ComponentContent<Any, Any>)?.states?.get(name) ?: return
+            state.childStates?.forEach { (childId, childState) ->
+                node.children.firstNotNullOfOrNull { it.find(childId) }?.let {
+                    it.stateName = childState
+                    applyChildStates(it, childState)
+                }
+            }
+        }
+
         /**
          * Builds the node tree under [component]. Components that declare `variables` get their
          * own [ScopedVariableStore] whose parent is the enclosing scope (iOS component scope).
@@ -110,6 +135,7 @@ internal class RenderNode(
                 val childKey = "$key.${child.id}".let { if (seen.add(it)) it else "$it#$i" }
                 build(session, child, childKey, scope, entity.type, scopes)
             }
+            node.stateName?.let { applyChildStates(node, it) }
             return node
         }
     }

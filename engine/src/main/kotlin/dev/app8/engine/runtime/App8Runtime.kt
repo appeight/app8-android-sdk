@@ -129,6 +129,32 @@ internal class App8Runtime(
         return component
     }
 
+    private val templateComponents = HashMap<String, Component?>()
+
+    /**
+     * A `components/` template as a component (iOS `App8Service.resolveTemplate(named:)`):
+     * collection cell templates referenced by name. Cached; null (with a warning) when unknown.
+     */
+    fun resolveTemplate(name: String): Component? = templateComponents.getOrPut(name) {
+        val resolver = templates
+        val content = resolver?.resolvedTemplates?.get(name)
+        val type = resolver?.templateType(name)
+        if (resolver == null || content == null || type == null) {
+            diagnostics.warn("template", "template '$name' not found")
+            return@getOrPut null
+        }
+        val full = kotlinx.serialization.json.JsonObject(
+            mapOf(
+                "type" to kotlinx.serialization.json.JsonPrimitive(type.raw),
+                "id" to kotlinx.serialization.json.JsonPrimitive(name),
+                "content" to content,
+            ),
+        )
+        runCatching { decoder.decodeComponent(dev.app8.engine.core.model.TemplatePreprocessor(resolver).process(full)) }
+            .onFailure { diagnostics.warn("template.decode", "template '$name': ${it.message}") }
+            .getOrNull()
+    }
+
     fun templateNames(): Set<String> = templates?.resolvedTemplates?.keys.orEmpty()
 
     private var reportedErrors = 0
