@@ -51,6 +51,7 @@ import dev.app8.engine.core.model.CollectionContent
 import dev.app8.engine.core.model.CollectionLayout
 import dev.app8.engine.core.model.CollectionProperties
 import dev.app8.engine.core.model.style.ColorHex
+import dev.app8.engine.debug.Recompositions
 import dev.app8.engine.render.LayoutTraits
 import dev.app8.engine.render.LocalDispatcher
 import dev.app8.engine.render.LocalInteractionEnabled
@@ -229,6 +230,7 @@ internal object CollectionKind : ComponentKind {
     @Composable
     private fun Vertical(model: CollectionModel, sections: List<CollectionSection>, p: CollectionProperties, width: Double) {
         val node = model.node
+        Recompositions.Count("${node.key}#vertical")
         val env = LocalRenderEnv.current
         val c = content(node)
         val config = p.layout
@@ -308,6 +310,7 @@ internal object CollectionKind : ComponentKind {
         swipe: CollectionProperties.SwipeActions?,
         dispatcher: ActionDispatcher,
     ) {
+        Recompositions.Count("${model.node.key}#row")
         val st = styles.getOrNull(row.section) ?: return
         val s = sections.getOrNull(row.section) ?: return
         val pad = Modifier.padding(top = row.padTop.dp, bottom = row.padBottom.dp)
@@ -361,6 +364,7 @@ internal object CollectionKind : ComponentKind {
 
     @Composable
     private fun ItemCell(model: CollectionModel, env: RenderEnv, item: CollectionItem, key: String, width: Double, fixedHeight: Double?, modifier: Modifier, selfSizingWidth: Boolean = false) {
+        Recompositions.Count("${model.node.key}#cell")
         val template = model.template(item)
         if (template == null) {
             // No template for this item: an empty cell (iOS dequeues the plain reuse cell).
@@ -499,6 +503,7 @@ internal object CollectionKind : ComponentKind {
         topLevel: Boolean = false,
     ) {
         val env = LocalRenderEnv.current
+        Recompositions.Count("${model.node.key}#strip")
         val itemW = if (topLevel) CollectionPlan.horizontalItemWidth(width, st) else st.itemWidth
         val itemH = st.itemHeight
         val rows = st.rows.coerceAtLeast(1)

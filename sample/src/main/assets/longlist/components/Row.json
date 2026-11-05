@@ -1,0 +1,224 @@
+{
+  "id": "Row",
+  "type": "view",
+  "content": {
+    "children": [
+      {
+        "id": "swatch",
+        "type": "view",
+        "content": {
+          "properties": {
+            "backgroundColor": "{{item.swatch}}",
+            "cornerRadius": 8
+          },
+          "layout": {
+            "width": 56,
+            "height": 56,
+            "constraints": [
+              {
+                "type": "top",
+                "target": "superview",
+                "constant": 12
+              },
+              {
+                "type": "leading",
+                "target": "superview",
+                "constant": 16
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "glyph",
+        "type": "icon",
+        "content": {
+          "properties": {
+            "type": "symbol",
+            "name": "{{item.icon}}"
+          },
+          "style": {
+            "tint": "#214E38",
+            "symbolFontSize": 22
+          },
+          "layout": {
+            "constraints": [
+              {
+                "type": "centerX",
+                "target": "swatch"
+              },
+              {
+                "type": "centerY",
+                "target": "swatch"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "title",
+        "type": "label",
+        "content": {
+          "properties": {
+            "text": "{{item.title}}"
+          },
+          "style": {
+            "text": {
+              "id": "rowTitle"
+            }
+          },
+          "layout": {
+            "constraints": [
+              {
+                "type": "top",
+                "target": "superview",
+                "constant": 12
+              },
+              {
+                "type": "leading",
+                "target": "swatch",
+                "attribute": "trailing",
+                "constant": 12
+              },
+              {
+                "type": "trailing",
+                "target": "price",
+                "attribute": "leading",
+                "constant": -8
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "price",
+        "type": "label",
+        "content": {
+          "properties": {
+            "text": "{{item.price}}"
+          },
+          "style": {
+            "text": {
+              "id": "rowPrice"
+            }
+          },
+          "layout": {
+            "constraints": [
+              {
+                "type": "top",
+                "target": "superview",
+                "constant": 12
+              },
+              {
+                "type": "trailing",
+                "target": "superview",
+                "constant": -16
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "body",
+        "type": "label",
+        "content": {
+          "properties": {
+            "text": "{{item.subtitle}}"
+          },
+          "style": {
+            "text": {
+              "id": "rowBody"
+            }
+          },
+          "layout": {
+            "constraints": [
+              {
+                "type": "top",
+                "target": "title",
+                "attribute": "bottom",
+                "constant": 4
+              },
+              {
+                "type": "leading",
+                "target": "title"
+              },
+              {
+                "type": "trailing",
+                "target": "superview",
+                "constant": -16
+              },
+              {
+                "type": "bottom",
+                "target": "superview",
+                "constant": -12,
+                "op": "<="
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "badge",
+        "type": "view",
+        "content": {
+          "properties": {
+            "isHidden": "{{!item.badge}}",
+            "backgroundColor": "#9BFFE3",
+            "cornerRadius": 4
+          },
+          "layout": {
+            "width": 8,
+            "height": 8,
+            "constraints": [
+              {
+                "type": "top",
+                "target": "swatch",
+                "constant": -3
+              },
+              {
+                "type": "trailing",
+                "target": "swatch",
+                "constant": 3
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "divider",
+        "type": "view",
+        "content": {
+          "properties": {
+            "backgroundColor": "#0000001A"
+          },
+          "layout": {
+            "height": 1,
+            "constraints": [
+              {
+                "type": "leading",
+                "target": "title"
+              },
+              {
+                "type": "trailing",
+                "target": "superview"
+              },
+              {
+                "type": "bottom",
+                "target": "superview"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "layout": {
+      "constraints": [
+        {
+          "type": "height",
+          "constant": 80,
+          "op": ">="
+        }
+      ]
+    }
+  }
+}

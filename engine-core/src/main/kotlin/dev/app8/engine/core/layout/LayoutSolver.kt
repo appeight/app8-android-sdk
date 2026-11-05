@@ -269,7 +269,7 @@ private class LayoutPass(
     private val previous: Map<String, Frame>?,
     private val measurements: Measurements,
 ) {
-    private val solver = Solver()
+    private val solver = Solver(removable = false)
     private val infos = ArrayList<NodeInfo>()
     private val keys = HashSet<String>()
     val conflicts = ArrayList<LayoutConflict>()

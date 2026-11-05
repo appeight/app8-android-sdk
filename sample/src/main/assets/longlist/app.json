@@ -1,0 +1,13 @@
+{
+  "title": "Long list",
+  "defaultUserInterfaceStyle": "light",
+  "navigation": {
+    "startFlow": "main",
+    "flows": [
+      {
+        "id": "main",
+        "startScreen": "list"
+      }
+    ]
+  }
+}
