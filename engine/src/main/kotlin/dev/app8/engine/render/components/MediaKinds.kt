@@ -13,6 +13,8 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.ui.text.style.TextAlign
 import coil3.compose.AsyncImage
 import dev.app8.engine.core.layout.IntrinsicMeasure
@@ -121,11 +123,17 @@ internal object IconKind : ComponentKind {
                     } else {
                         val pt = pointSize(node).toFloat()
                         // Material glyphs fill their em box; SF glyphs are ~1.2× the point size.
+                        val size = env.textSize(pt * 1.2f)
                         BasicText(
                             glyph.name,
+                            // Centred on the box and never clipped by it: one em tall, as the
+                            // Material glyph fills its em box (an SF symbol overflows its frame too).
+                            modifier = Modifier.wrapContentSize(Alignment.Center, unbounded = true),
                             style = TextStyle(
                                 color = tint,
-                                fontSize = env.textSize(pt * 1.2f),
+                                fontSize = size,
+                                lineHeight = size,
+                                lineHeightStyle = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.Both),
                                 fontFamily = MaterialSymbols.family(glyph.filled, 400, pt * 1.2f),
                                 textAlign = TextAlign.Center,
                             ),
