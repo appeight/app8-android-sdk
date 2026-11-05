@@ -110,6 +110,9 @@ internal class FlowController(
 ) {
     var currentFlowId: String? = startFlowId
         private set
+
+    /** Bumped when a screen's top bar turns opaque or transparent: status bar icons re-sample what is under them. */
+    var chromeEpoch: Int by androidx.compose.runtime.mutableIntStateOf(0)
     val layers: SnapshotStateList<Layer> = mutableStateListOf(Layer(StackState(Route(startScreen, params)), null))
 
     fun present(

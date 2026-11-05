@@ -71,4 +71,14 @@ class DSLLeniencyTest {
         val unknown = decoder.decode("""{ "search": { "placement": "floating" } }""", ::decodeNavigationBar)
         assertEquals(SearchBar.Placement.automatic, unknown.search?.placement)
     }
+
+    @Test
+    fun navigationBarTopAppBarStyle() {
+        fun style(json: String) = decoder.decode(json, ::decodeNavigationBar).topAppBar
+        assertEquals(null, style("""{ "title": "Inbox" }"""))
+        assertEquals(NavigationBar.TopAppBarStyle.large, style("""{ "title": "Inbox", "topAppBar": "large" }"""))
+        assertEquals(NavigationBar.TopAppBarStyle.centerAligned, style("""{ "topAppBar": "centerAligned" }"""))
+        // Unknown variants fall back to the small bar instead of failing the screen.
+        assertEquals(NavigationBar.TopAppBarStyle.small, style("""{ "topAppBar": "flexible" }"""))
+    }
 }

@@ -56,7 +56,10 @@ internal fun searchSlot(bar: NavigationBar, title: String?): SearchSlot? {
     }
 }
 
-/** Height a [SearchSlot.Row] field adds under the top app bar. */
+/** Material 3 search bar / search input field height (SearchBarTokens.ContainerHeight). */
+internal const val SEARCH_FIELD_HEIGHT = 56
+
+/** Height a [SearchSlot.Row] field adds under the top app bar: the 56dp field and an 8dp gap below. */
 internal const val SEARCH_ROW_HEIGHT = 64.0
 
 /**
@@ -73,6 +76,7 @@ internal fun NavSearchField(
     modifier: Modifier = Modifier,
     autoFocus: Boolean = false,
     onClose: (() -> Unit)? = null,
+    container: Color? = null,
 ) {
     val env = LocalRenderEnv.current
     val dispatcher = LocalDispatcher.current
@@ -99,7 +103,7 @@ internal fun NavSearchField(
         ?.let { Color(ColorHex.parseOrFallback(it).argb) } ?: scheme.primary
     val label = scheme.onSurface
     val secondary = scheme.onSurfaceVariant
-    val fill = scheme.surfaceContainerHigh
+    val fill = container ?: scheme.surfaceContainerHigh
     fun write(text: String) {
         query = text
         lastSeen[0] = text
@@ -129,7 +133,7 @@ internal fun NavSearchField(
             },
             expanded = expanded,
             onExpandedChange = { expanded = it },
-            modifier = Modifier.fillMaxWidth().height(52.dp).focusRequester(requester),
+            modifier = Modifier.fillMaxWidth().height(SEARCH_FIELD_HEIGHT.dp).focusRequester(requester),
             placeholder = search.placeholder?.let { p -> { Text(root.string(p).orEmpty(), maxLines = 1) } },
             leadingIcon = { Symbol("magnifyingglass", secondary) },
             trailingIcon = if (expanded || onClose != null) {
@@ -151,5 +155,5 @@ internal fun NavSearchField(
 /** [NavSearchField] in its own row under the top app bar. */
 @Composable
 internal fun NavSearchRow(session: ScreenSession, search: SearchBar, modifier: Modifier = Modifier) {
-    NavSearchField(session, search, modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 8.dp, top = 4.dp))
+    NavSearchField(session, search, modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 8.dp))
 }

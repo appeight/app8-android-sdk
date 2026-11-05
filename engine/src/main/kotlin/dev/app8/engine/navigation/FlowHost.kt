@@ -29,11 +29,9 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
-import androidx.navigation3.ui.defaultPopTransitionSpec
-import androidx.navigation3.ui.defaultPredictivePopTransitionSpec
-import androidx.navigation3.ui.defaultTransitionSpec
 import androidx.compose.animation.SharedTransitionLayout
 import dev.app8.engine.navigation.transitions.CustomModal
+import dev.app8.engine.navigation.transitions.MaterialTransitions
 import dev.app8.engine.navigation.transitions.TransitionFrame
 import dev.app8.engine.navigation.transitions.stackTransitionSpec
 import dev.app8.engine.core.model.Action
@@ -72,9 +70,11 @@ internal fun StackHost(flow: FlowController, layer: Layer, stack: StackState, ta
     // entry in TransitionFrame; `system` keeps Navigation 3's own animations.
     SharedTransitionLayout {
         val shared = this
-        val platformPush = defaultTransitionSpec<Route>()
-        val platformPop = defaultPopTransitionSpec<Route>()
-        val platformPredictive = defaultPredictivePopTransitionSpec<Route>()
+        // `system`: Material shared axis X and the in-app predictive back preview.
+        val density = androidx.compose.ui.platform.LocalDensity.current.density
+        val platformPush = remember(density) { MaterialTransitions.push<Route>(density) }
+        val platformPop = remember(density) { MaterialTransitions.pop<Route>(density) }
+        val platformPredictive = remember(density) { MaterialTransitions.predictivePop<Route>(density) }
         NavDisplay(
             backStack = stack.entries,
             onBack = { stack.pop(toRoot = false) },
@@ -94,6 +94,9 @@ internal fun StackHost(flow: FlowController, layer: Layer, stack: StackState, ta
         )
     }
 }
+
+/** Height of the Material 3 bottom sheet drag handle with its vertical padding (SheetBottomTokens: 4dp + 2 × 22dp). */
+internal const val SHEET_HANDLE_BLOCK = 48f
 
 /** A presented layer: Material 3 modal bottom sheet (`sheet`, `formSheet`, `pageSheet`) or a full-screen cover. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -127,7 +130,8 @@ private fun ModalLayer(flow: FlowController, layer: Layer) {
             val height = when (single) {
                 is Action.SheetDetent.Fixed -> Modifier.height(single.points.dp)
                 is Action.SheetDetent.Fraction -> Modifier.height((screenHeight * single.fraction).dp)
-                else -> Modifier.height((windowHeight - statusTop - 10f).coerceAtLeast(0f).dp)
+                // The M3 drag handle block (32x4dp handle, 22dp above and below) sits above the content.
+                else -> Modifier.height((windowHeight - statusTop - 10f - (if (layer.grabber != false) SHEET_HANDLE_BLOCK else 0f)).coerceAtLeast(0f).dp)
             }
             ModalBottomSheet(
                 onDismissRequest = { flow.dismiss(layer) },
