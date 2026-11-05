@@ -88,7 +88,9 @@ internal class RenderNode(
                 return null
             }
             val content = entity.content
-            val scope = (content as? StatefulContent)?.variables?.takeIf { it.isNotEmpty() }?.let { raw ->
+            // The screen's own variables live in the session scope (defined with datasources and params).
+            val isScreenRoot = parentType == null
+            val scope = (content as? StatefulContent)?.variables?.takeIf { it.isNotEmpty() && !isScreenRoot }?.let { raw ->
                 val store = ScopedVariableStore(parentScope.store)
                 store.defineVariables(App8Runtime.decodeVariableDefinitions(raw, session.runtime.diagnostics))
                 Scope(store, parentScope).also { scopes += it }
