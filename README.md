@@ -226,6 +226,29 @@ node per platform (`"android": { ... }`). The full comparison and the feature
 matrix are in
 [`app8-dsl/docs/platforms.md`](https://github.com/appeight/app8-dsl/blob/main/docs/platforms.md).
 
+### Icons
+
+SF Symbols are licensed for Apple platforms only, so `icon` symbols draw with Material
+Symbols Rounded. The SDK maps SF names to Material names
+(`engine/src/main/assets/a8/sf-to-material.json`), and a node's `android` override can name
+a Material Symbol directly. To keep the AAR small, the font contains only the mapped icons
+plus the names in [`engine/extra-icons.txt`](engine/extra-icons.txt); any other name draws
+nothing and logs an `icon.unavailable` diagnostics warning.
+
+To add an icon:
+
+1. Append its Material Symbols name to `engine/extra-icons.txt` (or map an SF name to it in
+   `sf-to-material.json`).
+2. Download the upstream font and `.codepoints` file named in the header of
+   `scripts/subset-icons.py`, then run it with fontTools:
+   ```bash
+   python3 -m venv /tmp/venv && /tmp/venv/bin/pip install fonttools brotli
+   /tmp/venv/bin/python scripts/subset-icons.py --font <MaterialSymbolsRounded[...].ttf> --codepoints <MaterialSymbolsRounded[...].codepoints>
+   ```
+3. Commit `engine/src/main/res/font/material_symbols_rounded.ttf` and
+   `engine/src/main/assets/a8/material-codepoints.json`. `./gradlew :engine:testDebugUnitTest`
+   checks they agree with the table and the allowlist.
+
 ## Versioning
 
 The SDKs ride one release train (see
