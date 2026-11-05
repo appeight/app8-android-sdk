@@ -13,4 +13,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "app8-android-sdk"
-include(":engine-core", ":engine", ":engine-maps", ":sample")
+include(":engine-core", ":engine", ":engine-maps", ":sample", ":benchmark")

@@ -12,6 +12,7 @@ import dev.app8.engine.core.layout.Size
 import dev.app8.engine.core.layout.StackSpec
 import dev.app8.engine.core.layout.solveLayout
 import dev.app8.engine.render.components.ComponentRegistry
+import dev.app8.engine.runtime.traced
 
 /** How a component takes part in layout (UIKit view traits). */
 internal data class LayoutTraits(
@@ -51,10 +52,10 @@ internal data class Solved(
  * variable it reads becomes a dependency of the layout and nothing else.
  */
 internal object LayoutTree {
-    fun build(node: RenderNode, env: RenderEnv, isRoot: Boolean = false): Pair<LayoutNode, String> {
+    fun build(node: RenderNode, env: RenderEnv, isRoot: Boolean = false): Pair<LayoutNode, String> = traced("App8.layoutTree") {
         val sig = StringBuilder()
         val tree = build(node, env, isRoot, sig)
-        return tree to sig.toString()
+        tree to sig.toString()
     }
 
     private fun build(node: RenderNode, env: RenderEnv, isRoot: Boolean, sig: StringBuilder): LayoutNode {
@@ -103,7 +104,7 @@ internal class SolveCache(private val maxEntries: Int = 1024) {
         val key = "${bounds.width},${bounds.height};${safeArea.top},${safeArea.left},${safeArea.bottom},${safeArea.right};$scale;kb$keyboardHeight;$signature"
         cache[key]?.let { hits++; return it }
         misses++
-        val r = solveLayout(tree, bounds, safeArea, keyboardHeight = keyboardHeight, scale = scale)
+        val r = traced("App8.solve") { solveLayout(tree, bounds, safeArea, keyboardHeight = keyboardHeight, scale = scale) }
         val local = HashMap<String, Frame>(r.frames.size)
         for (k in r.frames.keys) r.localFrame(k)?.let { local[k] = it }
         return Solved(local, r.frames, r.contentSizes, safeArea, r.contentHeight).also { cache[key] = it }

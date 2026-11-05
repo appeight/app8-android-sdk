@@ -1,0 +1,30 @@
+[
+  {
+    "id": "rowTitle",
+    "type": "text",
+    "content": {
+      "fontSize": 16,
+      "fontWeight": "semibold",
+      "color": "#000000",
+      "numberOfLines": 1
+    }
+  },
+  {
+    "id": "rowBody",
+    "type": "text",
+    "content": {
+      "fontSize": 14,
+      "color": "#00000099",
+      "numberOfLines": 0
+    }
+  },
+  {
+    "id": "rowPrice",
+    "type": "text",
+    "content": {
+      "fontSize": 14,
+      "color": "#214E38",
+      "numberOfLines": 1
+    }
+  }
+]
