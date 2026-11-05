@@ -8,9 +8,11 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.material3.Badge
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.NavigationItemIconPosition
+import androidx.compose.material3.ShortNavigationBar
+import androidx.compose.material3.ShortNavigationBarArrangement
+import androidx.compose.material3.ShortNavigationBarItem
+import androidx.compose.material3.ShortNavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
@@ -26,14 +28,20 @@ import dev.app8.engine.render.string
 import dev.app8.engine.style.App8ChromeTheme
 import dev.app8.engine.style.IosSystemColors
 
-/** Material 3 navigation bar height (without the system navigation bar inset). */
-internal const val TAB_BAR_HEIGHT = 80.0
+/**
+ * Material 3 Expressive short navigation bar height (without the system navigation bar
+ * inset): what Pixel apps (Clock, Phone) ship in 2026. The baseline 80dp bar is retired.
+ */
+internal const val TAB_BAR_HEIGHT = 64.0
+
+/** Window width (dp) from which tab items lay out icon-beside-label, centered (M3 medium width). */
+internal const val TAB_BAR_HORIZONTAL_ITEMS_WIDTH = 600
 
 /** The selected item's indicator pill: the tab tint at this alpha (Studio uses the same). */
 internal const val TAB_INDICATOR_ALPHA = 0.14f
 
 /**
- * `tabBarScreen` as a Material 3 `NavigationBar`: each tab keeps its own back stack (and
+ * `tabBarScreen` as a Material 3 Expressive `ShortNavigationBar`: each tab keeps its own back stack (and
  * saved state) like a UITabBarController of navigation controllers. Tab content extends
  * under the bar; its safe area bottom is the bar's top edge.
  */
@@ -70,12 +78,16 @@ internal fun TabBarHost(session: ScreenSession, flow: FlowController, layer: Lay
             enter = androidx.compose.animation.slideInVertically { it },
             exit = androidx.compose.animation.slideOutVertically { it },
         ) {
-        NavigationBar(
+        // Medium and wider windows: centered items with the icon beside the label.
+        val windowWidth = androidx.compose.ui.platform.LocalWindowInfo.current.containerSize.width
+        val wide = with(androidx.compose.ui.platform.LocalDensity.current) { windowWidth.toDp().value } >= TAB_BAR_HORIZONTAL_ITEMS_WIDTH
+        ShortNavigationBar(
             containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            arrangement = if (wide) ShortNavigationBarArrangement.Centered else ShortNavigationBarArrangement.EqualWeight,
         ) {
             tabs.forEachIndexed { index, tab ->
                 val badge = tab.badge?.let { session.root.string(it) }?.takeIf { it.isNotEmpty() && it != "0" }
-                NavigationBarItem(
+                ShortNavigationBarItem(
                     selected = index == i,
                     onClick = { state.selected = index },
                     icon = {
@@ -83,11 +95,14 @@ internal fun TabBarHost(session: ScreenSession, flow: FlowController, layer: Lay
                             Symbol(tab.icon, if (index == i) tint else unselected)
                         }
                     },
-                    label = { Text(tab.label) },
-                    colors = NavigationBarItemDefaults.colors(
+                    label = { Text(tab.label, maxLines = 1) },
+                    iconPosition = if (wide) NavigationItemIconPosition.Start else NavigationItemIconPosition.Top,
+                    colors = ShortNavigationBarItemDefaults.colors(
+                        selectedIconColor = tint,
                         selectedTextColor = tint,
+                        selectedIndicatorColor = tint.copy(alpha = TAB_INDICATOR_ALPHA),
+                        unselectedIconColor = unselected,
                         unselectedTextColor = unselected,
-                        indicatorColor = tint.copy(alpha = TAB_INDICATOR_ALPHA),
                     ),
                 )
             }

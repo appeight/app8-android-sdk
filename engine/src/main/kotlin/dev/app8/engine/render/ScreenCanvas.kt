@@ -34,11 +34,12 @@ import dev.app8.engine.debug.Recompositions
  * in each node's composable with the same read tracking, so a variable change recomposes
  * only the nodes that display it.
  *
+ * @param onSolved called with each new solve (the top bar finds the hero under it).
  * @param safeArea the screen's safe area in points (status bar / cutout / navigation bar +
  *   top app bar or tab bar), mapped onto the solver like `safeAreaLayoutGuide`.
  */
 @Composable
-internal fun ScreenCanvas(session: ScreenSession, safeArea: EdgeInsets, modifier: Modifier = Modifier) {
+internal fun ScreenCanvas(session: ScreenSession, safeArea: EdgeInsets, modifier: Modifier = Modifier, onSolved: ((Solved) -> Unit)? = null) {
     val env = LocalRenderEnv.current
     Recompositions.Count("${session.screenId}#canvas")
     BoxWithConstraints(modifier.fillMaxSize()) {
@@ -60,6 +61,12 @@ internal fun ScreenCanvas(session: ScreenSession, safeArea: EdgeInsets, modifier
                     session.runtime.diagnostics.warn("layout", "screen '${session.screenId}' failed to lay out: ${e.message}")
                     Solved.EMPTY
                 }
+            }
+        }
+        if (onSolved != null) {
+            val callback = rememberUpdatedState(onSolved)
+            androidx.compose.runtime.LaunchedEffect(solved) {
+                androidx.compose.runtime.snapshotFlow { solved.value }.collect { callback.value(it) }
             }
         }
         Recompositions.Reporter()
