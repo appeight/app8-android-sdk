@@ -37,7 +37,8 @@ Screenshots: `adb exec-out screencap -p > out.png`.
 - Port from Swift faithfully. When iOS behavior is the spec, match it; when
   the DSL docs and the Swift code disagree, follow the code and flag the drift.
 - Brand content renders identically to iOS. System chrome follows Android
-  (`app8-dsl/docs/platforms.md`): Material 3 top app bar, NavigationBar,
+  (`app8-dsl/docs/platforms.md`, numbers in `docs/android-chrome-spec.md`):
+  Material 3 top app bar, short navigation bar,
   predictive back, ripple, stretch overscroll, Roboto as `system` font.
 - Layout uses the same constraints as iOS, solved by our Cassowary solver in
   a custom Compose `Layout`. Never translate DSL layout to ConstraintLayout.

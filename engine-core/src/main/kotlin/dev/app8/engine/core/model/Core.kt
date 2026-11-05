@@ -74,9 +74,18 @@ public data class NavigationBar(
     val tintColor: String? = null,
     val topEdgeEffect: EdgeEffect? = null,
     val search: SearchBar? = null,
+    /**
+     * Android only (iOS ignores it): the Material 3 top app bar variant. `small` (default,
+     * 64dp, title at the start), `centerAligned` (64dp, centered title), `medium` (112dp,
+     * collapses to 64dp on scroll) or `large` (152dp, collapses to 64dp).
+     */
+    val topAppBar: TopAppBarStyle? = null,
 ) {
     @Suppress("EnumEntryName")
     public enum class EdgeEffect { automatic, soft, hard, hidden }
+
+    @Suppress("EnumEntryName")
+    public enum class TopAppBarStyle { small, centerAligned, medium, large }
 }
 
 /** System search field attached to the navigation bar. */
@@ -117,6 +126,7 @@ internal fun decodeNavigationBar(c: Cursor): NavigationBar {
         tintColor = c.optString("tintColor"),
         topEdgeEffect = c.optSafeEnum("topEdgeEffect", NavigationBar.EdgeEffect.automatic),
         search = c.opt("search", ::decodeSearchBar),
+        topAppBar = c.optSafeEnum("topAppBar", NavigationBar.TopAppBarStyle.small),
     )
 }
 
