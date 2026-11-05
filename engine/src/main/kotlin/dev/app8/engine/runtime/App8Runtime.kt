@@ -44,6 +44,7 @@ internal class App8Runtime(
     val eventBus = App8EventBus()
     val analyticsBus = App8AnalyticsBus()
     var analyticsConfig: App8AnalyticsConfig = config.analytics
+    val mapProvider: dev.app8.engine.maps.App8MapProvider? = config.mapProvider
 
     private val decodeErrors = DecodeErrorCollector()
     private val decoder = DslDecoder(DecodeOptions(platform = Platform.ANDROID, errorCollector = decodeErrors))

@@ -14,6 +14,8 @@ public data class App8Config(
     val logLevel: App8LogLevel = App8LogLevel.NONE,
     /** Device floor check. Tests and tooling may relax it; production hosts keep the default. */
     val enforcePlatformFloor: Boolean = true,
+    /** Draws `map` components (the `engine-maps` module's `GoogleMapsProvider`, or your own); null shows a static placeholder. */
+    val mapProvider: dev.app8.engine.maps.App8MapProvider? = null,
 )
 
 /** iOS `UIUserInterfaceStyle`. */
