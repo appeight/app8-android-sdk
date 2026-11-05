@@ -165,7 +165,8 @@ public class App8Instance internal constructor(
         val measurer = rememberTextMeasurer(cacheSize = 128)
         val fonts = fontProvider
         val scaling = textScaling
-        val env = remember(appearance, density, measurer, fonts, scaling) {
+        val styles = runtime.styles
+        val env = remember(appearance, density, measurer, fonts, scaling, styles) {
             RenderEnv(runtime, appearance, density, measurer, fonts, TextSizer.of(scaling, density))
         }
         val context = LocalContext.current

@@ -54,8 +54,14 @@ internal fun TabBarHost(session: ScreenSession, flow: FlowController, layer: Lay
                 StackHost(flow, layer, stacks[i], state, Chrome(bottom = TAB_BAR_HEIGHT + navInset, inTabs = true))
             }
         }
-        NavigationBar(
+        // `hidesTabBar` on the top screen of the selected tab slides the bar away.
+        androidx.compose.animation.AnimatedVisibility(
+            visible = !stacks[i].topHidesTabBar,
             modifier = Modifier.align(Alignment.BottomCenter),
+            enter = androidx.compose.animation.slideInVertically { it },
+            exit = androidx.compose.animation.slideOutVertically { it },
+        ) {
+        NavigationBar(
             containerColor = IosSystemColors.of("secondarySystemBackground", env.appearance),
         ) {
             tabs.forEachIndexed { index, tab ->
@@ -76,6 +82,7 @@ internal fun TabBarHost(session: ScreenSession, flow: FlowController, layer: Lay
                     ),
                 )
             }
+        }
         }
     }
 }

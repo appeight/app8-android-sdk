@@ -60,5 +60,33 @@ class InMemoryPreviewDataSource(envelope: PreviewEnvelope) : App8DataSource {
         return null
     }
 
+    /**
+     * Optional `bundle.streaming` (test fixtures, like the iOS examples' `streaming/` folders):
+     * `{ screens: { <screenId>: [frame] }, datasources: { <screenId>: { <id>: [frame] } },
+     * styles: [frame] }` with `frame = { delay: seconds, data: <document> }`.
+     */
+    private val streaming = bundle["streaming"] as? JsonObject
+
+    private fun frames(e: JsonElement?): kotlinx.coroutines.flow.Flow<ByteArray>? {
+        val list = (e as? JsonArray)?.takeIf { it.isNotEmpty() } ?: return null
+        return kotlinx.coroutines.flow.flow {
+            for (frame in list) {
+                val f = frame as? JsonObject ?: continue
+                val delay = (f["delay"] as? JsonPrimitive)?.contentOrNull?.toDoubleOrNull() ?: 2.0
+                kotlinx.coroutines.delay((delay * 1000).toLong())
+                f["data"]?.let { emit(bytes(it)) }
+            }
+        }
+    }
+
+    override fun streamScreen(screenId: String) = frames((streaming?.get("screens") as? JsonObject)?.get(screenId))
+
+    override fun streamDatasource(screenId: String, datasourceId: String, componentPath: String?) =
+        ((streaming?.get("datasources") as? JsonObject)?.get(screenId) as? JsonObject)?.let { m ->
+            frames(m[datasourceId] ?: m[datasourceId.removePrefix("datasources/")])
+        }
+
+    override fun streamStyles() = frames(streaming?.get("styles"))
+
     override suspend fun getAllScreenIds(): List<String> = (bundle["screens"] as? JsonObject)?.keys?.toList().orEmpty()
 }
