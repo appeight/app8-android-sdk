@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
@@ -79,18 +81,22 @@ private fun ModalLayer(flow: FlowController, layer: Layer) {
             val detents = layer.detents.orEmpty()
             val hasMedium = detents.any { it is Action.SheetDetent.Medium }
             val state = rememberModalBottomSheetState(skipPartiallyExpanded = !hasMedium)
-            val screenHeight = LocalConfiguration.current.screenHeightDp
+            // A large detent leaves the status bar and a 10pt gap above the sheet, like iOS.
+            val density = androidx.compose.ui.platform.LocalDensity.current
+            val windowHeight = with(density) { androidx.compose.ui.platform.LocalWindowInfo.current.containerSize.height.toDp().value }
+            val statusTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding().value
+            val screenHeight = windowHeight
             val single = detents.singleOrNull()
             val height = when (single) {
                 is Action.SheetDetent.Fixed -> Modifier.height(single.points.dp)
                 is Action.SheetDetent.Fraction -> Modifier.height((screenHeight * single.fraction).dp)
-                else -> Modifier.fillMaxHeight()
+                else -> Modifier.height((windowHeight - statusTop - 10f).coerceAtLeast(0f).dp)
             }
             ModalBottomSheet(
                 onDismissRequest = { flow.dismiss(layer) },
                 sheetState = state,
                 containerColor = IosSystemColors.of("systemBackground", LocalRenderEnv.current.appearance),
-                dragHandle = if (layer.grabber == true || detents.size > 1) ({ BottomSheetDefaults.DragHandle() }) else null,
+                dragHandle = if (layer.grabber != false) ({ BottomSheetDefaults.DragHandle() }) else null,
                 contentWindowInsets = { WindowInsets(0, 0, 0, 0) },
             ) {
                 Box(height.fillMaxWidth()) {
