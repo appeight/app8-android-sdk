@@ -1,0 +1,184 @@
+package dev.app8.engine.core.vars
+
+import dev.app8.engine.core.expr.DependencyExtractor
+import dev.app8.engine.core.expr.ExpressionEvaluator
+import dev.app8.engine.core.expr.ExpressionParser
+
+/**
+ * Computed-variable machinery shared by [VariableStore] and [ScopedVariableStore] (the Swift
+ * classes duplicate this code verbatim). [variables] is the store's own (local) variable map.
+ */
+internal class ComputedSupport(
+    private val store: VariableStoreProtocol,
+    private val variables: Map<String, Variable>,
+) {
+    val parser = ExpressionParser()
+    val evaluator = ExpressionEvaluator()
+    val extractor = DependencyExtractor()
+    val graph = DependencyGraph()
+
+    /** Shared part of `defineVariable`: computes the variable's initial value. */
+    fun initialize(name: String, variable: Variable, definition: VariableDefinition, logger: VariableLogger?) {
+        if (variable.isComputed) {
+            val expression = variable.expression ?: throw VariableException.InvalidExpression(
+                "No expression provided for computed variable", IllegalStateException(),
+            )
+            val node = parser.parse(expression)
+            val dependencies = extractor.extractDependencies(node)
+            checkCircularDependency(name, dependencies)
+            for (dependency in dependencies) graph.addDependency(dependency, name)
+            updateComputedVariable(variable)
+        } else {
+            val raw = definition.rawInitialValue
+            if (raw is String && raw.contains("{{")) {
+                // initialValue is an expression string — evaluate it against the current context.
+                try {
+                    val node = parser.parse(raw)
+                    val evaluated = evaluator.evaluate(node, VariableContext(store))
+                    if (evaluated != null) variable.setValueUnchecked(evaluated)
+                } catch (e: Exception) {
+                    logger?.error("Failed to evaluate initialValue expression '$raw' for '$name': ${e.message}")
+                }
+            }
+        }
+    }
+
+    fun updateDependentVariables(changedVariable: String) {
+        val order = graph.getUpdateOrder(graph.getDependents(changedVariable))
+        for (name in order) {
+            val variable = variables[name]
+            if (variable != null && variable.isComputed) updateComputedVariable(variable)
+        }
+    }
+
+    fun updateDependentVariablesForMultiple(changedVariables: Set<String>) {
+        val all = LinkedHashSet<String>()
+        for (changed in changedVariables) all.addAll(graph.getDependents(changed))
+        for (name in graph.getUpdateOrder(all)) {
+            val variable = variables[name]
+            if (variable != null && variable.isComputed) updateComputedVariable(variable)
+        }
+    }
+
+    fun updateComputedVariable(variable: Variable) {
+        val expression = variable.expression ?: return
+        try {
+            val node = parser.parse(expression)
+            val dependencies = extractor.extractDependencies(node)
+            val newValue = evaluator.evaluate(node, VariableContext(store))
+            variable.setComputedValue(newValue, dependencies)
+        } catch (e: Exception) {
+            throw VariableException.ComputationError(expression, e)
+        }
+    }
+
+    private fun checkCircularDependency(name: String, dependencies: Set<String>) {
+        var visited = HashSet<String>()
+        var path = ArrayList<String>()
+
+        fun hasCircularDependency(varName: String): Boolean {
+            if (varName in path) return true
+            if (varName in visited) return false
+            visited.add(varName)
+            path.add(varName)
+            val variable = variables[varName]
+            if (variable != null && variable.isComputed) {
+                val expression = variable.expression ?: return false
+                val deps = try {
+                    extractor.extractDependencies(parser.parse(expression))
+                } catch (_: Exception) {
+                    return false
+                }
+                for (dep in deps) if (hasCircularDependency(dep)) return true
+            }
+            path.removeAt(path.size - 1)
+            return false
+        }
+
+        for (dependency in dependencies) {
+            if (dependency == name) throw VariableException.CircularDependency(listOf(name))
+            path = arrayListOf(name)
+            visited = HashSet()
+            if (hasCircularDependency(dependency)) throw VariableException.CircularDependency(path.toList())
+        }
+    }
+}
+
+/** Main (app-scope) variable store with dependency tracking (Swift `VariableStore`). */
+public class VariableStore : VariableStoreProtocol {
+    private val variables = LinkedHashMap<String, Variable>()
+    private val support = ComputedSupport(this, variables)
+    private var isUpdating = false
+    private val anyVariableChangedSubject = PassthroughSubject<String>()
+    private val cancellables = ArrayList<Cancellable>()
+
+    /** Optional diagnostics sink. */
+    public var logger: VariableLogger? = null
+
+    override val anyVariableChanged: ChangePublisher<String> get() = anyVariableChangedSubject
+
+    override fun defineVariable(name: String, definition: VariableDefinition) {
+        val variable = Variable(name, definition)
+        support.initialize(name, variable, definition, logger)
+        cancellables.add(variable.valueChanged.subscribe { anyVariableChangedSubject.send(name) })
+        variables[name] = variable
+    }
+
+    override fun getValue(name: String): Any? = variables[name]?.value
+
+    override fun setValue(name: String, value: Any?) {
+        val variable = variables[name] ?: throw VariableException.UndefinedVariable(name)
+        variable.setValue(value)
+        if (!isUpdating) updateDependentVariables(name)
+    }
+
+    /**
+     * Note (faithful to iOS): if a value fails validation mid-batch the exception propagates and
+     * the store stays in "updating" mode, suppressing dependent recomputation on later `setValue`s.
+     */
+    override fun setMultipleValues(updates: Map<String, Any?>) {
+        val changed = LinkedHashSet<String>()
+        isUpdating = true
+        for ((name, value) in updates) {
+            val variable = variables[name] ?: throw VariableException.UndefinedVariable(name)
+            variable.setValue(value)
+            changed.add(name)
+        }
+        support.updateDependentVariablesForMultiple(changed)
+        isUpdating = false
+    }
+
+    override fun hasVariable(name: String): Boolean = variables.containsKey(name)
+
+    override fun setExternalValue(name: String, value: Any) {
+        val variable = variables[name] ?: return
+        try {
+            variable.setValue(value)
+            if (!isUpdating) updateDependentVariables(name)
+        } catch (e: Exception) {
+            logger?.error("VariableStore.setExternalValue failed for '$name': ${e.message}")
+        }
+    }
+
+    override fun getAllValues(): Map<String, Any?> = variables.mapValuesTo(LinkedHashMap()) { it.value.value }
+
+    override fun getAllVariables(): Map<String, Variable> = LinkedHashMap(variables)
+
+    override fun getParentStore(): VariableStoreProtocol? = null
+
+    override fun reset() {
+        variables.clear()
+        support.graph.reset()
+        cancellables.forEach { it.cancel() }
+        cancellables.clear()
+    }
+
+    private fun updateDependentVariables(changedVariable: String) {
+        isUpdating = true
+        try {
+            support.updateDependentVariables(changedVariable)
+        } finally {
+            isUpdating = false
+        }
+    }
+}
