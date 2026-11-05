@@ -303,7 +303,3 @@ internal fun Animation.Inline.toTransitionSpec(): FiniteAnimationSpec<Float> {
         )
     }
 }
-
-/** Approximate length of [spec] in ms (springs: the duration they were derived from). */
-internal fun Animation.Inline.approxMillis(): Int = ((duration + delay) * 1000).roundToInt().coerceAtLeast(0)
-

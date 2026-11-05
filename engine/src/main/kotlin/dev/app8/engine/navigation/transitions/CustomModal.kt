@@ -80,6 +80,7 @@ internal fun CustomModal(
     val exit = remember { Animatable(0f) }
     // Interactive drag along the dismissal edge, px (positive = toward the edge).
     val drag = remember { Animatable(0f) }
+    val dragTotal = remember { floatArrayOf(0f) }
     val spec = transition.animation.toTransitionSpec()
     val explicitExit = transition.explicitReverse(true)
     val edge = transition.interactive?.edge ?: transition.edge
@@ -175,8 +176,14 @@ internal fun CustomModal(
         if (interactive?.enabled == true && !dismissing) {
             val dimension = if (vertical) (frame?.height?.times(density.density)?.toFloat() ?: hPx) else (frame?.width?.times(density.density)?.toFloat() ?: wPx)
             box = box.draggable(
-                rememberDraggableState { delta -> scope.launch { drag.snapTo(drag.value + delta * sign) } },
+                rememberDraggableState { delta ->
+                    // Accumulate synchronously: the finger tracks 1:1 even when frames coalesce.
+                    dragTotal[0] += delta * sign
+                    val target = dragTotal[0]
+                    scope.launch { drag.snapTo(target) }
+                },
                 if (vertical) Orientation.Vertical else Orientation.Horizontal,
+                onDragStarted = { dragTotal[0] = drag.value },
                 onDragStopped = { velocity ->
                     val v = velocity * sign / density.density
                     val past = drag.value / dimension >= interactive.threshold || v >= interactive.velocity
