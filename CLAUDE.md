@@ -10,7 +10,15 @@ read `docs/platforms.md` there before changing behavior.
 ./gradlew :engine-core:test          # pure JVM: models, expressions, variables, layout solver
 ./gradlew :engine:testDebugUnitTest  # renderer unit tests (Robolectric/Roborazzi)
 ./gradlew :sample:installDebug       # sample + preview host on the running emulator
+./gradlew :engine:lint apiCheck      # lint (baseline: engine/lint-baseline.xml), public API dumps
+./gradlew apiDump                    # after an intended public API change; commit api/*.api
 ```
+
+CI (`.github/workflows/ci.yml`) runs the tests, lint, `apiCheck`,
+`scripts/check-version.sh` and the sample build. Releases: `/release`
+(`.claude/commands/release.md`) on the shared train; `EngineVersion.CURRENT`
+is the only place the version is written (Gradle reads it), and `dsl.lock`
+equals it.
 
 Emulators: AVDs `a8_pixel_9_api37` (current) and `a8_pixel_6_api31` (floor).
 Headless: `emulator -avd a8_pixel_9_api37 -no-window -no-audio -no-boot-anim -gpu host`.
