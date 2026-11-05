@@ -29,6 +29,13 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
+import androidx.navigation3.ui.defaultPopTransitionSpec
+import androidx.navigation3.ui.defaultPredictivePopTransitionSpec
+import androidx.navigation3.ui.defaultTransitionSpec
+import androidx.compose.animation.SharedTransitionLayout
+import dev.app8.engine.navigation.transitions.CustomModal
+import dev.app8.engine.navigation.transitions.TransitionFrame
+import dev.app8.engine.navigation.transitions.stackTransitionSpec
 import dev.app8.engine.core.model.Action
 import dev.app8.engine.render.LocalRenderEnv
 import dev.app8.engine.style.IosSystemColors
@@ -61,21 +68,51 @@ internal fun FlowHost(flow: FlowController, modifier: Modifier = Modifier) {
 @Composable
 internal fun StackHost(flow: FlowController, layer: Layer, stack: StackState, tabs: TabState?, chrome: Chrome) {
     val navigator = remember(flow, layer, stack, tabs) { StackNavigator(flow, layer, stack, tabs) }
-    NavDisplay(
-        backStack = stack.entries,
-        onBack = { if (stack.entries.size > 1) stack.entries.removeAt(stack.entries.lastIndex) },
-        entryProvider = { route ->
-            NavEntry(route, contentKey = route.id) {
-                ScreenHost(route, navigator, flow, layer, stack, chrome)
-            }
-        },
-    )
+    // Shared elements (`shared` preset) morph inside this scope; screen keyframes run per
+    // entry in TransitionFrame; `system` keeps Navigation 3's own animations.
+    SharedTransitionLayout {
+        val shared = this
+        val platformPush = defaultTransitionSpec<Route>()
+        val platformPop = defaultPopTransitionSpec<Route>()
+        val platformPredictive = defaultPredictivePopTransitionSpec<Route>()
+        NavDisplay(
+            backStack = stack.entries,
+            onBack = { stack.pop(toRoot = false) },
+            sharedTransitionScope = shared,
+            transitionSpec = stackTransitionSpec(stack, pop = false, predictive = false, platformPush),
+            popTransitionSpec = stackTransitionSpec(stack, pop = true, predictive = false, platformPop),
+            predictivePopTransitionSpec = { edge: Int ->
+                stackTransitionSpec<Route>(stack, pop = true, predictive = true) { platformPredictive(this, edge) }(this)
+            },
+            entryProvider = { route ->
+                NavEntry(route, contentKey = route.id) {
+                    TransitionFrame(route, stack, shared) {
+                        ScreenHost(route, navigator, flow, layer, stack, chrome)
+                    }
+                }
+            },
+        )
+    }
 }
 
 /** A presented layer: Material 3 modal bottom sheet (`sheet`, `formSheet`, `pageSheet`) or a full-screen cover. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ModalLayer(flow: FlowController, layer: Layer) {
+    val custom = layer.transition
+    if (custom != null) {
+        CustomModal(
+            transition = custom,
+            dismissing = layer.dismissing,
+            onDismissRequest = { flow.dismiss(layer) },
+            onRemoved = { flow.remove(layer) },
+            backEnabled = layer.stack.entries.size <= 1,
+        ) { sized ->
+            // A sized card owns no system bars: its screen's safe area is its own bounds.
+            StackHost(flow, layer, layer.stack, null, if (sized) Chrome(top = 0.0, bottom = 0.0) else Chrome())
+        }
+        return
+    }
     when (layer.presentation) {
         Action.PresentationStyle.sheet, Action.PresentationStyle.formSheet, Action.PresentationStyle.pageSheet -> {
             val detents = layer.detents.orEmpty()
