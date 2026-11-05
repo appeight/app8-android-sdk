@@ -12,6 +12,8 @@ android {
         minSdk = 31
         consumerProguardFiles("consumer-rules.pro")
     }
+    // Style mapping tests touch Compose value types only; android.jar stubs return defaults.
+    testOptions { unitTests.isReturnDefaultValues = true }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
