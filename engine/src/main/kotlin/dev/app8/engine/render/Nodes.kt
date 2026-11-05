@@ -23,6 +23,7 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -78,6 +79,7 @@ internal fun NodeView(node: RenderNode) {
     val env = LocalRenderEnv.current
     val content = node.content
     OnEvents(node, (content as? StatefulContent)?.onEvent)
+    StateBinding(node)
 
     val interaction = content.interaction
     val enabledHere = interaction?.enabled?.let { node.bool(it) } ?: true
@@ -163,6 +165,18 @@ internal fun tapModifier(node: RenderNode, content: EntityContent, indication: I
         )
     }
     return m
+}
+
+/** A `{{…}}` `defaultStateName`: re-evaluated when a variable it reads changes (iOS `setupStateBinding`). */
+@Composable
+private fun StateBinding(node: RenderNode) {
+    val expr = node.stateBinding ?: return
+    val dispatcher = LocalDispatcher.current
+    LaunchedEffect(node) {
+        snapshotFlow { node.string(expr) }.collect { name ->
+            if (!name.isNullOrEmpty() && name != node.stateName) dispatcher.setState(node, name)
+        }
+    }
 }
 
 /** `onEvent`: appear (on first composition), timer (delay, interval, repeats), disappear. */

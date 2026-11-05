@@ -88,6 +88,8 @@ internal object ComponentRegistry {
         ComponentType.Key.datePicker to DatePickerKind,
         ComponentType.Key.video to VideoKind,
         ComponentType.Key.map to MapKind,
+        ComponentType.Key.collection to CollectionKind,
+        ComponentType.Key.tableView to TableViewKind,
     )
 
     fun kind(node: RenderNode): ComponentKind = node.typeKey?.let { kinds[it] } ?: PlaceholderKind
