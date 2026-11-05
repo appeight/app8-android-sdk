@@ -121,6 +121,7 @@ public class VariableStore : VariableStoreProtocol {
         val variable = Variable(name, definition)
         support.initialize(name, variable, definition, logger)
         cancellables.add(variable.valueChanged.subscribe { anyVariableChangedSubject.send(name) })
+        variable.captureInitialValue()
         variables[name] = variable
     }
 
@@ -133,19 +134,26 @@ public class VariableStore : VariableStoreProtocol {
     }
 
     /**
-     * Note (faithful to iOS): if a value fails validation mid-batch the exception propagates and
-     * the store stays in "updating" mode, suppressing dependent recomputation on later `setValue`s.
+     * Unknown names reject the whole batch before anything is written. If a write still throws
+     * midway (type mismatch), the store leaves batch mode and recomputes dependents of what was
+     * already written before rethrowing, so a later [setValue] always recomputes dependents.
      */
     override fun setMultipleValues(updates: Map<String, Any?>) {
+        updates.keys.firstOrNull { !variables.containsKey(it) }?.let { throw VariableException.UndefinedVariable(it) }
         val changed = LinkedHashSet<String>()
         isUpdating = true
-        for ((name, value) in updates) {
-            val variable = variables[name] ?: throw VariableException.UndefinedVariable(name)
-            variable.setValue(value)
-            changed.add(name)
+        try {
+            for ((name, value) in updates) {
+                variables.getValue(name).setValue(value)
+                changed.add(name)
+            }
+        } catch (e: Exception) {
+            isUpdating = false
+            runCatching { support.updateDependentVariablesForMultiple(changed) }
+            throw e
         }
-        support.updateDependentVariablesForMultiple(changed)
         isUpdating = false
+        support.updateDependentVariablesForMultiple(changed)
     }
 
     override fun hasVariable(name: String): Boolean = variables.containsKey(name)
@@ -171,6 +179,18 @@ public class VariableStore : VariableStoreProtocol {
         support.graph.reset()
         cancellables.forEach { it.cancel() }
         cancellables.clear()
+    }
+
+    override fun resetToInitialValues() {
+        val names = variables.filterValues { !it.isComputed }.keys.toList()
+        isUpdating = true
+        for (name in names) variables[name]?.restoreInitialValue()
+        isUpdating = false
+        try {
+            support.updateDependentVariablesForMultiple(names.toSet())
+        } catch (e: Exception) {
+            logger?.error("resetToInitialValues: failed to recompute dependents: ${e.message}")
+        }
     }
 
     private fun updateDependentVariables(changedVariable: String) {

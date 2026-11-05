@@ -64,10 +64,10 @@ class ShadowColorResolutionTest {
 
     @Test
     fun badShadowLayerIsDroppedNotTheShadow() {
-        // iOS synthesizes Layer decoding, so `isHollow` is required; the SafeArray drops the bad layer.
+        // `color` is required; the SafeArray drops the bad layer, not the shadow.
         val s = shadow(
             """[ { "id": "s", "type": "shadow", "content": { "layers": [
-                  { "color": "#000000", "radius": 10, "offset": { "x": 0, "y": 4 }, "opacity": 0.1 },
+                  { "radius": 10, "offset": { "x": 0, "y": 4 }, "opacity": 0.1 },
                   { "isHollow": false, "color": "#000000", "radius": 2, "offset": { "x": 0, "y": 1 }, "opacity": 0.3 } ] } } ]""",
             "s",
         )

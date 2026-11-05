@@ -84,7 +84,7 @@ import kotlin.math.abs
  * M3 [DatePickerDialog] or a [TimePicker] dialog; `inline`: the M3 [DatePicker] in place
  * (time mode stays a pill, as iOS's inline time is); `wheels`: snapping wheel columns
  * (month/day/year, hour/minute, or day + time). A change writes `bindVariable`
- * (`yyyy-MM-dd`, as iOS) and fires `tap`.
+ * (`yyyy-MM-dd` in `date` mode, local date-time + offset in the time modes, as iOS) and fires `tap`.
  */
 internal object DatePickerKind : ComponentKind {
     override val handlesTaps: Boolean get() = true
@@ -104,7 +104,10 @@ internal object DatePickerKind : ComponentKind {
         val boundRaw = node.bound(p.bindVariable) as? String
         val bound = DateValues.parse(boundRaw)
         if (own != null) {
-            return if (bound != null && DateValues.format(own) != boundRaw?.take(10) && DateValues.differs(own, bound)) bound else own
+            val mode = p.datePickerMode ?: Mode.date
+            val ownStored = DateValues.format(own, mode)
+            val boundStored = if (mode == Mode.date) boundRaw?.take(10) else boundRaw
+            return if (bound != null && ownStored != boundStored && DateValues.differs(own, bound)) bound else own
         }
         return bound ?: DateValues.parse(node.string(p.selectedDate)) ?: System.currentTimeMillis()
     }
@@ -157,7 +160,7 @@ internal object DatePickerKind : ComponentKind {
             val v = raw.coerceIn(min ?: Long.MIN_VALUE, max ?: Long.MAX_VALUE)
             if (v != ms) {
                 node.ui["date"] = v
-                node.writeBound(p.bindVariable, DateValues.format(v))
+                node.writeBound(p.bindVariable, DateValues.format(v, mode))
                 dispatcher.dispatchTrigger(node, ActionTrigger.tap)
             }
         }

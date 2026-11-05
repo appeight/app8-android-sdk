@@ -334,9 +334,11 @@ private class ParserState(private val tokens: List<Token>) {
                 } while (match(TokenType.Comma))
             }
             consume(TokenType.RightBracket, "Expected ']' after array elements")
-            // Faithful to iOS: only literal elements are kept; non-literal elements are dropped.
-            val literalValues = elements.mapNotNull { (it as? ExpressionNode.Literal)?.value }
-            return ExpressionNode.Literal(LiteralValue.ArrayValue(literalValues))
+            // All-literal → a literal array; otherwise keep every element node (evaluated at runtime).
+            if (elements.all { it is ExpressionNode.Literal }) {
+                return ExpressionNode.Literal(LiteralValue.ArrayValue(elements.map { (it as ExpressionNode.Literal).value }))
+            }
+            return ExpressionNode.ArrayLiteral(elements)
         }
         throw ExpressionException.UnexpectedToken(current().position)
     }
