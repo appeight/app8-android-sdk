@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+    `maven-publish`
 }
 
 android {
@@ -12,10 +13,15 @@ android {
         minSdk = 31
         consumerProguardFiles("consumer-rules.pro")
     }
+    // Pre-existing findings live in lint-baseline.xml; anything new fails `:engine:lint`.
+    lint { baseline = file("lint-baseline.xml") }
     // Style mapping tests touch Compose value types only; android.jar stubs return defaults.
     testOptions { unitTests.isReturnDefaultValues = true }
     // Pipeline tests run on the JVM; android.jar stubs return defaults instead of throwing.
     testOptions { unitTests.isReturnDefaultValues = true }
+    publishing {
+        singleVariant("release") { withSourcesJar() }
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -46,4 +52,17 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.core)
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("release") {
+            artifactId = "engine"
+            afterEvaluate { from(components["release"]) }
+            pom {
+                name.set("App8 Engine")
+                description.set("Renders App8 DSL apps natively with Jetpack Compose.")
+            }
+        }
+    }
 }
