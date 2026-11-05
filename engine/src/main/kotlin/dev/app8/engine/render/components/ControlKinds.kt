@@ -260,7 +260,7 @@ internal object PickerKind : ComponentKind {
         }
         val text = menuText(node, env)
         var expanded by remember(node) { mutableStateOf(false) }
-        val table = MaterialSymbols.load(LocalContext.current)
+        val context = LocalContext.current
         val fs = text.style.fontSize
         Box(modifier) {
             ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { if (enabled) expanded = it }, modifier = Modifier.fillMaxSize()) {
@@ -279,7 +279,7 @@ internal object PickerKind : ComponentKind {
                 }
                 ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, matchAnchorWidth = false) {
                     for (o in options) {
-                        val glyph = o.icon?.let { MaterialSymbols.resolve(it, table) }
+                        val glyph = o.icon?.let { MaterialSymbols.resolve(context, it) }
                         DropdownMenuItem(
                             text = { Text(o.label) },
                             leadingIcon = glyph?.let { g -> { Text(g.name, fontFamily = MaterialSymbols.family(g.filled), fontSize = env.textSize(20f)) } },
