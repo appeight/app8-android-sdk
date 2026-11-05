@@ -26,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import dev.app8.engine.navigation.transitions.elementTransition
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -104,6 +105,8 @@ internal fun NodeView(node: RenderNode) {
     val bg by animateColorAsState(bgTarget, props?.backgroundColor?.animation.toSpecOf(node), label = "bg")
 
     var m: Modifier = Modifier.layoutId(node.key).testTag(node.id)
+    // `content.transition.key`: morphs with its counterpart during a `shared` transition.
+    m = m.elementTransition((content as? dev.app8.engine.core.model.ComponentContent<*, *>)?.elementTransition)
     if (zIndex != null) m = m.zIndex(zIndex)
     m = m.graphicsLayer {
         this.alpha = alpha

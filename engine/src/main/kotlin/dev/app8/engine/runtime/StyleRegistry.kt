@@ -57,6 +57,10 @@ internal class StyleRegistry(private val styles: Map<String, StyleAny>) {
 
     fun color(wrapped: Wrapped<ThemedColor>?, dark: Boolean): ColorHex? = color(resolve(wrapped), dark)
 
+    /** A registry with [updates] replacing the styles that share their id. */
+    fun merging(updates: List<StyleAny>): StyleRegistry =
+        StyleRegistry(LinkedHashMap(styles).apply { for (s in updates) put(s.id, s) })
+
     companion object {
         private const val MAX_HOPS = 16
         val EMPTY = StyleRegistry(emptyMap())

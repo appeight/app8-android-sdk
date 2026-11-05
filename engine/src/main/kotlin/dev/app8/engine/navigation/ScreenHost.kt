@@ -5,6 +5,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.text.BasicText
@@ -71,6 +75,11 @@ internal fun ScreenHost(route: Route, navigator: StackNavigator, flow: FlowContr
         } finally {
             runtime.endWork()
         }
+        // `streaming: true`: live datasource / screen / style updates while shown.
+        val initial = value?.getOrNull()
+        if (initial != null && initial.isStreaming) {
+            dev.app8.engine.render.runScreenStreams(runtime, appScope, route.screenId, route.params, initial) { value = Result.success(it) }
+        }
     }
     val session = result?.getOrNull()
     DisposableEffect(session) { onDispose { session?.dispose() } }
@@ -84,8 +93,15 @@ internal fun ScreenHost(route: Route, navigator: StackNavigator, flow: FlowContr
         else -> {
             val host = LocalHostEffects.current
             val dispatcher = remember(session, navigator) { ActionDispatcher(runtime, navigator, host) }
+            val hides = chrome.inTabs && (session.content as? dev.app8.engine.core.model.ComponentContent<*, *>)?.hidesTabBar == true
+            DisposableEffect(route.id, hides) {
+                if (hides) stack.hidesTabBar[route.id] = true
+                onDispose { stack.hidesTabBar.remove(route.id) }
+            }
+            // iOS hidesBottomBarWhenPushed: the screen's safe area ends at the window edge.
+            val screenChrome = if (hides) chrome.copy(bottom = null) else chrome
             CompositionLocalProvider(LocalDispatcher provides dispatcher) {
-                Screen(session, chrome, canGoBack = stack.entries.size > 1 && stack.entries.lastOrNull() == route, background)
+                Screen(session, screenChrome, canGoBack = stack.entries.size > 1 && stack.entries.lastOrNull() == route, background)
             }
         }
     }
@@ -100,7 +116,10 @@ private fun Screen(session: ScreenSession, chrome: Chrome, canGoBack: Boolean, b
     val window = WindowInsets.safeDrawing.asPaddingValues()
     val ld = LocalLayoutDirection.current
     val extra = (content as? dev.app8.engine.core.model.ComponentContent<*, *>)?.additionalSafeAreaInsets
-    val top = (chrome.top ?: window.calculateTopPadding().value.toDouble()) + (if (bar != null) TOP_BAR_HEIGHT else 0.0)
+    val barTitle = bar?.title?.let { session.root.string(it, session.scope.untracked) }
+    val searchRow = bar != null && searchSlot(bar, barTitle) == SearchSlot.Row
+    val top = (chrome.top ?: window.calculateTopPadding().value.toDouble()) +
+        (if (bar != null) TOP_BAR_HEIGHT else 0.0) + (if (searchRow) SEARCH_ROW_HEIGHT else 0.0)
     val bottom = chrome.bottom ?: window.calculateBottomPadding().value.toDouble()
     val safe = EdgeInsets(
         top = top + (extra?.top ?: 0.0),
@@ -164,8 +183,20 @@ private fun TopBar(session: ScreenSession, bar: NavigationBar, canGoBack: Boolea
     val titleColor = hex(bar.titleColor) ?: IosSystemColors.of("label", env.appearance)
     val tint = hex(bar.tintColor) ?: titleColor
     val title = bar.title?.let { root.string(it) }.orEmpty()
+    val search = bar.search
+    val slot = searchSlot(bar, title)
+    var searchOpen by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
+    androidx.compose.foundation.layout.Column {
     TopAppBar(
-        title = { Text(title, color = titleColor, maxLines = 1) },
+        title = {
+            when {
+                search != null && slot == SearchSlot.Title ->
+                    NavSearchField(session, search, Modifier.fillMaxWidth().padding(end = 16.dp))
+                search != null && slot == SearchSlot.Button && searchOpen ->
+                    NavSearchField(session, search, Modifier.fillMaxWidth().padding(end = 16.dp), autoFocus = true, onClose = { searchOpen = false })
+                else -> Text(title, color = titleColor, maxLines = 1)
+            }
+        },
         navigationIcon = {
             val left = bar.leftAction
             when {
@@ -176,10 +207,13 @@ private fun TopBar(session: ScreenSession, bar: NavigationBar, canGoBack: Boolea
         actions = {
             val items = bar.rightActions ?: listOfNotNull(bar.rightAction)
             for (item in items) BarItem(item, tint) { dispatcher.execute(root, item.action) }
+            if (slot == SearchSlot.Button && !searchOpen) IconButton(onClick = { searchOpen = true }) { Symbol("magnifyingglass", tint) }
         },
         windowInsets = if (statusBarInset) WindowInsets.statusBars else WindowInsets(0, 0, 0, 0),
         colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent),
     )
+    if (search != null && slot == SearchSlot.Row) NavSearchRow(session, search)
+    }
 }
 
 private val BACK = dev.app8.engine.core.model.Action(dev.app8.engine.core.model.Action.Type.navigation, isBack = true)

@@ -145,11 +145,16 @@ internal class ActionDispatcher(
         } else if (next != null) {
             val params = action.params.orEmpty().mapValues { (_, v) -> resolveValue(v, context) }
             val presentation = action.presentation
-            val customModal = (action.transition as? ScreenTransition.Inline)?.mode == ScreenTransition.Mode.modal
-            if ((presentation != null && presentation != Action.PresentationStyle.push) || customModal) {
-                navigator.present(next, params, presentation ?: Action.PresentationStyle.fullScreen, action.detents, action.grabber)
-            } else {
-                navigator.push(next, params)
+            // A registry pointer resolves first: its `mode` decides push vs custom modal.
+            val transition = action.transition
+            val inline = transition?.inline { id -> runtime.app?.transitions?.firstNotNullOfOrNull { (it as? ScreenTransition.Inline)?.takeIf { t -> t.id == id } } }
+            val customModal = inline != null && (inline.mode ?: inline.preset?.defaultMode) == ScreenTransition.Mode.modal &&
+                inline.preset != ScreenTransition.Preset.system
+            when {
+                presentation != null && presentation != Action.PresentationStyle.push ->
+                    navigator.present(next, params, presentation, action.detents, action.grabber)
+                customModal -> navigator.present(next, params, Action.PresentationStyle.fullScreen, action.detents, action.grabber, inline)
+                else -> navigator.push(next, params, inline)
             }
             posted = true
         }
