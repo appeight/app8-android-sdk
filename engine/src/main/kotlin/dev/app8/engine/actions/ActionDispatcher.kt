@@ -48,6 +48,14 @@ internal class ActionDispatcher(
     }
 
     /**
+     * `onTextChange` for a text input (`textField` / `textView`): actions see the new text as
+     * `$value`; analytics fire through [dispatchTrigger] (iOS `CBaseViewModel.dispatchTextChange`).
+     */
+    fun dispatchTextChange(node: RenderNode, text: String) {
+        dispatchTrigger(node, ActionTrigger.onTextChange, node.scope.untracked.overlaying("\$value", text))
+    }
+
+    /**
      * A `tableView` row tap (iOS `didSelectRowAt` + `fireRowTapAnalytics`): the auto
      * `app8.component.tapped` and the row's own binding, anchored on the row id with
      * component type `tableViewRow`, then the row's `tap` actions in the table's scope.
@@ -75,6 +83,9 @@ internal class ActionDispatcher(
         context: VariableContext = node.scope.untracked,
         store: VariableStoreProtocol = node.scope.store,
     ) {
+        // iOS gives every component its own store; here a component without variables shares
+        // its parent's, so a `component`-scope reset from it resets nothing (its own store is empty).
+        if (action.type == Action.Type.resetVariables && action.scope == Action.VariableScope.component && !node.ownsVariableScope) return
         when (action.type) {
             Action.Type.updateVariable, Action.Type.incrementVariable, Action.Type.toggleArrayValue,
             Action.Type.appendToArray, Action.Type.incrementArrayItem, Action.Type.updateMultipleVariables,
@@ -246,4 +257,5 @@ internal fun Action.toVariableAction(): VariableAction = VariableAction(
     matchBy = matchBy,
     field = field,
     updates = updates?.mapValues { (_, v) -> AnyCodableValue.fromJson(v) },
+    scope = scope?.name,
 )

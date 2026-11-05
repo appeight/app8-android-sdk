@@ -41,6 +41,8 @@ public data class VariableAction(
     val field: String? = null,
     /** updateMultipleVariables: name → value. */
     val updates: Map<String, AnyCodableValue>? = null,
+    /** resetVariables: `component`, `screen` (default), `app` or `all`; unknown values act as the default. */
+    val scope: String? = null,
 ) {
     public val actionType: VariableActionType? get() = VariableActionType.fromRawValue(type)
 

@@ -135,9 +135,13 @@ class ExpressionParserTest {
     }
 
     @Test
-    fun array_literal_drops_non_literal_elements_like_ios() {
-        val node = parser.parse("[1, x, 3]") as ExpressionNode.Literal
-        assertEquals(LiteralValue.ArrayValue(listOf(LiteralValue.IntValue(1), LiteralValue.IntValue(3))), node.value)
+    fun array_literal_keeps_non_literal_elements() {
+        val node = parser.parse("[1, x, 3]") as ExpressionNode.ArrayLiteral
+        assertEquals(
+            listOf(ExpressionNode.Literal(LiteralValue.IntValue(1)), ExpressionNode.Variable("x"), ExpressionNode.Literal(LiteralValue.IntValue(3))),
+            node.elements,
+        )
+        assertEquals(ExpressionNode.Literal(LiteralValue.ArrayValue(listOf(LiteralValue.IntValue(1)))), parser.parse("[1]"))
     }
 
     @Test
@@ -194,5 +198,6 @@ class ExpressionParserTest {
         is ExpressionNode.MemberAccess -> ".memberAccess(${node.member})"
         is ExpressionNode.ArrayAccess -> ".arrayAccess"
         is ExpressionNode.Ternary -> ".ternary"
+        is ExpressionNode.ArrayLiteral -> ".arrayLiteral"
     }
 }

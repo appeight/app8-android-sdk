@@ -16,6 +16,12 @@ public sealed interface ExpressionNode {
         val trueValue: ExpressionNode,
         val falseValue: ExpressionNode,
     ) : ExpressionNode
+
+    /**
+     * Array literal with at least one non-literal element (e.g. `[1, x, 3]`), evaluated
+     * element-wise at runtime. All-literal arrays stay [Literal] of [LiteralValue.ArrayValue].
+     */
+    public data class ArrayLiteral(val elements: List<ExpressionNode>) : ExpressionNode
 }
 
 /** Literal values in the AST (Swift `LiteralValue`). */

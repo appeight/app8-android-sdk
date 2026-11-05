@@ -1,10 +1,12 @@
 package dev.app8.engine.render.controls
 
+import dev.app8.engine.core.model.DatePickerProperties
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToLong
 
@@ -72,10 +74,12 @@ internal object SliderMath {
 
 /**
  * `datePicker` values (`CDatePickerViewModel`): reads ISO 8601 date-times or `yyyy-MM-dd`;
- * writes `yyyy-MM-dd` in the device zone (iOS writes the date only, in every mode).
+ * writes `yyyy-MM-dd` (local date) in `date` mode, and a local date-time with the UTC offset
+ * (`yyyy-MM-dd'T'HH:mm:ssXXX`, e.g. `2026-03-04T14:30:00+01:00`) in the time modes.
  */
 internal object DateValues {
-    private val shortDate: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+    private val shortDate: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.ROOT)
+    private val localDateTime: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.ROOT)
 
     fun parse(text: String?, zone: ZoneId = ZoneId.systemDefault()): Long? {
         val s = text?.trim().takeUnless { it.isNullOrEmpty() } ?: return null
@@ -87,6 +91,14 @@ internal object DateValues {
 
     fun format(epochMillis: Long, zone: ZoneId = ZoneId.systemDefault()): String =
         Instant.ofEpochMilli(epochMillis).atZone(zone).toLocalDate().format(shortDate)
+
+    /** The bound-variable value for [mode]: the date only in `date` mode, else date-time + offset (no fraction). */
+    fun format(epochMillis: Long, mode: DatePickerProperties.Mode, zone: ZoneId = ZoneId.systemDefault()): String =
+        when (mode) {
+            DatePickerProperties.Mode.date -> format(epochMillis, zone)
+            DatePickerProperties.Mode.time, DatePickerProperties.Mode.dateAndTime, DatePickerProperties.Mode.countdownTimer ->
+                Instant.ofEpochMilli(epochMillis).atZone(zone).format(localDateTime)
+        }
 
     /** The variable → view filter: a bound change of a second or less is not a new date. */
     fun differs(a: Long, b: Long): Boolean = abs(a - b) > 1000

@@ -29,7 +29,7 @@ public class VariableActionHandler {
             VariableActionType.APPEND_TO_ARRAY -> handleAppendToArray(action, store, context)
             VariableActionType.INCREMENT_ARRAY_ITEM -> handleIncrementArrayItem(action, store, context)
             VariableActionType.UPDATE_MULTIPLE_VARIABLES -> handleUpdateMultipleVariables(action, store, context)
-            VariableActionType.RESET_VARIABLES -> store.reset()
+            VariableActionType.RESET_VARIABLES -> handleResetVariables(action, store)
             null -> Unit
         }
     }
@@ -168,6 +168,29 @@ public class VariableActionHandler {
         for ((variableName, value) in updates) {
             store.setValue(variableName, resolveValue(value.value, context))
         }
+    }
+
+    /**
+     * Restores variables to their initial values (never deletes them). Scopes resolve from the
+     * acting component's store chain `[own, parent, …, root]` (root = the app store):
+     * `component` → own; `screen` (default) → the chain minus the root (a single-store chain
+     * is that store); `app` → root; `all` → the whole chain. Reset root-first so computed
+     * variables see fresh parents.
+     */
+    private fun handleResetVariables(action: VariableAction, store: VariableStoreProtocol) {
+        val chain = ArrayList<VariableStoreProtocol>()
+        var cursor: VariableStoreProtocol? = store
+        while (cursor != null && chain.none { it === cursor }) {
+            chain.add(cursor)
+            cursor = cursor.getParentStore()
+        }
+        val targets = when (action.scope) {
+            "component" -> listOf(store)
+            "app" -> listOf(chain.last())
+            "all" -> chain
+            else -> if (chain.size > 1) chain.dropLast(1) else chain
+        }
+        for (target in targets.asReversed()) target.resetToInitialValues()
     }
 
     private fun wholeOrDouble(d: Double): Any = if (d % 1.0 == 0.0) d.toLong() else d

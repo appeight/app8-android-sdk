@@ -263,8 +263,8 @@ internal class TextInputKind(private val multiline: Boolean) : ComponentKind {
         fun commit(newText: String) {
             node.ui[TEXT_KEY] = newText
             bind?.let { b -> runCatching { node.scope.store.setValue(b, newText) } }
-            // onTextChange sees the new text as `$value` (iOS overlay); analytics fire through the dispatcher.
-            dispatcher.dispatchTrigger(node, ActionTrigger.onTextChange, node.scope.untracked.overlaying("\$value", newText))
+            // After the binding write, as iOS: onTextChange with `$value` = the new text.
+            dispatcher.dispatchTextChange(node, newText)
             val max = p.maxLength
             if (!multiline && max != null && newText.length >= max) focus.focusNext()
         }

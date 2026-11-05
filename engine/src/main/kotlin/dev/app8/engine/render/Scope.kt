@@ -106,4 +106,5 @@ internal class TrackingStore(
     override fun setExternalValue(name: String, value: Any) = delegate.setExternalValue(name, value)
     override val anyVariableChanged: ChangePublisher<String> get() = delegate.anyVariableChanged
     override fun reset() = delegate.reset()
+    override fun resetToInitialValues() = delegate.resetToInitialValues()
 }

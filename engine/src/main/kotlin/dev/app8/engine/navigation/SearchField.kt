@@ -42,6 +42,10 @@ internal enum class SearchSlot {
     Button,
 }
 
+/**
+ * `fillsBar` never moves the field (iOS crashed relocating it into the left bar items): with
+ * `integrated` it stays in the title slot, which already spans the bar width.
+ */
 internal fun searchSlot(bar: NavigationBar, title: String?): SearchSlot? {
     val search = bar.search ?: return null
     return when (search.placement) {

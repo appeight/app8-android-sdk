@@ -12,6 +12,13 @@ public class Variable(public val name: String, definition: VariableDefinition) {
     public var dependencies: Set<String> = emptySet()
         private set
 
+    /**
+     * Value captured when the variable was defined (after evaluating an expression /
+     * datasource / injected-param initial value). Restored by the `resetVariables` action.
+     */
+    public var initialValue: Any? = null
+        private set
+
     private val valueSubject = PassthroughSubject<Pair<Any?, Any?>>()
 
     /** Emits `(oldValue, newValue)` synchronously whenever the value actually changes. */
@@ -35,6 +42,20 @@ public class Variable(public val name: String, definition: VariableDefinition) {
         if (!isComputed) return
         this.dependencies = dependencies
         assign(newValue)
+    }
+
+    /**
+     * Snapshots the current value as the `resetVariables` target. The stores call it once the
+     * definition-time value is final; hosts call it again after injecting navigation params.
+     */
+    public fun captureInitialValue() {
+        initialValue = value
+    }
+
+    /** Restores the captured initial value (no-op for computed variables; their store recomputes them). */
+    internal fun restoreInitialValue() {
+        if (isComputed) return
+        setValueUnchecked(initialValue)
     }
 
     /** Sets the value without validation (internal batch updates / expression initial values). */

@@ -1,5 +1,6 @@
 package dev.app8.engine.render.controls
 
+import dev.app8.engine.core.model.DatePickerProperties
 import dev.app8.engine.maps.App8Coordinate
 import org.junit.Test
 import java.time.ZoneId
@@ -61,6 +62,23 @@ class ControlLogicTest {
         assertEquals("2026-04-04", DateValues.format(1775305800000L, utc))
         assertFalse(DateValues.differs(1000, 1500))
         assertTrue(DateValues.differs(0, 86_400_000))
+    }
+
+    /** iOS `PortFindingsTests.testDatePicker*`: time modes keep the time, as local time + offset. */
+    @Test
+    fun datePickerStorageDependsOnMode() {
+        val paris = ZoneId.of("Europe/Paris")
+        val ms = java.time.LocalDateTime.of(2026, 3, 4, 14, 30).atZone(paris).toInstant().toEpochMilli()
+        assertEquals("2026-03-04", DateValues.format(ms, DatePickerProperties.Mode.date, paris))
+        for (mode in listOf(DatePickerProperties.Mode.time, DatePickerProperties.Mode.dateAndTime, DatePickerProperties.Mode.countdownTimer)) {
+            val stored = DateValues.format(ms, mode, paris)
+            assertEquals("2026-03-04T14:30:00+01:00", stored)
+            assertEquals(ms, DateValues.parse(stored, paris))
+        }
+        val nineOhFive = java.time.LocalDateTime.of(2026, 7, 4, 9, 5, 7).atZone(paris).toInstant().toEpochMilli() + 250
+        assertEquals("2026-07-04T09:05:07+02:00", DateValues.format(nineOhFive, DatePickerProperties.Mode.dateAndTime, paris))
+        // UTC offset zero prints `Z`, like Foundation's `XXXXX`.
+        assertEquals("2026-03-04T14:30:00Z", DateValues.format(ms + 3_600_000, DatePickerProperties.Mode.time, ZoneId.of("UTC")))
     }
 
     @Test
