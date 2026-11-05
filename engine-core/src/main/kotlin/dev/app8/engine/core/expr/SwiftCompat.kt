@@ -1,6 +1,8 @@
 package dev.app8.engine.core.expr
 
 import java.math.BigDecimal
+import java.math.MathContext
+import java.math.RoundingMode
 import java.text.BreakIterator
 import kotlin.math.abs
 import kotlin.math.sign
@@ -24,7 +26,13 @@ internal object SwiftCompat {
         if (d == Double.NEGATIVE_INFINITY) return "-inf"
         if (d == 0.0) return if (1.0 / d < 0) "-0.0" else "0.0"
         // Double.toString is the shortest repr that round-trips (JDK 19+ / Android).
-        val bd = BigDecimal(d.toString()).stripTrailingZeros()
+        var bd = BigDecimal(d.toString()).stripTrailingZeros()
+        // Java always prints two significant digits in E-notation (5e-324 → "4.9E-324"), so a
+        // one-digit representation may still round-trip; prefer it, as Swift does.
+        if (bd.precision() == 2) {
+            val shorter = bd.round(MathContext(1, RoundingMode.HALF_EVEN))
+            if (shorter.toDouble() == d) bd = shorter.stripTrailingZeros()
+        }
         val negative = bd.signum() < 0
         val digits = bd.unscaledValue().abs().toString()
         val exponent = digits.length - bd.scale() - 1
