@@ -78,6 +78,16 @@ internal object ComponentRegistry {
         ComponentType.Key.scrollView to ScrollKind,
         ComponentType.Key.shape to ShapeKind,
         ComponentType.Key.pageControl to PageControlKind,
+        ComponentType.Key.textField to TextInputKind(multiline = false),
+        ComponentType.Key.textView to TextInputKind(multiline = true),
+        ComponentType.Key.toggle to ToggleKind,
+        ComponentType.Key.slider to SliderKind,
+        ComponentType.Key.picker to PickerKind,
+        ComponentType.Key.activityIndicator to ActivityIndicatorKind,
+        ComponentType.Key.shimmer to ShimmerKind,
+        ComponentType.Key.datePicker to DatePickerKind,
+        ComponentType.Key.video to VideoKind,
+        ComponentType.Key.map to MapKind,
     )
 
     fun kind(node: RenderNode): ComponentKind = node.typeKey?.let { kinds[it] } ?: PlaceholderKind

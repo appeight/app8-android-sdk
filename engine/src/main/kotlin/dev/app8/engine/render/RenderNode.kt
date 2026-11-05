@@ -10,6 +10,7 @@ import dev.app8.engine.core.model.ComponentEntity
 import dev.app8.engine.core.model.ComponentType
 import dev.app8.engine.core.model.EntityContent
 import dev.app8.engine.core.model.StatefulContent
+import dev.app8.engine.core.model.style.TextInputStyle
 import dev.app8.engine.core.vars.ScopedVariableStore
 import dev.app8.engine.runtime.App8Runtime
 
@@ -43,6 +44,9 @@ internal class RenderNode(
 
     val baseContent: EntityContent get() = base
 
+    /** Control state that outlives recomposition and feeds layout (a text input's text, …). */
+    val ui = androidx.compose.runtime.mutableStateMapOf<String, Any?>()
+
     val typeKey: ComponentType.Key? get() = (type as? ComponentType.Known)?.key
 
     val inStack: Boolean get() = parentType == ComponentType.Known(ComponentType.Key.stackView)
@@ -66,7 +70,11 @@ internal class RenderNode(
             val state = cc.states?.get(name) ?: return content
             return cc.copy(
                 properties = state.properties ?: cc.properties,
-                style = state.style ?: cc.style,
+                // Text input states merge over the base style (iOS `MergeableStyle`).
+                style = state.style?.let { st ->
+                    val base = cc.style
+                    if (st is TextInputStyle && base is TextInputStyle) st.merging(base) else st
+                } ?: cc.style,
                 layout = state.layout ?: cc.layout,
             )
         }

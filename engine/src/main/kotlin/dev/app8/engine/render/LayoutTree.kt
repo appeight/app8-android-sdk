@@ -97,11 +97,11 @@ internal class SolveCache(private val maxEntries: Int = 256) {
     var misses = 0
         private set
 
-    fun solve(tree: LayoutNode, signature: String, bounds: LayoutBounds, safeArea: EdgeInsets, scale: Double): Solved {
-        val key = "${bounds.width},${bounds.height};${safeArea.top},${safeArea.left},${safeArea.bottom},${safeArea.right};$scale;$signature"
+    fun solve(tree: LayoutNode, signature: String, bounds: LayoutBounds, safeArea: EdgeInsets, scale: Double, keyboardHeight: Double = 0.0): Solved {
+        val key = "${bounds.width},${bounds.height};${safeArea.top},${safeArea.left},${safeArea.bottom},${safeArea.right};$scale;kb$keyboardHeight;$signature"
         cache[key]?.let { hits++; return it }
         misses++
-        val r = solveLayout(tree, bounds, safeArea, scale = scale)
+        val r = solveLayout(tree, bounds, safeArea, keyboardHeight = keyboardHeight, scale = scale)
         val local = HashMap<String, Frame>(r.frames.size)
         for (k in r.frames.keys) r.localFrame(k)?.let { local[k] = it }
         return Solved(local, r.frames, r.contentSizes, safeArea).also { cache[key] = it }

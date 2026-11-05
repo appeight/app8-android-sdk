@@ -57,8 +57,15 @@ internal class ActionDispatcher(
                 host.openUrl(url, action.urlPresentation ?: Action.URLPresentation.external)
             }
             Action.Type.emit -> emit(node, action, context)
-            // Focus and keyboard actions belong to text inputs (not rendered yet).
-            Action.Type.focus, Action.Type.focusNext, Action.Type.focusPrevious, Action.Type.dismissKeyboard -> Unit
+            Action.Type.focus -> action.target?.let { raw ->
+                val focus = node.session.focus
+                val target = node.string(raw, context) ?: raw
+                val key = focus.resolve(target, node.key)
+                if (key == null || !focus.focus(key)) runtime.diagnostics.warn("action.focus", "no text input '$target' to focus (${node.key})")
+            }
+            Action.Type.focusNext -> node.session.focus.focusNext()
+            Action.Type.focusPrevious -> node.session.focus.focusPrevious()
+            Action.Type.dismissKeyboard -> node.session.focus.dismissKeyboard()
             Action.Type.executeFunction, Action.Type.complete -> Unit
         }
     }
