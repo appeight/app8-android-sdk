@@ -47,6 +47,13 @@ internal class App8Runtime(
     val analyticsBus = App8AnalyticsBus()
     var analyticsConfig: App8AnalyticsConfig = config.analytics
     val mapProvider: dev.app8.engine.maps.App8MapProvider? = config.mapProvider
+    val dynamicColor: Boolean = config.dynamicColor
+
+    /**
+     * The app's brand accent for system chrome outside any tab bar (sheets, dialogs): the
+     * tab bar `tintColor`, published by the tab host when it shows. Null: neutral.
+     */
+    var chromeAccent: androidx.compose.ui.graphics.Color? by androidx.compose.runtime.mutableStateOf(null)
 
     private val decodeErrors = DecodeErrorCollector()
     private val decoder = DslDecoder(DecodeOptions(platform = Platform.ANDROID, errorCollector = decodeErrors))

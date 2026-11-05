@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -28,7 +29,6 @@ import dev.app8.engine.render.LocalDispatcher
 import dev.app8.engine.render.LocalRenderEnv
 import dev.app8.engine.render.ScreenSession
 import dev.app8.engine.render.string
-import dev.app8.engine.style.IosSystemColors
 
 /** Where `navigationBar.search` sits in the Material 3 top app bar. */
 internal enum class SearchSlot {
@@ -92,11 +92,14 @@ internal fun NavSearchField(
     var expanded by remember { mutableStateOf(false) }
     val focus = LocalFocusManager.current
     val requester = remember { FocusRequester() }
+    // Colors from the app's scheme (app8-dsl platforms.md, "Android system colors"):
+    // a neutral step off the background, never Material's lavender baseline.
+    val scheme = MaterialTheme.colorScheme
     val tint = search.tintColor?.let { root.string(it) }?.takeIf { it.isNotEmpty() }
-        ?.let { Color(ColorHex.parseOrFallback(it).argb) } ?: IosSystemColors.of("systemBlue", env.appearance)
-    val label = IosSystemColors.of("label", env.appearance)
-    val secondary = IosSystemColors.of("secondaryLabel", env.appearance)
-    val fill = IosSystemColors.of("tertiarySystemFill", env.appearance)
+        ?.let { Color(ColorHex.parseOrFallback(it).argb) } ?: scheme.primary
+    val label = scheme.onSurface
+    val secondary = scheme.onSurfaceVariant
+    val fill = scheme.surfaceContainerHigh
     fun write(text: String) {
         query = text
         lastSeen[0] = text
