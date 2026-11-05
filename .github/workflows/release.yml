@@ -37,7 +37,7 @@ jobs:
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21  # JDK 20+ BreakIterator follows Unicode extended grapheme clusters, like Swift Characters
 
       - uses: gradle/actions/setup-gradle@v6
         with:
