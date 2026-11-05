@@ -31,6 +31,17 @@ internal class ScreenSession private constructor(
 ) {
     private val scopes = mutableListOf<Scope>()
 
+    /** Text-input focus for this presentation (focus actions, return-key chaining). */
+    val focus = dev.app8.engine.render.controls.FocusManager()
+
+    /** Pre-order index of each node key: the focus order of text inputs. */
+    val treeOrder: Map<String, Int> by lazy {
+        val out = HashMap<String, Int>()
+        fun walk(n: RenderNode) { out[n.key] = out.size; n.children.forEach(::walk) }
+        walk(root)
+        out
+    }
+
     lateinit var root: RenderNode
         private set
 
