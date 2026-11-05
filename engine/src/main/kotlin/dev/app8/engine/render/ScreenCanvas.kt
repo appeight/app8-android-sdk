@@ -21,6 +21,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import dev.app8.engine.core.layout.EdgeInsets
 import dev.app8.engine.core.layout.LayoutBounds
+import dev.app8.engine.debug.Recompositions
 
 /**
  * Draws a screen's component tree, laid out by the Cassowary solver like iOS Auto Layout.
@@ -39,6 +40,7 @@ import dev.app8.engine.core.layout.LayoutBounds
 @Composable
 internal fun ScreenCanvas(session: ScreenSession, safeArea: EdgeInsets, modifier: Modifier = Modifier) {
     val env = LocalRenderEnv.current
+    Recompositions.Count("${session.screenId}#canvas")
     BoxWithConstraints(modifier.fillMaxSize()) {
         val bounds = rememberUpdatedState(LayoutBounds(maxWidth.value.toDouble(), maxHeight.value.toDouble()))
         val safe = rememberUpdatedState(safeArea)
@@ -60,6 +62,7 @@ internal fun ScreenCanvas(session: ScreenSession, safeArea: EdgeInsets, modifier
                 }
             }
         }
+        Recompositions.Reporter()
         CompositionLocalProvider(LocalSolved provides solved) {
             // The root fills the screen; its children are placed by ChildrenLayout.
             Layout(

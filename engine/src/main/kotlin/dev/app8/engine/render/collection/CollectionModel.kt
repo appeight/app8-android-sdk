@@ -27,6 +27,7 @@ import dev.app8.engine.render.RenderNode
 import dev.app8.engine.render.Scope
 import dev.app8.engine.render.Solved
 import dev.app8.engine.render.resolve
+import dev.app8.engine.runtime.traced
 import dev.app8.engine.core.layout.Layout as SolverLayout
 import dev.app8.engine.core.model.Layout as DslLayout
 import kotlin.math.ceil
@@ -273,16 +274,16 @@ internal class Cell private constructor(
         const val ROOT = "#cell"
         private const val PROBE_WIDTH = 10_000.0
 
-        fun create(parent: RenderNode, template: Component, store: ScopedVariableStore, variable: String?, value: Any?): Cell? {
+        fun create(parent: RenderNode, template: Component, store: ScopedVariableStore, variable: String?, value: Any?): Cell? = traced("App8.cell") {
             val scope = Scope(store, parent.scope)
             val scopes = ArrayList<Scope>()
             val root = RenderNode.build(parent.session, template, template.id, scope, parent.type, scopes)
             if (root == null) {
                 scope.dispose()
                 store.detach()
-                return null
+                return@traced null
             }
-            return Cell(template, scope, root, scopes, variable, value)
+            Cell(template, scope, root, scopes, variable, value)
         }
 
         /** A cell rendered in [parent]'s own scope (table rows): the scope is not the cell's to dispose. */

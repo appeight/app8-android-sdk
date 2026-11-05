@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.baselineprofile)
     `maven-publish`
 }
 
@@ -52,6 +53,15 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.core)
+    // The sample's journeys produce this library's Baseline Profile (shipped in the AAR).
+    baselineProfile(project(":benchmark"))
+}
+
+baselineProfile {
+    // Only the engine's own classes (engine-core included: the rules apply in the host's dex).
+    filter { include("dev.app8.engine.**") }
+    // Written to src/main/generated/baselineProfiles and committed; regenerate on purpose.
+    automaticGenerationDuringBuild = false
 }
 
 publishing {
@@ -64,5 +74,15 @@ publishing {
                 description.set("Renders App8 DSL apps natively with Jetpack Compose.")
             }
         }
+    }
+}
+
+// Compose compiler stability reports and metrics (classes.txt, composables.txt, …):
+// ./gradlew :engine:compileReleaseKotlin -Papp8.composeReports  →  engine/build/compose_compiler/
+composeCompiler {
+    stabilityConfigurationFiles.add(layout.projectDirectory.file("compose-stability.conf"))
+    if (providers.gradleProperty("app8.composeReports").isPresent) {
+        reportsDestination = layout.buildDirectory.dir("compose_compiler")
+        metricsDestination = layout.buildDirectory.dir("compose_compiler")
     }
 }
