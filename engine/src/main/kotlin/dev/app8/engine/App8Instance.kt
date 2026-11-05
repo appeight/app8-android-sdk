@@ -25,6 +25,7 @@ import dev.app8.engine.core.model.App
 import dev.app8.engine.events.App8AnalyticsBus
 import dev.app8.engine.events.App8AnalyticsConfig
 import dev.app8.engine.events.App8EventBus
+import dev.app8.engine.navigation.AdaptiveSystemBars
 import dev.app8.engine.navigation.AlertHost
 import dev.app8.engine.navigation.ComposeHostEffects
 import dev.app8.engine.navigation.FlowController
@@ -173,14 +174,6 @@ public class App8Instance internal constructor(
         val flow = remember(app, startScreen) {
             FlowController(app, startScreen, params, flowId(app)) { runtime.diagnostics.warn("navigation", it) }
         }
-        // Readable system bar icons over DSL content: light icons in dark appearance.
-        androidx.compose.runtime.SideEffect {
-            val window = (view.context as? android.app.Activity)?.window ?: return@SideEffect
-            androidx.core.view.WindowCompat.getInsetsController(window, view).apply {
-                isAppearanceLightStatusBars = !dark
-                isAppearanceLightNavigationBars = !dark
-            }
-        }
         MaterialTheme(colorScheme = if (dark) darkColorScheme() else lightColorScheme()) {
             CompositionLocalProvider(
                 LocalApp8Appearance provides appearance,
@@ -192,6 +185,8 @@ public class App8Instance internal constructor(
             ) {
                 FlowHost(flow, modifier)
                 AlertHost(effects)
+                // Readable system bar icons over DSL content.
+                AdaptiveSystemBars(flow, dark, runtime.pending)
             }
         }
     }

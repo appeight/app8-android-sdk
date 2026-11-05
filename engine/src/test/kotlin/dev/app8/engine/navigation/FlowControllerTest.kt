@@ -39,3 +39,11 @@ class FlowControllerTest {
         assertEquals(before, flow.layers.single().stack.entries.single().id)
     }
 }
+
+class StatusBarContrastTest {
+    @Test
+    fun lightContentGetsDarkIcons() {
+        assertEquals(true, lightIconsUnreadable(0.95))
+        assertEquals(false, lightIconsUnreadable(0.08))
+    }
+}
