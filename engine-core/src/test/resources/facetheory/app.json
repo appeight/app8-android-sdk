@@ -1,0 +1,23 @@
+{
+  "title": "Facetheory",
+  "defaultUserInterfaceStyle": "light",
+  "navigation": {
+    "startFlow": "main",
+    "flows": [
+      {
+        "id": "main",
+        "startScreen": "launch"
+      },
+      {
+        "id": "store",
+        "startScreen": "tabs"
+      }
+    ]
+  },
+  "variables": {
+    "cart": {
+      "type": "array",
+      "initialValue": []
+    }
+  }
+}

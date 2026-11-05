@@ -1,0 +1,562 @@
+{
+  "type": "screen",
+  "id": "product",
+  "flowId": "main",
+  "content": {
+    "hidesTabBar": true,
+    "navigationBar": {
+      "tintColor": "#214E38",
+      "topEdgeEffect": "hidden"
+    },
+    "style": {
+      "material": [
+        {
+          "id": "productBackground",
+          "type": "fill",
+          "content": {
+            "solid": "#FFFFFF"
+          }
+        }
+      ]
+    },
+    "variables": {
+      "product": {
+        "type": "object",
+        "schema": "datasources/products",
+        "preview": {
+          "source": "datasources/products",
+          "index": 0
+        }
+      },
+      "selectedOption": {
+        "type": "number",
+        "initialValue": 0
+      },
+      "galleryPage": {
+        "type": "number",
+        "initialValue": 0
+      }
+    },
+    "children": [
+      {
+        "id": "productScroll",
+        "type": "scrollView",
+        "content": {
+          "properties": {
+            "direction": "vertical",
+            "showsIndicator": false,
+            "contentInsetAdjustment": "never",
+            "contentInset": {
+              "bottom": 60
+            }
+          },
+          "layout": {
+            "constraints": [
+              {
+                "type": "top",
+                "target": "superview"
+              },
+              {
+                "type": "leading",
+                "target": "superview"
+              },
+              {
+                "type": "trailing",
+                "target": "superview"
+              },
+              {
+                "type": "bottom",
+                "target": "superview"
+              }
+            ]
+          },
+          "children": [
+            {
+              "id": "productStack",
+              "type": "stackView",
+              "content": {
+                "properties": {
+                  "axis": "vertical",
+                  "spacing": 0,
+                  "alignment": "fill"
+                },
+                "layout": {
+                  "constraints": [
+                    {
+                      "type": "top",
+                      "target": "superview"
+                    },
+                    {
+                      "type": "leading",
+                      "target": "superview"
+                    },
+                    {
+                      "type": "trailing",
+                      "target": "superview"
+                    },
+                    {
+                      "type": "bottom",
+                      "target": "superview"
+                    }
+                  ]
+                },
+                "children": [
+                  {
+                    "id": "gallery",
+                    "type": "view",
+                    "content": {
+                      "layout": {
+                        "height": 500
+                      },
+                      "children": [
+                        {
+                          "id": "galleryImages",
+                          "type": "collection",
+                          "content": {
+                            "properties": {
+                              "data": "{{product.images}}",
+                              "layout": {
+                                "type": "horizontal",
+                                "itemHeight": 500,
+                                "pagingStyle": "paging",
+                                "currentPageVariable": "galleryPage",
+                                "showsScrollIndicator": false
+                              }
+                            },
+                            "template": {
+                              "id": "galleryImage",
+                              "type": "image",
+                              "content": {
+                                "properties": {
+                                  "type": "remoteAsset",
+                                  "name": "{{item.image}}",
+                                  "url": "{{item.imageUrl}}"
+                                },
+                                "style": {
+                                  "contentMode": "scaleAspectFill",
+                                  "material": [
+                                    {
+                                      "id": "galleryImageFill",
+                                      "type": "fill",
+                                      "content": {
+                                        "solid": "#F2F4EC"
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            },
+                            "layout": {
+                              "constraints": [
+                                {
+                                  "type": "top",
+                                  "target": "superview"
+                                },
+                                {
+                                  "type": "leading",
+                                  "target": "superview"
+                                },
+                                {
+                                  "type": "trailing",
+                                  "target": "superview"
+                                },
+                                {
+                                  "type": "bottom",
+                                  "target": "superview"
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "id": "galleryDots",
+                          "type": "pageControl",
+                          "content": {
+                            "properties": {
+                              "numberOfPages": "{{product.images.length}}",
+                              "currentPage": "{{galleryPage}}"
+                            },
+                            "style": {
+                              "pageIndicatorTintColor": "#0000003D",
+                              "currentPageIndicatorTintColor": "#214E38"
+                            },
+                            "layout": {
+                              "constraints": [
+                                {
+                                  "type": "centerX",
+                                  "target": "superview"
+                                },
+                                {
+                                  "type": "bottom",
+                                  "target": "superview",
+                                  "constant": -12
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "id": "productInfo",
+                    "type": "view",
+                    "content": {
+                      "children": [
+                        {
+                          "id": "productInfoStack",
+                          "type": "stackView",
+                          "content": {
+                            "properties": {
+                              "axis": "vertical",
+                              "spacing": 16,
+                              "alignment": "fill"
+                            },
+                            "layout": {
+                              "constraints": [
+                                {
+                                  "type": "top",
+                                  "target": "superview",
+                                  "constant": 24
+                                },
+                                {
+                                  "type": "leading",
+                                  "target": "superview",
+                                  "constant": 16
+                                },
+                                {
+                                  "type": "trailing",
+                                  "target": "superview",
+                                  "constant": -16
+                                },
+                                {
+                                  "type": "bottom",
+                                  "target": "superview"
+                                }
+                              ]
+                            },
+                            "children": [
+                              {
+                                "id": "productName",
+                                "type": "label",
+                                "content": {
+                                  "properties": {
+                                    "text": "{{product.title}}"
+                                  },
+                                  "style": {
+                                    "text": {
+                                      "id": "productTitle"
+                                    }
+                                  }
+                                }
+                              },
+                              {
+                                "id": "productDescription",
+                                "type": "label",
+                                "content": {
+                                  "properties": {
+                                    "text": "{{product.description}}",
+                                    "isHidden": "{{product.description.length == 0}}"
+                                  },
+                                  "style": {
+                                    "text": {
+                                      "id": "productBody"
+                                    }
+                                  }
+                                }
+                              },
+                              {
+                                "id": "productDivider",
+                                "type": "view",
+                                "content": {
+                                  "style": {
+                                    "material": [
+                                      {
+                                        "id": "productDividerFill",
+                                        "type": "fill",
+                                        "content": {
+                                          "solid": "#00000026"
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  "layout": {
+                                    "height": 0.5
+                                  }
+                                }
+                              },
+                              {
+                                "id": "productOptionLabel",
+                                "type": "label",
+                                "content": {
+                                  "properties": {
+                                    "text": "{{product.optionName}}: {{find(product.optionValues, item.index == selectedOption).value}}",
+                                    "isHidden": "{{product.optionValues.length == 0}}"
+                                  },
+                                  "style": {
+                                    "text": {
+                                      "id": "productOption"
+                                    }
+                                  }
+                                }
+                              },
+                              {
+                                "id": "productOptions",
+                                "type": "view",
+                                "content": {
+                                  "properties": {
+                                    "isHidden": "{{product.optionValues.length == 0}}"
+                                  },
+                                  "layout": {
+                                    "height": "{{ceil(product.optionValues.length / 2) * 54 - 10}}"
+                                  },
+                                  "children": [
+                                    {
+                                      "id": "productOptionGrid",
+                                      "type": "collection",
+                                      "content": {
+                                        "properties": {
+                                          "data": "{{product.optionValues}}",
+                                          "layout": {
+                                            "type": "grid",
+                                            "columns": 2,
+                                            "itemHeight": 44,
+                                            "itemSpacing": 10,
+                                            "lineSpacing": 10,
+                                            "showsScrollIndicator": false
+                                          }
+                                        },
+                                        "template": {
+                                          "id": "optionChip",
+                                          "type": "view",
+                                          "content": {
+                                            "style": {
+                                              "material": [
+                                                {
+                                                  "id": "optionChipOutline",
+                                                  "type": "outline",
+                                                  "content": {
+                                                    "lineWidth": 1,
+                                                    "position": "inside",
+                                                    "fill": {
+                                                      "solid": "#214E38"
+                                                    }
+                                                  }
+                                                }
+                                              ]
+                                            },
+                                            "actions": {
+                                              "tap": {
+                                                "type": "updateVariable",
+                                                "variableName": "selectedOption",
+                                                "value": "{{item.index}}"
+                                              }
+                                            },
+                                            "children": [
+                                              {
+                                                "id": "optionChipSelected",
+                                                "type": "view",
+                                                "content": {
+                                                  "properties": {
+                                                    "isHidden": "{{$parent.selectedOption != item.index}}"
+                                                  },
+                                                  "style": {
+                                                    "material": [
+                                                      {
+                                                        "id": "optionChipSelectedFill",
+                                                        "type": "fill",
+                                                        "content": {
+                                                          "solid": "#214E38"
+                                                        }
+                                                      }
+                                                    ]
+                                                  },
+                                                  "layout": {
+                                                    "constraints": [
+                                                      {
+                                                        "type": "top",
+                                                        "target": "superview"
+                                                      },
+                                                      {
+                                                        "type": "leading",
+                                                        "target": "superview"
+                                                      },
+                                                      {
+                                                        "type": "trailing",
+                                                        "target": "superview"
+                                                      },
+                                                      {
+                                                        "type": "bottom",
+                                                        "target": "superview"
+                                                      }
+                                                    ]
+                                                  }
+                                                }
+                                              },
+                                              {
+                                                "id": "optionChipLabel",
+                                                "type": "label",
+                                                "content": {
+                                                  "properties": {
+                                                    "text": "{{uppercase(item.value)}}",
+                                                    "isHidden": "{{$parent.selectedOption == item.index}}"
+                                                  },
+                                                  "style": {
+                                                    "text": {
+                                                      "id": "optionChipText"
+                                                    }
+                                                  },
+                                                  "layout": {
+                                                    "constraints": [
+                                                      {
+                                                        "type": "centerY",
+                                                        "target": "superview"
+                                                      },
+                                                      {
+                                                        "type": "leading",
+                                                        "target": "superview",
+                                                        "constant": 8
+                                                      },
+                                                      {
+                                                        "type": "trailing",
+                                                        "target": "superview",
+                                                        "constant": -8
+                                                      }
+                                                    ]
+                                                  }
+                                                }
+                                              },
+                                              {
+                                                "id": "optionChipLabelSelected",
+                                                "type": "label",
+                                                "content": {
+                                                  "properties": {
+                                                    "text": "{{uppercase(item.value)}}",
+                                                    "isHidden": "{{$parent.selectedOption != item.index}}"
+                                                  },
+                                                  "style": {
+                                                    "text": {
+                                                      "id": "optionChipTextSelected"
+                                                    }
+                                                  },
+                                                  "layout": {
+                                                    "constraints": [
+                                                      {
+                                                        "type": "centerY",
+                                                        "target": "superview"
+                                                      },
+                                                      {
+                                                        "type": "leading",
+                                                        "target": "superview",
+                                                        "constant": 8
+                                                      },
+                                                      {
+                                                        "type": "trailing",
+                                                        "target": "superview",
+                                                        "constant": -8
+                                                      }
+                                                    ]
+                                                  }
+                                                }
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "layout": {
+                                          "constraints": [
+                                            {
+                                              "type": "top",
+                                              "target": "superview"
+                                            },
+                                            {
+                                              "type": "leading",
+                                              "target": "superview"
+                                            },
+                                            {
+                                              "type": "trailing",
+                                              "target": "superview"
+                                            },
+                                            {
+                                              "type": "bottom",
+                                              "target": "superview"
+                                            }
+                                          ]
+                                        }
+                                      }
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "id": "addToCart",
+                                "type": "button",
+                                "content": {
+                                  "properties": {
+                                    "text": "ADD TO CART — {{product.optionValues.length > 0 ? find(product.optionValues, item.index == selectedOption).price : product.price}}"
+                                  },
+                                  "style": {
+                                    "text": {
+                                      "id": "primaryButtonText",
+                                      "type": "text"
+                                    },
+                                    "material": [
+                                      {
+                                        "id": "addToCartFill",
+                                        "type": "fill",
+                                        "content": {
+                                          "solid": "#214E38"
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  "layout": {
+                                    "height": 52
+                                  },
+                                  "actions": {
+                                    "tap": {
+                                      "type": "incrementArrayItem",
+                                      "variableName": "cart",
+                                      "matchBy": "key",
+                                      "by": 1,
+                                      "value": {
+                                        "key": "{{product.handle}}|{{product.optionValues.length > 0 ? find(product.optionValues, item.index == selectedOption).value : product.variant}}",
+                                        "handle": "{{product.handle}}",
+                                        "title": "{{product.title}}",
+                                        "variant": "{{product.optionValues.length > 0 ? find(product.optionValues, item.index == selectedOption).value : product.variant}}",
+                                        "image": "{{product.image}}",
+                                        "imageUrl": "{{product.imageUrl}}",
+                                        "unitPrice": "{{product.optionValues.length > 0 ? find(product.optionValues, item.index == selectedOption).priceValue : product.priceValue}}"
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              {
+                                "id": "productPerks",
+                                "type": "label",
+                                "content": {
+                                  "properties": {
+                                    "text": "Free shipping over £35  |  365 day free returns  |  15% off your first order"
+                                  },
+                                  "style": {
+                                    "text": {
+                                      "id": "productFootnote"
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

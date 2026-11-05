@@ -1,0 +1,311 @@
+{
+  "type": "screen",
+  "id": "launch",
+  "flowId": "main",
+  "content": {
+    "navigationBar": {
+      "hidden": true
+    },
+    "swipeBackEnabled": false,
+    "properties": {},
+    "children": [
+      {
+        "id": "reel",
+        "type": "video",
+        "content": {
+          "properties": {
+            "type": "remoteAsset",
+            "name": "launch-reel",
+            "autoplay": true,
+            "loop": true,
+            "muted": true,
+            "poster": {
+              "type": "remoteAsset",
+              "name": "launch-reel-poster"
+            }
+          },
+          "style": {
+            "contentMode": "scaleAspectFill"
+          },
+          "layout": {
+            "constraints": [
+              {
+                "type": "top",
+                "target": "superview"
+              },
+              {
+                "type": "leading",
+                "target": "superview"
+              },
+              {
+                "type": "trailing",
+                "target": "superview"
+              },
+              {
+                "type": "bottom",
+                "target": "superview"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "logoDifference",
+        "type": "image",
+        "content": {
+          "properties": {
+            "type": "remoteAsset",
+            "name": "facetheory-logo"
+          },
+          "style": {
+            "contentMode": "scaleAspectFit",
+            "blendMode": "difference"
+          },
+          "layout": {
+            "height": 56,
+            "constraints": [
+              {
+                "type": "centerY",
+                "target": "superview"
+              },
+              {
+                "type": "leading",
+                "target": "superview",
+                "constant": 20
+              },
+              {
+                "type": "trailing",
+                "target": "superview",
+                "constant": -20
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "logoOverlay",
+        "type": "image",
+        "content": {
+          "properties": {
+            "type": "remoteAsset",
+            "name": "facetheory-logo"
+          },
+          "style": {
+            "contentMode": "scaleAspectFit",
+            "blendMode": "overlay"
+          },
+          "layout": {
+            "height": 56,
+            "constraints": [
+              {
+                "type": "centerY",
+                "target": "superview"
+              },
+              {
+                "type": "leading",
+                "target": "superview",
+                "constant": 20
+              },
+              {
+                "type": "trailing",
+                "target": "superview",
+                "constant": -20
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "launchActions",
+        "type": "view",
+        "content": {
+          "properties": {
+            "alpha": {
+              "value": "{{showActions ? 1 : 0}}",
+              "animation": {
+                "duration": 0.6,
+                "curve": "easeOut"
+              }
+            }
+          },
+          "interaction": {
+            "enabled": "{{showActions}}"
+          },
+          "layout": {
+            "constraints": [
+              {
+                "type": "leading",
+                "target": "superview"
+              },
+              {
+                "type": "trailing",
+                "target": "superview"
+              },
+              {
+                "type": "bottom",
+                "target": "superview"
+              }
+            ]
+          },
+          "children": [
+            {
+              "id": "launchActionsFade",
+              "type": "view",
+              "content": {
+                "style": {
+                  "material": [
+                    {
+                      "id": "launchActionsFadeFill",
+                      "type": "fill",
+                      "content": {
+                        "gradient": {
+                          "start": {
+                            "x": 0.5,
+                            "y": 0,
+                            "color": "#00000000"
+                          },
+                          "end": {
+                            "x": 0.5,
+                            "y": 1,
+                            "color": "#00000080"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                "layout": {
+                  "constraints": [
+                    {
+                      "type": "top",
+                      "target": "superview"
+                    },
+                    {
+                      "type": "leading",
+                      "target": "superview"
+                    },
+                    {
+                      "type": "trailing",
+                      "target": "superview"
+                    },
+                    {
+                      "type": "bottom",
+                      "target": "superview"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "id": "signIn",
+              "type": "button",
+              "content": {
+                "properties": {
+                  "text": "SIGN IN"
+                },
+                "style": {
+                  "text": {
+                    "id": "lightButtonText",
+                    "type": "text"
+                  },
+                  "material": [
+                    {
+                      "id": "signInFill",
+                      "type": "fill",
+                      "content": {
+                        "solid": "#FFFFFF"
+                      }
+                    }
+                  ]
+                },
+                "layout": {
+                  "height": 52,
+                  "constraints": [
+                    {
+                      "type": "top",
+                      "target": "superview",
+                      "constant": 200
+                    },
+                    {
+                      "type": "leading",
+                      "target": "superview",
+                      "constant": 16
+                    },
+                    {
+                      "type": "trailing",
+                      "target": "superview",
+                      "constant": -16
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "id": "continueAsGuest",
+              "type": "button",
+              "content": {
+                "properties": {
+                  "text": "CONTINUE AS GUEST →"
+                },
+                "style": {
+                  "text": {
+                    "id": "guestButtonText",
+                    "type": "text"
+                  }
+                },
+                "actions": {
+                  "tap": {
+                    "type": "completeFlow",
+                    "destination": "store"
+                  }
+                },
+                "layout": {
+                  "height": 52,
+                  "constraints": [
+                    {
+                      "type": "top",
+                      "target": "signIn",
+                      "attribute": "bottom",
+                      "constant": 8
+                    },
+                    {
+                      "type": "leading",
+                      "target": "superview",
+                      "constant": 16
+                    },
+                    {
+                      "type": "trailing",
+                      "target": "superview",
+                      "constant": -16
+                    },
+                    {
+                      "type": "bottom",
+                      "target": "safeArea"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "onEvent": [
+      {
+        "event": "timer",
+        "delay": 3.0,
+        "action": {
+          "type": "updateVariable",
+          "variableName": "showActions",
+          "value": true
+        }
+      }
+    ],
+    "variables": {
+      "showActions": {
+        "type": "boolean",
+        "initialValue": false
+      }
+    }
+  }
+}
