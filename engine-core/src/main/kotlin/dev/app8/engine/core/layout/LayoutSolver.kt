@@ -124,8 +124,13 @@ private class Measurements {
 /** Priority of a broken required constraint: above every other priority, below required. */
 private const val BROKEN_REQUIRED = 999.5
 
-/** Under-constrained views settle at zero size at the superview origin. */
+/**
+ * Under-constrained views settle at zero size at the superview origin. Zero size wins
+ * over the origin: a view pinned only by its bottom edge sits at that edge with height
+ * 0 (as on iOS), not stretched up from the superview's top.
+ */
 private const val AMBIGUITY = 0.5
+private const val AMBIGUITY_SIZE = 0.6
 
 /** Content-sized roots and scroll content are as short as their content allows. */
 private const val CONTENT_FIT = 1.0
@@ -305,8 +310,8 @@ private class LayoutPass(
             val p = parent.container
             add(Expression.of(v.x), LayoutRelation.EQUAL, Expression.of(p.x), AMBIGUITY)
             add(Expression.of(v.y), LayoutRelation.EQUAL, Expression.of(p.y), AMBIGUITY)
-            add(Expression.of(v.w), LayoutRelation.EQUAL, Expression(0.0), AMBIGUITY)
-            add(Expression.of(v.h), LayoutRelation.EQUAL, Expression(0.0), AMBIGUITY)
+            add(Expression.of(v.w), LayoutRelation.EQUAL, Expression(0.0), AMBIGUITY_SIZE)
+            add(Expression.of(v.h), LayoutRelation.EQUAL, Expression(0.0), AMBIGUITY_SIZE)
         }
 
         solver.updateVariables()
