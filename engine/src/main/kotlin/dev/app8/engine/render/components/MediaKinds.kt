@@ -115,8 +115,7 @@ internal object IconKind : ComponentKind {
             when (val model = props?.model) {
                 is IconProperties.Model.Symbol -> {
                     val name = node.string(model.name) ?: model.name
-                    val table = MaterialSymbols.load(LocalContext.current)
-                    val glyph = MaterialSymbols.resolve(name, table)
+                    val glyph = MaterialSymbols.resolve(LocalContext.current, name)
                     if (glyph == null) {
                         node.runtime.diagnostics.warn("icon.unmapped", "SF Symbol '$name' has no Material Symbol (${node.id})")
                     } else {
