@@ -185,8 +185,15 @@ private fun OnEvents(node: RenderNode, events: List<EventTrigger>?) {
     for ((i, e) in events.withIndex()) {
         if (e.event != EventTrigger.EventType.timer) continue
         LaunchedEffect(node, i) {
-            delay(((e.delay ?: 0.0) * 1000).toLong())
-            dispatcher.execute(node, e.action)
+            // A pending one-shot timer counts as outstanding work (tooling waits for it).
+            val runtime = node.runtime
+            runtime.beginWork()
+            try {
+                delay(((e.delay ?: 0.0) * 1000).toLong())
+                dispatcher.execute(node, e.action)
+            } finally {
+                runtime.endWork()
+            }
             if (e.repeats == true) {
                 val interval = ((e.interval ?: e.delay ?: 1.0) * 1000).toLong().coerceAtLeast(16)
                 while (true) {

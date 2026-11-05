@@ -16,6 +16,11 @@
             android:exported="true"
             android:theme="@android:style/Theme.Material.Light.NoActionBar" />
         <activity
+            android:name=".PreviewHostActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar" />
+        <activity
             android:name=".StyleGalleryActivity"
             android:exported="true"
             android:theme="@android:style/Theme.Material.Light.NoActionBar" />
