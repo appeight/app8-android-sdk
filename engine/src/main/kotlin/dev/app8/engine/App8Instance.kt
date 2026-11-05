@@ -6,8 +6,8 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -43,6 +43,7 @@ import dev.app8.engine.style.LocalApp8Appearance
 import dev.app8.engine.style.LocalApp8FontProvider
 import dev.app8.engine.style.LocalApp8TextScaling
 import dev.app8.engine.style.TextSizer
+import dev.app8.engine.style.systemColorScheme
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -184,7 +185,14 @@ public class App8Instance internal constructor(
                 },
             )
         }
-        MaterialTheme(colorScheme = if (dark) darkColorScheme() else lightColorScheme()) {
+        // System chrome takes the app's colors, never Material's baseline purple
+        // (app8-dsl platforms.md, "Android system colors"); wallpaper colors only on opt-in.
+        val scheme = if (runtime.dynamicColor) {
+            if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+        } else {
+            systemColorScheme(runtime.chromeAccent, dark)
+        }
+        MaterialTheme(colorScheme = scheme) {
             CompositionLocalProvider(
                 LocalApp8Appearance provides appearance,
                 LocalApp8FontProvider provides fonts,
