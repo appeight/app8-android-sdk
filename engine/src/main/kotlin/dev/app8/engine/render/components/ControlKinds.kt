@@ -272,18 +272,18 @@ internal object PickerKind : ComponentKind {
                 ) {
                     BasicText(title(node, p), style = text.style, maxLines = 1, softWrap = false)
                     BasicText(
-                        "unfold_more",
+                        MaterialSymbols.material(context, "unfold_more")?.text.orEmpty(),
                         style = TextStyle(color = text.style.color, fontSize = fs * 1.1f, fontFamily = MaterialSymbols.family(false, 500, fs.value)),
                         maxLines = 1,
                     )
                 }
                 ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, matchAnchorWidth = false) {
                     for (o in options) {
-                        val glyph = o.icon?.let { MaterialSymbols.resolve(context, it) }
+                        val glyph = o.icon?.let { MaterialSymbols.resolve(context, it, env.runtime.diagnostics, node.id) }
                         DropdownMenuItem(
                             text = { Text(o.label) },
-                            leadingIcon = glyph?.let { g -> { Text(g.name, fontFamily = MaterialSymbols.family(g.filled), fontSize = env.textSize(20f)) } },
-                            trailingIcon = if (o.value == sel) ({ Text("check", fontFamily = MaterialSymbols.family(false), fontSize = env.textSize(20f)) }) else null,
+                            leadingIcon = glyph?.let { g -> { Text(g.text, fontFamily = MaterialSymbols.family(g.filled), fontSize = env.textSize(20f)) } },
+                            trailingIcon = if (o.value == sel) ({ Text(MaterialSymbols.material(context, "check")?.text.orEmpty(), fontFamily = MaterialSymbols.family(false), fontSize = env.textSize(20f)) }) else null,
                             onClick = {
                                 expanded = false
                                 select(o.value)

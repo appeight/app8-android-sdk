@@ -143,25 +143,38 @@ section to drop by about 2× on device.
 
 ## AAR size
 
-| | bytes |
-|---|---:|
-| `engine-release.aar` | 7,728,095 |
-| `res/font/material_symbols_rounded.ttf`, compressed in the AAR | 6,641,474 (86 % of the AAR) |
-| same font, uncompressed (what the APK carries) | 15,235,612 |
-| `classes.jar`, compressed | 1,080,168 |
+The engine bundles only the Material Symbols it can draw (see *Icon font subset*).
 
-Subsetting the font to the 402 Material names that `sf-to-material.json` maps (506 SF names),
-measured with fontTools: keep those 400 ligature glyphs plus the letters, and keep all axes.
+| | before | after |
+|---|---:|---:|
+| `engine-release.aar` | 7,900,252 | 1,596,816 (−80 %) |
+| `res/font/material_symbols_rounded.ttf`, compressed in the AAR | 6,641,474 | 328,988 |
+| same font, uncompressed (what the APK carries) | 15,235,612 | 656,948 |
+| `assets/a8/material-codepoints.json`, uncompressed | — | 9,971 |
 
-| Variant | uncompressed | compressed (≈ AAR share) | AAR saving |
-|---|---:|---:|---:|
-| current font (4304 ligatures, axes FILL/GRAD/opsz/wght) | 15.2 MB | 6.64 MB | — |
-| subset, all axes | 0.86 MB | 0.47 MB | ≈ 6.2 MB (−80 % of the AAR) |
-| subset, `GRAD` pinned to 0 (the engine always sets 0) | 0.48 MB | 0.28 MB | ≈ 6.4 MB |
+Before: the full upstream variable font (4,304 icons, axes FILL/GRAD/opsz/wght).
 
-Subsetting drops every icon that the table does not map, which means bare Material names
-used as `android` overrides, too. That is the product decision still pending, so the font
-is unchanged.
+### Icon font subset
+
+`scripts/subset-icons.py` builds the font from the upstream Material Symbols Rounded variable
+font (google/material-design-icons, commit pinned in the script header). It keeps the
+Material names that `sf-to-material.json` maps to (402 names from 506 SF names) plus
+`engine/extra-icons.txt` (engine chrome such as `arrow_back`, `check`, `unfold_more`, and
+common `android` override names): 404 names, 402 codepoints, 247 filled alternates.
+
+- The engine draws icons by codepoint (Private Use Area), not by ligature, so the `rlig`
+  ligature lookup is dropped; it reaches every icon through the letters a–z. The `rclt`
+  lookup and its FeatureVariations record stay because they swap in the filled glyphs at
+  `FILL=1`.
+- Axes FILL, opsz and wght stay. GRAD is pinned to 0, its default, which is the value the
+  engine always used: 656,948 bytes pinned vs 1,191,080 with GRAD kept.
+- On device (a8_pixel_9_api37), IconsDemo, ComponentCatalog, TabBarDemo, AirbnbHome,
+  SystemButtonCatalog and TopBarCatalog render pixel-identical to the full font, with
+  identical diagnostics.
+- A Material name outside the subset (for example an `android` override) draws nothing and
+  warns `icon.unavailable`. To add one, append it to `engine/extra-icons.txt` and rerun the
+  script; `BundledIconsTest` checks the table, the allowlist, `material-codepoints.json` and
+  the font's cmap agree.
 
 ## Remaining hotspots
 
@@ -174,7 +187,7 @@ is unchanged.
    structural key, using data-class equality instead of strings, would remove most of it.
 3. **Startup**: TTFD is ~165 ms, of which the engine's solve and layout tree are ~6 ms. The
    rest is bundle load and decode on a background coroutine, plus first composition.
-4. **Font**: 15 MB in every host APK (see above).
+4. **Font**: fixed, 0.66 MB subset instead of 15 MB (see *Icon font subset*).
 
 ## Unfinished
 

@@ -238,13 +238,10 @@ private fun BarItem(item: BarAction, defaultTint: Color, onClick: () -> Unit) {
 /** A Material Symbol by SF or Material name, 24dp. */
 @Composable
 internal fun Symbol(name: String, color: Color, size: Float = 24f) {
-    val glyph = MaterialSymbols.resolve(androidx.compose.ui.platform.LocalContext.current, name)
-    if (glyph == null) {
-        LocalRenderEnv.current.runtime.diagnostics.warn("icon.unmapped", "SF Symbol '$name' has no Material Symbol (bar item)")
-        return
-    }
+    val glyph = MaterialSymbols.resolve(androidx.compose.ui.platform.LocalContext.current, name, LocalRenderEnv.current.runtime.diagnostics, "bar item")
+        ?: return
     BasicText(
-        glyph.name,
+        glyph.text,
         style = TextStyle(color = color, fontSize = size.sp, fontFamily = MaterialSymbols.family(glyph.filled, 400, size)),
         maxLines = 1,
         softWrap = false,
