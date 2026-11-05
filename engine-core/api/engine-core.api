@@ -497,6 +497,19 @@ public final class dev/app8/engine/core/layout/LayoutBounds {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class dev/app8/engine/core/layout/LayoutConflict {
+	public fun <init> (Ljava/util/List;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/util/List;Ljava/lang/String;)Ldev/app8/engine/core/layout/LayoutConflict;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/layout/LayoutConflict;Ljava/util/List;Ljava/lang/String;ILjava/lang/Object;)Ldev/app8/engine/core/layout/LayoutConflict;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getConstraint ()Ljava/lang/String;
+	public final fun getViews ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class dev/app8/engine/core/layout/LayoutConstraint {
 	public fun <init> (Ldev/app8/engine/core/layout/LayoutAttribute;Ldev/app8/engine/core/layout/ConstraintTarget;Ldev/app8/engine/core/layout/LayoutAttribute;DLjava/lang/Double;Ldev/app8/engine/core/layout/LayoutRelation;F)V
 	public synthetic fun <init> (Ldev/app8/engine/core/layout/LayoutAttribute;Ldev/app8/engine/core/layout/ConstraintTarget;Ldev/app8/engine/core/layout/LayoutAttribute;DLjava/lang/Double;Ldev/app8/engine/core/layout/LayoutRelation;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -568,6 +581,7 @@ public final class dev/app8/engine/core/layout/LayoutRelation$Companion {
 
 public final class dev/app8/engine/core/layout/LayoutResult {
 	public final fun get (Ljava/lang/String;)Ldev/app8/engine/core/layout/Frame;
+	public final fun getConflicts ()Ljava/util/List;
 	public final fun getContentHeight ()D
 	public final fun getContentSizes ()Ljava/util/Map;
 	public final fun getFrames ()Ljava/util/Map;

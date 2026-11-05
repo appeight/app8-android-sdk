@@ -58,6 +58,8 @@ public class LayoutResult internal constructor(
     /** Solver passes run (safe-area insets and wrapping text need a second). */
     public val passes: Int,
     private val parents: Map<String, String>,
+    /** Required constraints the solver had to break (UIKit's "Unable to simultaneously satisfy constraints"). */
+    public val conflicts: List<LayoutConflict> = emptyList(),
 ) {
     public operator fun get(key: String): Frame? = frames[key]
 
@@ -107,8 +109,18 @@ public fun solveLayout(
         if (!p.insetsUsed && !remeasureChanges) break
     }
     val p = pass!!
-    return LayoutResult(p.frames, p.contentSizes, p.contentHeight, count, p.parents)
+    return LayoutResult(p.frames, p.contentSizes, p.contentHeight, count, p.parents, p.conflicts.distinct())
 }
+
+/**
+ * A required constraint that conflicted with the required constraints added before it. Like
+ * Auto Layout, the solver breaks it (keeps it as the strongest optional preference) and lays
+ * out the rest.
+ *
+ * @property views the keys of the views the constraint relates.
+ * @property constraint the broken constraint, e.g. `card.h == 120` or `a.y + a.h <= b.y - 8`.
+ */
+public data class LayoutConflict(val views: List<String>, val constraint: String)
 
 /** Intrinsic sizes per node and width, shared by the passes. */
 private class Measurements {
@@ -260,6 +272,7 @@ private class LayoutPass(
     private val solver = Solver()
     private val infos = ArrayList<NodeInfo>()
     private val keys = HashSet<String>()
+    val conflicts = ArrayList<LayoutConflict>()
     private val intrinsicCache = HashMap<NodeInfo, Size?>()
 
     /** Whether a nested view's safe-area insets (from the previous pass's frames) were used. */
@@ -387,8 +400,35 @@ private class LayoutPass(
         } catch (_: UnsatisfiableConstraintException) {
             // Auto Layout breaks one of the conflicting required constraints and
             // logs; keep this one as the strongest preference instead.
+            conflicts += conflictOf(lhs, op, rhs)
             solver.addConstraint(Constraint(lhs, operator, rhs, BROKEN_REQUIRED))
         }
+    }
+
+    private fun conflictOf(lhs: Expression, op: LayoutRelation, rhs: Expression): LayoutConflict {
+        fun view(name: String) = name.substringBeforeLast('.').removeSuffix("#content")
+        val views = (lhs.terms + rhs.terms).map { view(it.variable.name) }.filter { it.isNotEmpty() }.distinct()
+        val rel = when (op) {
+            LayoutRelation.EQUAL -> "=="
+            LayoutRelation.LESS_OR_EQUAL -> "<="
+            LayoutRelation.GREATER_OR_EQUAL -> ">="
+        }
+        return LayoutConflict(views, "${describe(lhs)} $rel ${describe(rhs)}")
+    }
+
+    private fun describe(e: Expression): String {
+        fun num(v: Double) = if (v == Math.floor(v) && kotlin.math.abs(v) < 1e9) v.toLong().toString() else "%.2f".format(v)
+        val parts = ArrayList<String>()
+        for (t in e.terms) {
+            val c = t.coefficient
+            val name = t.variable.name.ifEmpty { "?" }
+            val body = if (kotlin.math.abs(c) == 1.0) name else "${num(kotlin.math.abs(c))}*$name"
+            parts += if (parts.isEmpty()) (if (c < 0) "-$body" else body) else (if (c < 0) "- $body" else "+ $body")
+        }
+        val k = e.constant
+        if (parts.isEmpty()) return num(k)
+        if (k != 0.0) parts += if (k < 0) "- ${num(-k)}" else "+ ${num(k)}"
+        return parts.joinToString(" ")
     }
 
     private fun add(lhs: Expression, op: LayoutRelation, constant: Double, priority: Double) =
