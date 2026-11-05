@@ -55,6 +55,7 @@ import dev.app8.engine.core.model.TextViewProperties
 import dev.app8.engine.core.model.Trigger
 import dev.app8.engine.core.model.style.TextInputStyle
 import dev.app8.engine.render.ChildrenLayout
+import dev.app8.engine.render.controls.bringIntoViewAboveKeyboard
 import dev.app8.engine.render.LayoutTraits
 import dev.app8.engine.render.LocalDispatcher
 import dev.app8.engine.render.LocalInteractionEnabled
@@ -322,7 +323,7 @@ internal class TextInputKind(private val multiline: Boolean) : ComponentKind {
             else -> false
         } && value.text.isNotEmpty() && enabled
 
-        Box(modifier) {
+        Box(modifier.bringIntoViewAboveKeyboard(focused)) {
             val pad = Modifier.padding(start = l.padding.left.dp, top = l.padding.top.dp, end = l.padding.right.dp, bottom = l.padding.bottom.dp)
             Row(Modifier.fillMaxSize().then(pad), verticalAlignment = if (multiline) Alignment.Top else Alignment.CenterVertically) {
                 BasicTextField(

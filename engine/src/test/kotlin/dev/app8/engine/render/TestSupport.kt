@@ -29,9 +29,9 @@ internal class MemoryDataSource(
 internal class RecordingNavigator : Navigator {
     val calls = mutableListOf<String>()
     val params = mutableListOf<Map<String, Any?>>()
-    override fun push(screenId: String, params: Map<String, Any?>) { calls += "push:$screenId"; this.params += params }
+    override fun push(screenId: String, params: Map<String, Any?>, transition: dev.app8.engine.core.model.ScreenTransition?) { calls += "push:$screenId"; this.params += params }
     override fun pop(toRoot: Boolean) { calls += "pop:$toRoot" }
-    override fun present(screenId: String, params: Map<String, Any?>, presentation: Action.PresentationStyle, detents: List<Action.SheetDetent>?, grabber: Boolean?) {
+    override fun present(screenId: String, params: Map<String, Any?>, presentation: Action.PresentationStyle, detents: List<Action.SheetDetent>?, grabber: Boolean?, transition: dev.app8.engine.core.model.ScreenTransition?) {
         calls += "present:$screenId:$presentation:${detents?.size ?: 0}"
     }
     override fun dismiss() { calls += "dismiss" }

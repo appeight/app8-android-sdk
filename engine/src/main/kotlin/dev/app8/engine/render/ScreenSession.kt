@@ -47,6 +47,13 @@ internal class ScreenSession private constructor(
 
     val tabBar: TabBarScreenContent? get() = (component as? ComponentEntity<*>)?.content as? TabBarScreenContent
 
+    /** `streaming: true` on the screen: live updates through the data source streams. */
+    val isStreaming: Boolean get() = (content as? dev.app8.engine.core.model.ComponentContent<*, *>)?.streaming == true
+
+    /** The screen's own variable values (what a streamed update preserves). */
+    fun localValues(): Map<String, Any?> =
+        (scope.store as? ScopedVariableStore)?.getLocalVariables()?.mapValues { it.value.value }.orEmpty()
+
     val content: StatefulContent? get() = (component as? ComponentEntity<*>)?.content as? StatefulContent
 
     fun dispose() {
@@ -57,8 +64,22 @@ internal class ScreenSession private constructor(
 
     companion object {
         /** Loads and prepares [screenId] (iOS `renderScreen`: datasources first, then params). */
-        suspend fun create(runtime: App8Runtime, appScope: Scope, screenId: String, params: Map<String, Any?>): ScreenSession {
-            val component = runtime.loadScreen(screenId)
+        suspend fun create(runtime: App8Runtime, appScope: Scope, screenId: String, params: Map<String, Any?>): ScreenSession =
+            create(runtime, appScope, screenId, runtime.loadScreen(screenId), params, emptyMap())
+
+        /**
+         * A session for [component] (a streamed screen update, iOS `ScreenUpdater.update`):
+         * variables are defined fresh, then [preserved] values of variables that still
+         * exist are restored, so user state survives the structural update.
+         */
+        suspend fun create(
+            runtime: App8Runtime,
+            appScope: Scope,
+            screenId: String,
+            component: Component,
+            params: Map<String, Any?>,
+            preserved: Map<String, Any?>,
+        ): ScreenSession {
             val store = ScopedVariableStore(runtime.appStore)
             val content = (component as? ComponentEntity<*>)?.content as? StatefulContent
             content?.variables?.let { raw ->
@@ -83,6 +104,11 @@ internal class ScreenSession private constructor(
                 } else {
                     store.defineVariable(name, VariableDefinition(VariableType.inferType(v), v))
                 }
+            }
+            for ((name, value) in preserved) {
+                if (value == null || !store.getLocalVariables().containsKey(name)) continue
+                runCatching { store.setValue(name, value) }
+                    .onFailure { runtime.diagnostics.warn("streaming", "can't restore '$name' on '$screenId': ${it.message}") }
             }
             val scope = Scope(store, appScope)
             val session = ScreenSession(runtime, screenId, component, scope)

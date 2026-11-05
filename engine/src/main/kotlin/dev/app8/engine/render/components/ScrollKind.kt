@@ -1,6 +1,15 @@
 package dev.app8.engine.render.components
 
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.gestures.FlingBehavior
+import androidx.compose.foundation.gestures.ScrollScope
+import androidx.compose.runtime.remember
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.layout.findRootCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.rememberScrollState
@@ -51,11 +60,42 @@ internal object ScrollKind : ComponentKind {
         val solved = LocalSolved.current
         val density = LocalDensity.current.density
         ScrollEvents(node, p, state, vertical, density)
-        val scrollModifier = if (vertical) Modifier.verticalScroll(state) else Modifier.horizontalScroll(state)
-        Box(modifier.clipToBounds()) {
+        val auto = p.autoScroll
+        val infinite = auto != null && (auto.infinite ?: true)
+        val loopGapPx = ((auto?.loopGap ?: 0.0) * density).toFloat()
+        // Main-axis length of one copy of the content in px (the marquee wrap length).
+        val contentLength = remember { androidx.compose.runtime.mutableIntStateOf(0) }
+        if (auto != null) AutoScroll(state, auto.speed * density, infinite, { contentLength.intValue + loopGapPx })
+        val fling = if (p.pagingEnabled == true) rememberPagingFling(state, vertical) else null
+        val scrollModifier = if (vertical) Modifier.verticalScroll(state, flingBehavior = fling) else Modifier.horizontalScroll(state, flingBehavior = fling)
+        // `infinite` auto-scroll draws the content a second time after itself (plus
+        // `loopGap`), so wrapping the offset by one length is seamless (iOS marquee duplicate).
+        val marquee = if (infinite) Modifier.drawWithContent {
+            drawContent()
+            val len = contentLength.intValue + loopGapPx
+            translate(left = if (vertical) 0f else len, top = if (vertical) len else 0f) { this@drawWithContent.drawContent() }
+        } else Modifier
+        // The keyboard covers the bottom of a vertical scroll view (the window does not
+        // resize edge-to-edge): extend the content by the covered part so a focused field
+        // near the end can still scroll above the keyboard.
+        val imePx = if (vertical) WindowInsets.ime.getBottom(LocalDensity.current) else 0
+        val gapBelow = remember { androidx.compose.runtime.mutableIntStateOf(0) }
+        val keyboardPad = (imePx - gapBelow.intValue).coerceAtLeast(0)
+        val scroller = remember(state) { dev.app8.engine.render.controls.KeyboardScroller(state) }
+        val track = if (vertical) Modifier.onGloballyPositioned { c ->
+            scroller.viewport = c
+            val root = c.findRootCoordinates()
+            gapBelow.intValue = (root.size.height - c.localToRoot(androidx.compose.ui.geometry.Offset(0f, c.size.height.toFloat())).y).toInt().coerceAtLeast(0)
+        } else Modifier
+        Box(modifier.then(track).clipToBounds()) {
             Layout(
-                content = { for (child in node.children) key(child.key) { NodeView(child) } },
-                modifier = scrollModifier,
+                content = {
+                    val provided = if (vertical) scroller else dev.app8.engine.render.controls.LocalKeyboardScroller.current
+                    androidx.compose.runtime.CompositionLocalProvider(dev.app8.engine.render.controls.LocalKeyboardScroller provides provided) {
+                        for (child in node.children) key(child.key) { NodeView(child) }
+                    }
+                },
+                modifier = scrollModifier.then(marquee),
             ) { measurables, constraints ->
                 val s = solved.value
                 val d = density
@@ -77,13 +117,91 @@ internal object ScrollKind : ComponentKind {
                 val viewportW = if (constraints.hasBoundedWidth) constraints.maxWidth else ((self?.width ?: 0.0) * d).roundToInt()
                 val viewportH = if (constraints.hasBoundedHeight) constraints.maxHeight else ((self?.height ?: 0.0) * d).roundToInt()
                 val contentW = if (vertical) viewportW else (((content?.width ?: 0.0) + left + right) * d).roundToInt()
-                val contentH = if (vertical) (((content?.height ?: 0.0) + top + bottom) * d).roundToInt() else viewportH
+                val contentH = if (vertical) (((content?.height ?: 0.0) + top + bottom) * d).roundToInt() + keyboardPad else viewportH
                 val placeables = measurables.map { m ->
                     val f = s.local[m.layoutId as? String]
                     m.measure(Constraints.fixed(((f?.width ?: 0.0) * d).roundToInt().coerceAtLeast(0), ((f?.height ?: 0.0) * d).roundToInt().coerceAtLeast(0))) to f
                 }
-                layout(contentW.coerceAtLeast(if (vertical) 0 else viewportW), contentH.coerceAtLeast(if (vertical) viewportH else 0)) {
+                val w = contentW.coerceAtLeast(if (vertical) 0 else viewportW)
+                val h = contentH.coerceAtLeast(if (vertical) viewportH else 0)
+                // One copy's length: the content extent (children may reach past the solved
+                // content size), so the marquee seam sits right after the last child.
+                val extent = placeables.maxOfOrNull { (_, f) -> if (f == null) 0.0 else if (vertical) f.y + f.height else f.x + f.width } ?: 0.0
+                contentLength.intValue = maxOf(if (vertical) contentH else contentW, ((extent + if (vertical) top + bottom else left + right) * d).roundToInt())
+                // The marquee copy extends the scrollable range by one length + gap.
+                val extra = if (infinite) contentLength.intValue + loopGapPx.roundToInt() else 0
+                layout(if (vertical) w else maxOf(w, extra * 2), if (vertical) maxOf(h, extra * 2) else h) {
                     for ((pl, f) in placeables) if (f != null) pl.place(px(f.x + left, d), px(f.y + top, d))
+                }
+            }
+        }
+    }
+
+    /**
+     * `autoScroll` (iOS display-link marquee): advances the offset by `speed` points per
+     * second. `infinite` wraps by one content length (+ `loopGap`); otherwise it stops at
+     * the end. A drag takes over and the marquee resumes from wherever the user left it.
+     */
+    @Composable
+    private fun AutoScroll(state: ScrollState, speedPx: Double, infinite: Boolean, length: () -> Float) {
+        LaunchedEffect(state, speedPx, infinite) {
+            var last = 0L
+            var position = state.value.toFloat()
+            var written = state.value
+            while (true) {
+                androidx.compose.runtime.withFrameNanos { now ->
+                    if (last == 0L) { last = now; return@withFrameNanos }
+                    val dt = (now - last) / 1e9
+                    last = now
+                    if (state.isScrollInProgress) { position = state.value.toFloat(); written = state.value; return@withFrameNanos }
+                    // Sub-pixel accumulation: never advance from the pixel-snapped offset.
+                    if (kotlin.math.abs(state.value - written) > 1) position = state.value.toFloat()
+                    position += (speedPx * dt).toFloat()
+                    val len = length()
+                    if (infinite && len > 0f) {
+                        while (position >= len) position -= len
+                        while (position < 0f) position += len
+                    } else {
+                        position = position.coerceIn(0f, state.maxValue.toFloat())
+                    }
+                    val target = position.roundToInt()
+                    state.dispatchRawDelta((target - state.value).toFloat())
+                    written = state.value
+                }
+            }
+        }
+    }
+
+    /**
+     * `pagingEnabled` (UIScrollView paging): a drag settles on a whole page (the viewport
+     * size). A fling moves at most one page in its direction; a slow release snaps to the
+     * nearest page.
+     */
+    @Composable
+    private fun rememberPagingFling(state: ScrollState, vertical: Boolean): FlingBehavior {
+        val spec = androidx.compose.animation.core.spring<Float>(stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow)
+        val density = LocalDensity.current.density
+        return remember(state, vertical) {
+            object : FlingBehavior {
+                override suspend fun ScrollScope.performFling(initialVelocity: Float): Float {
+                    val page = state.viewportSize.toFloat()
+                    if (page <= 0f) return initialVelocity
+                    val offset = state.value.toFloat()
+                    val current = kotlin.math.floor(offset / page)
+                    val fraction = offset / page - current
+                    val threshold = 400f * density
+                    val targetPage = when {
+                        initialVelocity > threshold -> current + 1
+                        initialVelocity < -threshold -> current
+                        else -> if (fraction >= 0.5f) current + 1 else current
+                    }
+                    val target = (targetPage * page).coerceIn(0f, state.maxValue.toFloat())
+                    var previous = 0f
+                    androidx.compose.animation.core.animate(0f, target - offset, initialVelocity, spec) { v, _ ->
+                        scrollBy(v - previous)
+                        previous = v
+                    }
+                    return 0f
                 }
             }
         }

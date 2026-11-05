@@ -165,14 +165,24 @@ public class App8Instance internal constructor(
         val measurer = rememberTextMeasurer(cacheSize = 128)
         val fonts = fontProvider
         val scaling = textScaling
-        val env = remember(appearance, density, measurer, fonts, scaling) {
+        val styles = runtime.styles
+        val env = remember(appearance, density, measurer, fonts, scaling, styles) {
             RenderEnv(runtime, appearance, density, measurer, fonts, TextSizer.of(scaling, density))
         }
         val context = LocalContext.current
         val view = LocalView.current
         val effects = remember(context, view) { ComposeHostEffects(context, view, runtime.diagnostics) }
+        val navScope = androidx.compose.runtime.rememberCoroutineScope()
         val flow = remember(app, startScreen) {
-            FlowController(app, startScreen, params, flowId(app)) { runtime.diagnostics.warn("navigation", it) }
+            FlowController(
+                app, startScreen, params, flowId(app),
+                warn = { runtime.diagnostics.warn("navigation", it) },
+                scope = navScope,
+                screenTransition = { id ->
+                    val content = (runtime.loadScreen(id) as? dev.app8.engine.core.model.ComponentEntity<*>)?.content
+                    (content as? dev.app8.engine.core.model.ComponentContent<*, *>)?.transition?.screenOrNull
+                },
+            )
         }
         MaterialTheme(colorScheme = if (dark) darkColorScheme() else lightColorScheme()) {
             CompositionLocalProvider(
