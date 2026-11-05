@@ -12,7 +12,7 @@ android {
         minSdk = 31
         targetSdk = 36
         versionCode = 1
-        versionName = "0.4.0"
+        versionName = project.version.toString()
     }
     buildTypes {
         // Debug-signed so `installRelease` works for frame-time measurements (debuggable

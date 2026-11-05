@@ -1,0 +1,6 @@
+public final class dev/app8/engine/maps/GoogleMapsProvider : dev/app8/engine/maps/App8MapProvider {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun Map (Ldev/app8/engine/maps/App8MapState;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+}
+

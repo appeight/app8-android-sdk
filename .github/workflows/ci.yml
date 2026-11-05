@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Version consistency
+        run: scripts/check-version.sh
+
+      # Public repo: no token. Clones next to this checkout so DslDocumentationTest finds
+      # ../app8-dsl/docs and decodes every JSON example of the pinned spec.
+      - name: Check out app8-dsl at dsl.lock
+        run: scripts/fetch-dsl.sh "$GITHUB_WORKSPACE/../app8-dsl"
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+
+      - name: Test, lint, API check, build sample
+        run: >
+          ./gradlew --continue
+          :engine-core:test
+          :engine:testDebugUnitTest
+          :engine:lint
+          apiCheck
+          :sample:assembleDebug
+
+      - name: Upload reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: reports
+          path: |
+            **/build/reports/
+            **/build/test-results/
+          retention-days: 7

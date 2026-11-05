@@ -4,12 +4,16 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.compose)
+    `maven-publish`
 }
 
 android {
     namespace = "dev.app8.engine.maps.google"
     compileSdk = 37
     defaultConfig { minSdk = 31 }
+    publishing {
+        singleVariant("release") { withSourcesJar() }
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -24,4 +28,17 @@ kotlin {
 dependencies {
     api(project(":engine"))
     implementation(libs.maps.compose)
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("release") {
+            artifactId = "engine-maps"
+            afterEvaluate { from(components["release"]) }
+            pom {
+                name.set("App8 Engine Maps")
+                description.set("Google Maps provider for App8 map components.")
+            }
+        }
+    }
 }

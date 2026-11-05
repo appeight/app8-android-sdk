@@ -3,11 +3,13 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
+    `maven-publish`
 }
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
+    withSourcesJar()
 }
 
 kotlin {
@@ -20,4 +22,17 @@ dependencies {
     api(libs.kotlinx.coroutines.core)
     testImplementation(libs.kotlin.test)
     testImplementation(libs.junit)
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("release") {
+            artifactId = "engine-core"
+            from(components["java"])
+            pom {
+                name.set("App8 Engine Core")
+                description.set("Platform-neutral App8 DSL engine: models, expressions, variables and the layout solver.")
+            }
+        }
+    }
 }
