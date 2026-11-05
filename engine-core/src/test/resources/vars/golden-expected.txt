@@ -7,7 +7,7 @@ S:"world"
 NULL
 [I:1,I:2,I:3]
 [I:1,S:"a",B:true,NULL,D:2.5]
-[I:1,I:3]
+[I:1,I:25,I:3]
 []
 S:"John"
 I:25
@@ -43,7 +43,7 @@ S:"x1.5"
 S:"x2.0"
 S:"xtrue"
 S:"x"
-S:"xOptional([\"apple\", \"banana\", \"cherry\"])"
+S:"x[\"apple\",\"banana\",\"cherry\"]"
 S:"x"
 I:2
 I:2
@@ -237,15 +237,15 @@ S:"2.5"
 S:"0.3333333333333333"
 S:"1e+20"
 ERR:Expected ')' after function arguments
-S:"Optional([0.1, 0.2, 0.30000000000000004, 1.005, 2.5, -2.5, 1e-07, 123456789012.5])"
+S:"[0.10000000000000001,0.20000000000000001,0.30000000000000004,1.0049999999999999,2.5,-2.5,9.9999999999999995e-08,123456789012.5]"
 S:""
 S:""
-S:"Optional([\"apple\", \"banana\", \"cherry\"])"
+S:"[\"apple\",\"banana\",\"cherry\"]"
 S:"Jane"
-S:"Optional([\"b\": [1, [\"c\": \"deep\"]]])"
-S:"Optional([:])"
-S:"Optional([])"
-S:"Optional([1, \"2\", 3.5, true, <null>, \"abc\"])"
+S:"{\"b\":[1,{\"c\":\"deep\"}]}"
+S:"{}"
+S:"[]"
+S:"[1,\"2\",3.5,true,null,\"abc\"]"
 B:true
 B:false
 B:false
@@ -473,3 +473,16 @@ S:"tab\there"
 ERR:Undefined variable: '$parent'
 ERR:Undefined variable: '$parent'
 ERR:Undefined variable: '_private'
+S:"{\"age\":30,\"email\":\"jane@example.com\",\"firstName\":\"Jane\",\"lastName\":\"Doe\"}"
+S:"[{\"active\":true,\"categoryId\":10,\"id\":1,\"name\":\"Shirt\",\"price\":35},{\"active\":true,\"categoryId\":20,\"id\":2,\"name\":\"Jeans\",\"price\":80},{\"active\":false,\"categoryId\":10,\"id\":3,\"name\":\"Jacket\",\"price\":120.5},{\"active\":true,\"categoryId\":20,\"id\":4,\"name\":\"Dress\",\"price\":60}]"
+S:"{\"x\":null,\"y\":0}"
+S:"[1,1,\"1\"]"
+S:"[1e+20,2,0.33333333333333331,-0.5]"
+S:"[\"a/b\",\"q\\\"x\",\"tab\\there\",\"nl\\nx\",\"é👍\"]"
+S:"[null,null,true]"
+[I:25,S:"John",[I:26,S:"apple"]]
+[I:1,NULL,I:3]
+ERR:Undefined variable: 'missingVar'
+S:"n=[3,1,4,1,5,9,2,6]"
+S:"[3,1,4,1,5,9,2,6]!"
+ERR:Invalid character '{' at position 9

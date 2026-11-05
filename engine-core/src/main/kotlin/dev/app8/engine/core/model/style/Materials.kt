@@ -115,9 +115,10 @@ public data class Shadow(val layers: List<Layer> = emptyList()) {
         val color: ThemedColor,
         val radius: Double,
         val offset: Offset,
-        val opacity: Double,
-        /** Required on iOS (synthesized decoding ignores the `= true` default), so it is required here too. */
-        val isHollow: Boolean,
+        /** Optional in the DSL, default `1.0` (styles.md). */
+        val opacity: Double = 1.0,
+        /** Optional in the DSL, default `false`: a non-hollow layer gets a background of the shadow colour. */
+        val isHollow: Boolean = false,
     )
 
     public data class Offset(val x: Double, val y: Double)
@@ -134,8 +135,8 @@ internal fun decodeShadowLayer(c: Cursor): Shadow.Layer {
         color = c.req("color", ::decodeThemedColor),
         radius = c.reqDouble("radius"),
         offset = c.req("offset") { o -> o.obj(); Shadow.Offset(o.reqDouble("x"), o.reqDouble("y")) },
-        opacity = c.reqDouble("opacity"),
-        isHollow = c.req("isHollow") { it.bool() },
+        opacity = c.optDouble("opacity") ?: 1.0,
+        isHollow = c.optBool("isHollow") ?: false,
     )
 }
 
@@ -153,7 +154,8 @@ internal fun decodeOutline(c: Cursor): Outline {
     c.obj()
     return Outline(
         lineWidth = c.reqFloat("lineWidth"),
-        position = c.req("position") { it.strictEnum<Outline.Position>() },
+        // Optional, default `inside` (styles.md).
+        position = c.optEnum<Outline.Position>("position") ?: Outline.Position.inside,
         fill = c.req("fill", ::decodeFill),
     )
 }

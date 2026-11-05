@@ -110,4 +110,55 @@ class ActionDispatchTest {
         assertTrue(analytics.none { it.name == "app8.component.tapped" })
         assertNull(analytics.first { it.name == "app8.buyClicked" }.properties["who"])
     }
+
+    // iOS PortFindingsTests #2 / #3 (app8-ios-sdk#36).
+    private val portScreen = """{"type":"screen","id":"p","content":{
+      "variables":{"note":{"type":"string","initialValue":""},"last":{"type":"string","initialValue":""},
+        "email":{"type":"string","initialValue":"a@b.c"},"fromParam":{"type":"string"}},
+      "children":[
+        {"type":"textView","id":"tv","content":{"properties":{"bindVariable":"note"},
+          "analytics":{"onTextChange":{"name":"noteEdited"}},
+          "actions":{"onTextChange":{"type":"updateVariable","variableName":"last","value":"{{${'$'}value}}"}}}},
+        {"type":"view","id":"plain","content":{"actions":{"tap":{"type":"resetVariables","scope":"component"}}}},
+        {"type":"view","id":"owner","content":{"variables":{"draft":{"type":"string","initialValue":"x"}},
+          "actions":{"tap":{"type":"resetVariables","scope":"component"}}}},
+        {"type":"view","id":"screenReset","content":{"actions":{"tap":{"type":"resetVariables"}}}}
+      ]}}"""
+
+    @Test
+    fun `textView onTextChange runs with the new text as value and fires analytics`() {
+        val rt2 = runtime(mapOf("p" to portScreen))
+        val s2 = session(rt2, "p")
+        val seen = mutableListOf<String>()
+        rt2.analyticsBus.observe { seen += it.name }
+        val d = ActionDispatcher(rt2, RecordingNavigator(), RecordingHost())
+        d.dispatchTextChange(s2.root.find("tv")!!, "hello")
+        assertEquals("hello", s2.scope.store.getValue("last"))
+        assertTrue("app8.noteEdited" in seen, "$seen")
+    }
+
+    @Test
+    fun `resetVariables restores initial values, component scope only resets an own store`() {
+        val rt2 = runtime(mapOf("p" to portScreen))
+        val s2 = session(rt2, "p", params = mapOf("fromParam" to "injected"))
+        val d = ActionDispatcher(rt2, RecordingNavigator(), RecordingHost())
+        val store = s2.scope.store
+        store.setValue("email", "changed")
+        store.setValue("fromParam", "edited")
+        rt2.appStore.setValue("cartCount", 9)
+
+        d.dispatchTrigger(s2.root.find("plain")!!, ActionTrigger.tap)
+        assertEquals("changed", store.getValue("email"), "a component without variables has an empty own store")
+
+        val owner = s2.root.find("owner")!!
+        owner.scope.store.setValue("draft", "y")
+        d.dispatchTrigger(owner, ActionTrigger.tap)
+        assertEquals("x", owner.scope.store.getValue("draft"))
+        assertEquals("changed", store.getValue("email"))
+
+        d.dispatchTrigger(s2.root.find("screenReset")!!, ActionTrigger.tap)
+        assertEquals("a@b.c", store.getValue("email"))
+        assertEquals("injected", store.getValue("fromParam"), "an injected param is the initial value")
+        assertEquals(9L, rt2.appStore.getValue("cartCount"), "screen scope leaves app variables alone")
+    }
 }

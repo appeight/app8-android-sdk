@@ -149,9 +149,10 @@ class VariableActionHandlerTest {
         assertEquals(100L, store.getValue("counter"))
         assertEquals("Modified", store.getValue("message"))
         execute(action("resetVariables"))
-        // resetVariables currently clears all variables rather than restoring initial values.
-        assertNull(store.getValue("counter"))
-        assertNull(store.getValue("message"))
+        // resetVariables restores initial values; variables stay defined.
+        assertEquals(0L, store.getValue("counter"))
+        assertEquals("Hello", store.getValue("message"))
+        kotlin.test.assertTrue(store.hasVariable("counter"))
     }
 
     @Test

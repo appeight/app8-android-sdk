@@ -364,7 +364,7 @@ class ExpressionEvaluatorTest {
 
     @Test
     fun collections_in_string_context_render_like_swift_optional_description() {
-        assertEquals("xOptional([\"apple\", \"banana\", \"cherry\"])", evaluate("'x' + items"))
+        assertEquals("x[\"apple\",\"banana\",\"cherry\"]", evaluate("'x' + items"))
         assertEquals("apple|1|2.5|", evaluate("join(['apple', 1, 2.5, null], '|')"))
     }
 

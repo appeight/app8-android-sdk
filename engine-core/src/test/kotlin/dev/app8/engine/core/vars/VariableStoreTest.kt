@@ -205,12 +205,12 @@ class VariableStoreTest {
     }
 
     @Test
-    fun set_multiple_values_failure_leaves_store_in_updating_mode_like_ios() {
+    fun set_multiple_values_failure_does_not_leave_store_updating() {
         store.defineVariable("a", VariableDefinition(VariableType.NUMBER, 1))
         store.defineVariable("doubled", VariableDefinition(VariableType.NUMBER, computed = "{{a * 2}}"))
         assertFailsWith<VariableException.TypeMismatch> { store.setMultipleValues(mapOf("a" to "bad")) }
         store.setValue("a", 5)
-        assertEquals(2L, store.getValue("doubled")) // dependents suppressed: faithful iOS quirk
+        assertEquals(10L, store.getValue("doubled")) // batch mode cleared on failure
     }
 
     @Test

@@ -36,6 +36,10 @@ internal class RenderNode(
     lateinit var children: List<RenderNode>
         internal set
 
+    /** True when [scope] is this node's own store: the screen root, or a component declaring variables. */
+    val ownsVariableScope: Boolean
+        get() = parentType == null || !(base as? StatefulContent)?.variables.isNullOrEmpty()
+
     /**
      * The DSL state (`states`, `setState`, `triggers`); null = base content. A `{{…}}`
      * `defaultStateName` is a state binding (iOS `setupStateBinding`): evaluated here for the
