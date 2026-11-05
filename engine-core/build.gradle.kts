@@ -36,3 +36,16 @@ publishing {
         }
     }
 }
+
+// Layout solver timing harness (LayoutSolverBenchmark): skipped by `test`, run on demand.
+tasks.register<Test>("layoutBenchmark") {
+    group = "verification"
+    description = "Times solveLayout on the benchmark fixtures (results in docs/performance.md)."
+    testClassesDirs = sourceSets["test"].output.classesDirs
+    classpath = sourceSets["test"].runtimeClasspath
+    filter { includeTestsMatching("*LayoutSolverBenchmark") }
+    systemProperty("app8.bench", "true")
+    maxHeapSize = "2g"
+    outputs.upToDateWhen { false }
+    testLogging { showStandardStreams = true }
+}
