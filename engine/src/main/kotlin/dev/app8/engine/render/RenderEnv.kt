@@ -81,7 +81,7 @@ internal class RenderEnv(
     fun measure(text: AnnotatedString, style: ResolvedText, maxWidth: Double?): Size {
         if (text.isEmpty()) return Size(0.0, 0.0)
         val d = density.density
-        val constraints = if (maxWidth == null || style.maxLines == 1) Constraints() else Constraints(maxWidth = (maxWidth * d).toInt().coerceAtLeast(0))
+        val constraints = if (maxWidth == null || style.maxLines == 1) Constraints() else Constraints(maxWidth = ceil(maxWidth * d - 0.01).toInt().coerceAtLeast(0))
         val r: TextLayoutResult = measurer.measure(
             text, style.style, overflow = style.overflow, softWrap = style.softWrap && style.maxLines != 1,
             maxLines = style.maxLines, constraints = constraints, density = density,
