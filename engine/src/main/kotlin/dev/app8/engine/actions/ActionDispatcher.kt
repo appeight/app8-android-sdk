@@ -8,6 +8,7 @@ import dev.app8.engine.core.model.ScreenTransition
 import dev.app8.engine.core.vars.AnyCodableValue
 import dev.app8.engine.core.vars.Values
 import dev.app8.engine.core.vars.VariableContext
+import dev.app8.engine.core.vars.VariableStoreProtocol
 import dev.app8.engine.core.vars.actions.VariableAction
 import dev.app8.engine.core.vars.actions.VariableActionHandler
 import dev.app8.engine.events.App8AnalyticsEvent
@@ -30,18 +31,55 @@ internal class ActionDispatcher(
     private val variableHandler = VariableActionHandler().apply { logger = runtime.diagnostics }
 
     /** Fires analytics for [trigger] on [node], then runs its actions in order. */
-    fun dispatchTrigger(node: RenderNode, trigger: ActionTrigger, context: VariableContext = node.scope.untracked) {
+    /**
+     * Fires analytics for [trigger] on [node], then runs its actions in order. Collections pass
+     * the tapped cell's [context] and [store] so `{{item}}` resolves and variable actions run
+     * against the cell scope (iOS `handleSelection` with the cell store).
+     */
+    fun dispatchTrigger(
+        node: RenderNode,
+        trigger: ActionTrigger,
+        context: VariableContext = node.scope.untracked,
+        store: VariableStoreProtocol = node.scope.store,
+    ) {
         fireTriggerAnalytics(node, trigger, context)
         val actions = node.content.actions?.get(trigger).orEmpty()
+        for (action in actions) execute(node, action, context, store)
+    }
+
+    /**
+     * A `tableView` row tap (iOS `didSelectRowAt` + `fireRowTapAnalytics`): the auto
+     * `app8.component.tapped` and the row's own binding, anchored on the row id with
+     * component type `tableViewRow`, then the row's `tap` actions in the table's scope.
+     */
+    fun dispatchRowTap(node: RenderNode, rowId: String, actions: List<Action>, binding: AnalyticsBinding?) {
+        val context = node.scope.untracked
+        if (runtime.analyticsConfig.autoComponentTaps) {
+            analytics(node, App8AnalyticsEvent.Auto.COMPONENT_TAPPED, emptyMap(), rowId, "tableViewRow")
+        }
+        if (binding != null) {
+            val props = resolvePayload(node, binding.properties, context)
+            for (key in props.keys) {
+                if (key in App8AnalyticsEvent.canonicalKeys) {
+                    warnOnce("collision:${binding.name}:$key", "analytics binding '${binding.name}' writes canonical key '$key'; the SDK value wins")
+                }
+            }
+            analytics(node, normalizeAuthorAnalyticsName(binding.name, ::warnOnce), props, rowId, "tableViewRow")
+        }
         for (action in actions) execute(node, action, context)
     }
 
-    fun execute(node: RenderNode, action: Action, context: VariableContext = node.scope.untracked) {
+    fun execute(
+        node: RenderNode,
+        action: Action,
+        context: VariableContext = node.scope.untracked,
+        store: VariableStoreProtocol = node.scope.store,
+    ) {
         when (action.type) {
             Action.Type.updateVariable, Action.Type.incrementVariable, Action.Type.toggleArrayValue,
             Action.Type.appendToArray, Action.Type.incrementArrayItem, Action.Type.updateMultipleVariables,
             Action.Type.resetVariables,
-            -> runCatching { variableHandler.execute(action.toVariableAction(), node.scope.store, context) }
+            -> runCatching { variableHandler.execute(action.toVariableAction(), store, context) }
                 .onFailure { runtime.diagnostics.warn("action.variable", "${action.type} in ${node.key}: ${it.message}") }
 
             Action.Type.setState -> action.stateName?.let { raw -> setState(node, node.string(raw, context) ?: raw) }
@@ -139,13 +177,19 @@ internal class ActionDispatcher(
         analytics(node, normalizeAuthorAnalyticsName(binding.name, ::warnOnce), props)
     }
 
-    private fun analytics(node: RenderNode, name: String, properties: Map<String, Any?>) {
+    private fun analytics(
+        node: RenderNode,
+        name: String,
+        properties: Map<String, Any?>,
+        componentId: String = node.id,
+        componentType: String = node.type.raw,
+    ) {
         runtime.analyticsBus.dispatch(
             App8AnalyticsEvent(
                 name = name,
                 screenId = node.session.screenId,
-                componentId = node.id,
-                componentType = node.type.raw,
+                componentId = componentId,
+                componentType = componentType,
                 locale = runtime.translations.activeLocaleTag,
                 properties = properties,
             ),

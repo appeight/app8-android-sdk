@@ -78,6 +78,8 @@ internal object ComponentRegistry {
         ComponentType.Key.scrollView to ScrollKind,
         ComponentType.Key.shape to ShapeKind,
         ComponentType.Key.pageControl to PageControlKind,
+        ComponentType.Key.collection to CollectionKind,
+        ComponentType.Key.tableView to TableViewKind,
     )
 
     fun kind(node: RenderNode): ComponentKind = node.typeKey?.let { kinds[it] } ?: PlaceholderKind

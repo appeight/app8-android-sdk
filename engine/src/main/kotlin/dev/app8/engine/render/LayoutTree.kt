@@ -37,6 +37,8 @@ internal data class Solved(
     val absolute: Map<String, Frame>,
     val contentSizes: Map<String, Size>,
     val safeArea: EdgeInsets,
+    /** The root's height, or for a content-sized root (self-sizing cells), how far its content reaches. */
+    val contentHeight: Double = 0.0,
 ) {
     companion object {
         val EMPTY = Solved(emptyMap(), emptyMap(), emptyMap(), EdgeInsets.ZERO)
@@ -87,7 +89,7 @@ internal object LayoutTree {
  * area (shoppu-web `render/solve.ts`). Re-rendering a screen whose layout inputs did not
  * change, or switching back to a tab, skips the solver.
  */
-internal class SolveCache(private val maxEntries: Int = 256) {
+internal class SolveCache(private val maxEntries: Int = 1024) {
     private val cache = object : LinkedHashMap<String, Solved>(64, 0.75f, true) {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Solved>?) = size > maxEntries
     }
@@ -104,7 +106,7 @@ internal class SolveCache(private val maxEntries: Int = 256) {
         val r = solveLayout(tree, bounds, safeArea, scale = scale)
         val local = HashMap<String, Frame>(r.frames.size)
         for (k in r.frames.keys) r.localFrame(k)?.let { local[k] = it }
-        return Solved(local, r.frames, r.contentSizes, safeArea).also { cache[key] = it }
+        return Solved(local, r.frames, r.contentSizes, safeArea, r.contentHeight).also { cache[key] = it }
     }
 
     fun clear() = cache.clear()
