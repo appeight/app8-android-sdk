@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
@@ -53,7 +54,8 @@ internal object LabelKind : ComponentKind {
         val model = env.textModel((node.content.style as? LabelStyle)?.text)
         var style = env.text(model, 17f, env.labelColor, defaultLines = 1)
         props.numberOfLines?.let { n -> style = style.copy(maxLines = if (n <= 0) Int.MAX_VALUE else n) }
-        val raw = node.localized(props.text)
+        // A one-line UILabel draws only the first line of multi-line text, without an ellipsis.
+        val raw = node.localized(props.text).let { if (style.maxLines == 1) it.substringBefore('\n') else it }
         val spans = props.spans
         val text = if (spans.isNullOrEmpty()) AnnotatedString(raw) else buildAnnotatedString {
             append(raw)
@@ -94,12 +96,27 @@ internal object LabelKind : ComponentKind {
 internal fun DslText(text: AnnotatedString, style: ResolvedText, modifier: Modifier = Modifier) {
     BasicText(
         text = text,
-        modifier = modifier,
+        modifier = modifier.then(PixelSlack),
         style = style.style,
         overflow = style.overflow,
         softWrap = style.softWrap && style.maxLines != 1,
         maxLines = style.maxLines,
     )
+}
+
+/**
+ * The solver snaps both edges of a frame to the pixel grid, so a frame can be one pixel
+ * narrower than the text's measured width; lay text out 2px wider (centered on the frame)
+ * so that rounding never truncates or wraps it.
+ */
+private val PixelSlack = Modifier.layout { measurable, constraints ->
+    if (!constraints.hasBoundedWidth) {
+        val p = measurable.measure(constraints)
+        return@layout layout(p.width, p.height) { p.place(0, 0) }
+    }
+    val w = constraints.maxWidth
+    val p = measurable.measure(constraints.copy(minWidth = w + 2, maxWidth = w + 2))
+    layout(w, p.height.coerceIn(constraints.minHeight, constraints.maxHeight)) { p.place(-1, 0) }
 }
 
 /**
