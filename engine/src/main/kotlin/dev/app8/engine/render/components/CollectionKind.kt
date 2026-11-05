@@ -250,14 +250,21 @@ internal object CollectionKind : ComponentKind {
         val inverted = p.inverted == true
         var top = (insets?.top ?: 0.0)
         var bottom = (insets?.bottom ?: 0.0)
-        if (inverted) top = bottom.also { bottom = top }
-        val padding = PaddingValues(top = (top + auto.first).dp, bottom = (bottom + auto.second).dp)
+        var autoTop = auto.first
+        var autoBottom = auto.second
+        // iOS flips the whole collection view (transform scaleY -1), so both contentInset and
+        // the safe-area adjustment swap ends: the bottom safe area pads the visual top.
+        if (inverted) {
+            top = bottom.also { bottom = top }
+            autoTop = autoBottom.also { autoBottom = autoTop }
+        }
+        val padding = PaddingValues(top = (top + autoTop).dp, bottom = (bottom + autoBottom).dp)
         val state = rememberLazyListState()
         val sticky = p.stickyHeaders == true
         val dispatcher = LocalDispatcher.current
         val swipe = p.swipeActions?.takeIf { !isMixed(c) && config?.type != CollectionLayout.LayoutType.grid }
 
-        ScrollEffects(model, p, state, rows, auto.first)
+        ScrollEffects(model, p, state, rows, if (inverted) autoBottom else autoTop)
 
         val list: @Composable () -> Unit = {
             LazyColumn(

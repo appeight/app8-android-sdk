@@ -25,6 +25,12 @@ import androidx.compose.ui.graphics.layer.GraphicsLayer
 import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.graphics.shadow.ShadowContext
+import androidx.core.graphics.withTranslation
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.addOutline
+import androidx.compose.ui.graphics.asAndroidPath
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.node.CompositionLocalConsumerModifierNode
@@ -241,25 +247,33 @@ internal fun DrawScope.drawPlan(plan: MaterialPlan, shadows: ShadowContext, effe
     }
 }
 
-/** One `CALayer`-style shadow of the box with [corner] (see [ShadowSpec]). */
+/**
+ * One `CALayer`-style shadow of the box with [corner] (see [ShadowSpec]), drawn straight
+ * onto the canvas with a blur mask. Compose's drop-shadow painter renders into a bitmap
+ * only [blurMaskRadiusForSigma] larger than the shape, which cut large soft shadows off
+ * with a hard edge (screens/PhotoStackTest); the mask filter has no such bound.
+ */
+@Suppress("UNUSED_PARAMETER")
 internal fun DrawScope.drawShadow(spec: ShadowSpec, corner: Corner?, shadows: ShadowContext) {
     if (spec.opacity <= 0f || spec.color.alpha <= 0f) return
+    val spread = spec.spread * density
+    val w = size.width + 2 * spread
+    val h = size.height + 2 * spread
+    if (w <= 0f || h <= 0f) return
     val shape = if (corner == null) {
         androidx.compose.ui.graphics.RectangleShape
     } else {
         ContinuousRoundedShape((cornerRadiusPx(corner) / density).dp, corner.smoothing)
     }
-    // Compose feeds `radius` (px) straight into BlurMaskFilter; CA's radius is a sigma.
-    val blurRadius = blurMaskRadiusForSigma(spec.radius * density) / density
-    val shadow = Shadow(
-        radius = blurRadius.dp,
-        color = spec.color,
-        spread = spec.spread.dp,
-        offset = DpOffset(spec.offsetX.dp, spec.offsetY.dp),
-        alpha = spec.opacity,
-    )
-    // The platform context caches the blurred bitmap per shape, size and shadow.
-    val painter = shadows.createDropShadowPainter(shape, shadow)
-    with(painter) { draw(size) }
+    val outline = shape.createOutline(androidx.compose.ui.geometry.Size(w, h), layoutDirection, this)
+    val path = Path().apply { addOutline(outline) }.asAndroidPath()
+    val blur = blurMaskRadiusForSigma(spec.radius * density)
+    val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        color = spec.color.copy(alpha = spec.color.alpha * spec.opacity).toArgb()
+        if (blur > 0f) maskFilter = android.graphics.BlurMaskFilter(blur, android.graphics.BlurMaskFilter.Blur.NORMAL)
+    }
+    drawIntoCanvas { canvas ->
+        canvas.nativeCanvas.withTranslation(spec.offsetX * density - spread, spec.offsetY * density - spread) { drawPath(path, paint) }
+    }
 }
 

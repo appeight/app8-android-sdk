@@ -44,6 +44,27 @@ class LayoutSemanticsTest {
     }
 
     @Test
+    fun edgePinnedViewWithoutSizeCollapsesAtThatEdge() {
+        // screens/ChatMessages: a title container pinned only leading + bottom, its label
+        // pinned leading + top inside it. On iOS the container sits at the bottom edge with
+        // zero height (the label hangs below it), not stretched up from the header's top.
+        val header = LayoutNode(
+            "header",
+            layout = Layout(leading = fixed(0), top = fixed(0), width = fixed(300), height = fixed(140)),
+            children = listOf(
+                LayoutNode(
+                    "title",
+                    layout = Layout(constraints = listOf(c(LEADING, "superview", constant = 20), c(BOTTOM, "superview", constant = -16))),
+                    children = listOf(label("text", 120.0, 41.0, layout = Layout(constraints = listOf(c(LEADING, "superview"), c(TOP, "superview"))))),
+                ),
+            ),
+        )
+        val r = solveLayout(screen(header), PHONE)
+        assertEquals(frame(20, 124, 0, 0), r["title"])
+        assertEquals(frame(20, 124, 120, 41), r["text"])
+    }
+
+    @Test
     fun fractionalEdgesAreIgnoredAsOnIOS() {
         val v = LayoutNode("v", layout = Layout(leading = Dimension.Fraction(0.5), top = fixed(0), width = fixed(10), height = fixed(10)))
         assertEquals(frame(0, 0, 10, 10), solveLayout(screen(v), PHONE)["v"])

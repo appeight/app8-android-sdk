@@ -321,4 +321,28 @@ class StackViewLayoutTest {
         )
         assertEquals(50.0, solveLayout(screen(stack), PHONE)["a"]!!.width)
     }
+
+    @Test
+    fun firstNestedStackTakesTheSlackInAFillStack() {
+        // screens/StackViewProfileCard: two centre-aligned rows in a 76pt fill stack. UIKit
+        // stretches the first row (index tie-break), like leaf views with equal hugging.
+        fun row(k: String) = LayoutNode(
+            k,
+            stack = StackSpec(StackAxis.HORIZONTAL, 10.0, StackAlignment.CENTER, StackDistribution.FILL),
+            children = listOf(
+                LayoutNode("$k-icon", layout = Layout(width = fixed(16), height = fixed(16))),
+                label("$k-text", 150.0, 20.0),
+            ),
+        )
+        val info = LayoutNode(
+            "info",
+            stack = StackSpec(StackAxis.VERTICAL, 12.0, StackAlignment.FILL, StackDistribution.FILL),
+            layout = Layout(leading = fixed(0), top = fixed(0), width = fixed(320), height = fixed(76)),
+            children = listOf(row("a"), row("b")),
+        )
+        val r = solveLayout(screen(info), PHONE)
+        assertEquals(Frame(0.0, 0.0, 320.0, 44.0), r["a"])
+        assertEquals(Frame(0.0, 56.0, 320.0, 20.0), r["b"])
+        assertEquals(12.0, r["a-text"]!!.y)
+    }
 }

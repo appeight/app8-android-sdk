@@ -151,6 +151,10 @@ internal object ButtonKind : ComponentKind {
         env.color(system.foreground)?.let { return it }
         return when (system.variant) {
             SystemButtonStyle.Variant.filled, SystemButtonStyle.Variant.borderedProminent, SystemButtonStyle.Variant.prominentGlass, null -> Color.White
+            // iOS 26 `.gray()`, `.bordered()` and `.glass()` draw their title in `label`, not the
+            // tint (conformance screens/ButtonExamples, apps/SystemButtonCatalog).
+            SystemButtonStyle.Variant.gray, SystemButtonStyle.Variant.bordered, SystemButtonStyle.Variant.glass ->
+                IosSystemColors.of("label", env.appearance)
             else -> tint(system, env)
         }
     }
@@ -202,8 +206,9 @@ internal object ButtonKind : ComponentKind {
             val fill: Color? = when (system.variant) {
                 SystemButtonStyle.Variant.plain -> null
                 SystemButtonStyle.Variant.gray -> IosSystemColors.of("secondarySystemFill", env.appearance)
-                SystemButtonStyle.Variant.tinted, SystemButtonStyle.Variant.borderedTinted, SystemButtonStyle.Variant.glass -> tint.copy(alpha = 0.15f)
-                SystemButtonStyle.Variant.bordered -> IosSystemColors.of("tertiarySystemFill", env.appearance)
+                SystemButtonStyle.Variant.tinted, SystemButtonStyle.Variant.borderedTinted -> tint.copy(alpha = 0.15f)
+                // Clear glass over the backdrop reads as a neutral fill, whatever the tint.
+                SystemButtonStyle.Variant.bordered, SystemButtonStyle.Variant.glass -> IosSystemColors.of("tertiarySystemFill", env.appearance)
                 else -> tint
             }
             m = m.clip(shape)

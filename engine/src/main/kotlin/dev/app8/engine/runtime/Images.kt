@@ -34,7 +34,9 @@ private class AssetFetcher(
         if (bytes != null) {
             return SourceFetchResult(ImageSource(Buffer().write(bytes), options.fileSystem), null, DataSource.DISK)
         }
-        val url = ref.url ?: ref.name?.takeIf { it.startsWith("http://") || it.startsWith("https://") } ?: return null
+        val url = ref.url ?: ref.name?.takeIf { it.startsWith("http://") || it.startsWith("https://") }
+            // Say what is missing instead of Coil's "Unable to create a fetcher".
+            ?: throw IllegalStateException("asset '${ref.name ?: ref.id}' not found in the data source and no url")
         val (fetcher, _) = loader.components.newFetcher(url.toUri(), options, loader) ?: return null
         return fetcher.fetch()
     }

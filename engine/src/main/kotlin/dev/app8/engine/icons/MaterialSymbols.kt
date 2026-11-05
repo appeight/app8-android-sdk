@@ -30,15 +30,32 @@ internal object MaterialSymbols {
         }.getOrDefault(emptyMap()).also { table = it }
     }
 
+    private val glyphs = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
+    @Volatile private var paint: android.graphics.Paint? = null
+
+    /**
+     * Whether the bundled font has a ligature for [name]. An unknown name would otherwise
+     * render as its letters (`suitcase` drew "SUI…" in a tab bar).
+     */
+    fun hasGlyph(context: Context, name: String): Boolean = glyphs.getOrPut(name) {
+        val p = paint ?: runCatching {
+            android.graphics.Paint().apply { typeface = androidx.core.content.res.ResourcesCompat.getFont(context, R.font.material_symbols_rounded) }
+        }.getOrNull()?.also { paint = it }
+        p?.hasGlyph(name) ?: true
+    }
+
+    /** [resolve] with bare Material names checked against the font. */
+    fun resolve(context: Context, name: String): Glyph? = resolve(name, load(context)) { hasGlyph(context, it) }
+
     /** The glyph for an SF Symbol (or Material Symbol) name; null when unmapped. */
-    fun resolve(name: String, table: Map<String, String>): Glyph? {
+    fun resolve(name: String, table: Map<String, String>, known: (String) -> Boolean = { true }): Glyph? {
         table[name]?.let { return Glyph(it, filled = name.endsWith(".fill")) }
         val base = name.removeSuffix(".fill")
         val filled = base != name || name.contains(".fill.")
         table[base]?.let { return Glyph(it, filled) }
         table[name.replace(".fill", "")]?.let { return Glyph(it, true) }
         // A Material Symbols name (the `android` override): lowercase, underscores, no dots.
-        if (MATERIAL_NAME.matches(name)) return Glyph(name, filled = false)
+        if (MATERIAL_NAME.matches(name) && known(name)) return Glyph(name, filled = false)
         return null
     }
 

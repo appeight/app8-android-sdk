@@ -115,7 +115,7 @@ private fun ActionButton(action: CollectionProperties.SwipeAction, modifier: Mod
     Box(modifier.background(bg).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             action.systemImage?.let { name ->
-                val glyph = MaterialSymbols.resolve(name, MaterialSymbols.load(LocalContext.current))
+                val glyph = MaterialSymbols.resolve(LocalContext.current, name)
                 if (glyph != null) {
                     BasicText(glyph.name, style = TextStyle(color = Color.White, fontSize = 22.sp, fontFamily = MaterialSymbols.family(glyph.filled, 400, 22f)), maxLines = 1)
                 }
