@@ -20,6 +20,12 @@ internal data class Route(val screenId: String, val params: Map<String, Any?> = 
 @Stable
 internal class StackState(root: Route) {
     val entries: SnapshotStateList<Route> = mutableStateListOf(root)
+
+    /** Routes whose screen sets `hidesTabBar` (filled in as screens load). */
+    val hidesTabBar: androidx.compose.runtime.snapshots.SnapshotStateMap<Long, Boolean> = androidx.compose.runtime.mutableStateMapOf()
+
+    /** Whether the top screen hides the enclosing tab bar (iOS `hidesBottomBarWhenPushed`). */
+    val topHidesTabBar: Boolean get() = entries.lastOrNull()?.let { hidesTabBar[it.id] } == true
 }
 
 /** The base flow or a presented modal (sheet / full screen), each with its own stack. */

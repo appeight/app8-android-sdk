@@ -19,6 +19,8 @@ import dev.app8.engine.core.vars.VariableStore
 import dev.app8.engine.events.App8AnalyticsBus
 import dev.app8.engine.events.App8AnalyticsConfig
 import dev.app8.engine.events.App8EventBus
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -53,7 +55,8 @@ internal class App8Runtime(
 
     var app: App? = null
         private set
-    var styles: StyleRegistry = StyleRegistry.EMPTY
+    /** Snapshot state: a streamed style update (`streamStyles`) recomposes what reads it. */
+    var styles: StyleRegistry by androidx.compose.runtime.mutableStateOf(StyleRegistry.EMPTY)
         private set
     private var templates: TemplateResolver? = null
     private val screens = HashMap<String, Component>()
@@ -127,6 +130,25 @@ internal class App8Runtime(
         reportDecodeErrors()
         screens[screenId] = component
         return component
+    }
+
+    /**
+     * A streamed screen document (`streamScreen`): decoded like [loadScreen] and cached, so a
+     * later push of the same screen shows the latest version.
+     */
+    fun decodeScreenUpdate(screenId: String, bytes: ByteArray): Component {
+        val component = decoder.decodeScreen(utf8(bytes, "$screenId.json"), templates)
+        reportDecodeErrors()
+        screens[screenId] = component
+        return component
+    }
+
+    /** A streamed stylesheet (`streamStyles`): its styles replace the ones with the same id. */
+    fun applyStyleUpdate(bytes: ByteArray) {
+        val list = runCatching { decoder.decodeStyles(bytes.decodeToString()) }
+            .onFailure { diagnostics.warn("styles.decode", "style stream: ${it.message}") }
+            .getOrNull() ?: return
+        styles = styles.merging(list)
     }
 
     private val templateComponents = HashMap<String, Component?>()
