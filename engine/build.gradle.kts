@@ -14,6 +14,8 @@ android {
     }
     // Style mapping tests touch Compose value types only; android.jar stubs return defaults.
     testOptions { unitTests.isReturnDefaultValues = true }
+    // Pipeline tests run on the JVM; android.jar stubs return defaults instead of throwing.
+    testOptions { unitTests.isReturnDefaultValues = true }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -41,4 +43,5 @@ dependencies {
     debugImplementation(libs.compose.ui.tooling)
     testImplementation(libs.junit)
     testImplementation(libs.kotlin.test)
+    testImplementation(libs.kotlinx.coroutines.core)
 }
