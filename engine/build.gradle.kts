@@ -14,6 +14,8 @@ android {
     }
     // Style mapping tests touch Compose value types only; android.jar stubs return defaults.
     testOptions { unitTests.isReturnDefaultValues = true }
+    // Pipeline tests run on the JVM; android.jar stubs return defaults instead of throwing.
+    testOptions { unitTests.isReturnDefaultValues = true }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -34,7 +36,12 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.coil.compose)
     implementation(libs.coil.network)
+    implementation(libs.navigation3.runtime)
+    implementation(libs.navigation3.ui)
+    implementation(libs.browser)
     implementation(libs.compose.ui.tooling.preview)
     debugImplementation(libs.compose.ui.tooling)
     testImplementation(libs.junit)
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.kotlinx.coroutines.core)
 }
