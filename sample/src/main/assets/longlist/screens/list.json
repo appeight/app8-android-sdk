@@ -1,0 +1,33 @@
+{
+  "type": "screen",
+  "id": "list",
+  "flowId": "main",
+  "content": {
+    "navigationBar": {
+      "title": "Long list"
+    },
+    "variables": {
+      "items": {
+        "type": "array",
+        "source": "datasources/items"
+      }
+    },
+    "children": [
+      {
+        "id": "itemList",
+        "type": "collection",
+        "content": {
+          "properties": {
+            "data": "{{items}}",
+            "templateName": "Row",
+            "layout": {
+              "type": "vertical",
+              "itemSpacing": 0,
+              "estimatedItemHeight": 96
+            }
+          }
+        }
+      }
+    ]
+  }
+}

@@ -51,6 +51,7 @@ import dev.app8.engine.core.model.Trigger
 import dev.app8.engine.core.model.ViewProperties
 import dev.app8.engine.core.model.style.BaseStyle
 import dev.app8.engine.core.model.style.ColorHex
+import dev.app8.engine.debug.Recompositions
 import dev.app8.engine.render.components.ComponentRegistry
 import dev.app8.engine.style.dslClip
 import dev.app8.engine.style.dslMaterial
@@ -72,6 +73,7 @@ internal val LocalInteractionEnabled = compositionLocalOf { true }
  */
 @Composable
 internal fun NodeView(node: RenderNode) {
+    Recompositions.Count(node.key)
     val kind = ComponentRegistry.kind(node)
     if (kind.isHidden(node)) {
         Box(Modifier.layoutId(node.key))
