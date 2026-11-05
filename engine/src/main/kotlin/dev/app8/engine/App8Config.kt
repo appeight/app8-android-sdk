@@ -16,6 +16,13 @@ public data class App8Config(
     val enforcePlatformFloor: Boolean = true,
     /** Draws `map` components (the `engine-maps` module's `GoogleMapsProvider`, or your own); null shows a static placeholder. */
     val mapProvider: dev.app8.engine.maps.App8MapProvider? = null,
+    /**
+     * Material You wallpaper colors for system chrome (sheets, dialogs, pickers, the
+     * navigation bar indicator). Off by default: chrome follows the app's own DSL colors
+     * (app8-dsl platforms.md, "Android system colors"), so a brand app never shows
+     * the user's wallpaper palette.
+     */
+    val dynamicColor: Boolean = false,
 )
 
 /** iOS `UIUserInterfaceStyle`. */

@@ -129,9 +129,15 @@ private fun Screen(session: ScreenSession, chrome: Chrome, canGoBack: Boolean, b
     )
     ScreenAnalytics(session, bar)
     val backdrop = rememberApp8Backdrop()
-    Box(Modifier.fillMaxSize().background(background)) {
-        App8BackdropSource(backdrop) { m -> ScreenCanvas(session, safe, m) }
-        if (bar != null) TopBar(session, bar, canGoBack, chrome.top == null)
+    // A navigation bar or search tint re-themes this screen's chrome (pickers, dialogs).
+    val accent = (bar?.tintColor ?: bar?.search?.tintColor)
+        ?.let { session.root.string(it, session.scope.untracked) }?.takeIf { it.isNotEmpty() }
+        ?.let { Color(ColorHex.parseOrFallback(it).argb) }
+    dev.app8.engine.style.App8ChromeTheme(accent, env.appearance.isDark) {
+        Box(Modifier.fillMaxSize().background(background)) {
+            App8BackdropSource(backdrop) { m -> ScreenCanvas(session, safe, m) }
+            if (bar != null) TopBar(session, bar, canGoBack, chrome.top == null)
+        }
     }
     @Suppress("UNUSED_EXPRESSION") env
 }
