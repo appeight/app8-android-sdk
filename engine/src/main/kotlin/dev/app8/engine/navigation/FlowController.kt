@@ -55,7 +55,16 @@ internal class TabState(initial: Int, val count: Int, private val ids: List<Stri
  * sheets.
  */
 @Stable
-internal class FlowController(private val app: App?, startScreen: String, params: Map<String, Any?> = emptyMap()) {
+internal class FlowController(
+    private val app: App?,
+    startScreen: String,
+    params: Map<String, Any?> = emptyMap(),
+    /** The flow [startScreen] belongs to (iOS `currentFlowId`); null for a lone screen. */
+    startFlowId: String? = null,
+    private val warn: (String) -> Unit = {},
+) {
+    var currentFlowId: String? = startFlowId
+        private set
     val layers: SnapshotStateList<Layer> = mutableStateListOf(Layer(StackState(Route(startScreen, params)), null))
 
     fun present(screenId: String, params: Map<String, Any?>, presentation: Action.PresentationStyle, detents: List<Action.SheetDetent>?, grabber: Boolean?) {
@@ -70,11 +79,21 @@ internal class FlowController(private val app: App?, startScreen: String, params
         if (layers.size > 1) layers.removeAt(layers.lastIndex)
     }
 
-    /** `completeFlow`: [destination] is a flow id (its start screen) or a screen id. */
+    /**
+     * `completeFlow` (iOS `FlowCoordinator.completeFlow`): one-way switch to the flow
+     * [destination]. An unknown flow is an error and leaves navigation as it is; switching
+     * to the current flow is ignored (a launch timer can fire more than once).
+     */
     fun completeFlow(destination: String) {
-        val screen = app?.navigation?.flows?.firstOrNull { it.id == destination }?.startScreen ?: destination
+        val flow = app?.navigation?.flows?.firstOrNull { it.id == destination }
+        if (flow == null) {
+            warn("Flow not found: $destination")
+            return
+        }
+        if (destination == currentFlowId) return
+        currentFlowId = destination
         layers.clear()
-        layers += Layer(StackState(Route(screen)), null)
+        layers += Layer(StackState(Route(flow.startScreen)), null)
     }
 }
 
