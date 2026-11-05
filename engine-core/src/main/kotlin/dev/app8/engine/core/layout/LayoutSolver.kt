@@ -596,8 +596,12 @@ private class LayoutPass(
             }
         }
         if (s.alignment != StackAlignment.FILL) {
-            // As tall/wide as the largest arranged subview when nothing else decides.
-            add(sv.attr(cross), eq, 0.0, STACK_SPANNING_FIT)
+            // As tall/wide as the largest arranged subview when nothing else decides. In a
+            // `fill` parent stack whose axis is this cross axis, the index tie-break applies
+            // as for intrinsic sizes: the first nested stack takes the slack, as in UIKit.
+            val parentAxis = info.parent?.node?.stack?.axis
+            val tie = if (parentAxis != null && parentAxis != s.axis) info.tieBreak else 0.0
+            add(sv.attr(cross), eq, 0.0, STACK_SPANNING_FIT + tie)
         }
 
         when (s.distribution) {
