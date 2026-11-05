@@ -165,6 +165,14 @@ public class App8Instance internal constructor(
         val view = LocalView.current
         val effects = remember(context, view) { ComposeHostEffects(context, view, runtime.diagnostics) }
         val flow = remember(app, startScreen) { FlowController(app, startScreen, params) }
+        // Readable system bar icons over DSL content: light icons in dark appearance.
+        androidx.compose.runtime.SideEffect {
+            val window = (view.context as? android.app.Activity)?.window ?: return@SideEffect
+            androidx.core.view.WindowCompat.getInsetsController(window, view).apply {
+                isAppearanceLightStatusBars = !dark
+                isAppearanceLightNavigationBars = !dark
+            }
+        }
         MaterialTheme(colorScheme = if (dark) darkColorScheme() else lightColorScheme()) {
             CompositionLocalProvider(
                 LocalApp8Appearance provides appearance,
