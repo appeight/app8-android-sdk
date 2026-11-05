@@ -52,7 +52,10 @@ import androidx.compose.ui.Modifier.Node
  * [appearance] `null` follows [LocalApp8Appearance].
  */
 internal fun Modifier.dslMaterial(material: Material, appearance: App8Appearance? = null): Modifier =
-    this then DslMaterialElement(material, appearance)
+    this then DslMaterialElement(material, null, appearance)
+
+/** Draws an already resolved [plan] (render features the DSL can't express yet: radial fills, spread, …). */
+internal fun Modifier.materialPlan(plan: MaterialPlan): Modifier = this then DslMaterialElement(null, plan, null)
 
 /** Clips content to the material's first corner (iOS `clipsToBounds` with the corner's radius and curve). */
 internal fun Modifier.dslClip(material: Material): Modifier {
@@ -60,13 +63,13 @@ internal fun Modifier.dslClip(material: Material): Modifier {
     return if (corner == null) this else clip(DslCornerShape(corner))
 }
 
-private data class DslMaterialElement(val material: Material, val appearance: App8Appearance?) :
+private data class DslMaterialElement(val material: Material?, val plan: MaterialPlan?, val appearance: App8Appearance?) :
     ModifierNodeElement<DslMaterialNode>() {
-    override fun create() = DslMaterialNode(material, appearance)
-    override fun update(node: DslMaterialNode) = node.update(material, appearance)
+    override fun create() = DslMaterialNode(material, plan, appearance)
+    override fun update(node: DslMaterialNode) = node.update(material, plan, appearance)
     override fun InspectorInfo.inspectableProperties() {
         name = "dslMaterial"
-        properties["material"] = material
+        properties["material"] = material ?: plan
         properties["appearance"] = appearance
     }
 }
@@ -77,7 +80,8 @@ private val GLASS_LIFT = ShadowSpec(Color.Black, radius = 4f, offsetX = 0f, offs
 private const val BACKDROP_SCALE = 0.25f
 
 private class DslMaterialNode(
-    private var material: Material,
+    private var material: Material?,
+    private var fixedPlan: MaterialPlan?,
     private var appearance: App8Appearance?,
 ) : Node(), DrawModifierNode, GlobalPositionAwareModifierNode, CompositionLocalConsumerModifierNode {
 
@@ -87,9 +91,10 @@ private class DslMaterialNode(
     private val effectLayers = mutableListOf<GraphicsLayer>()
     private val renderEffects = HashMap<Pair<EffectSpec, Float>, androidx.compose.ui.graphics.RenderEffect>()
 
-    fun update(material: Material, appearance: App8Appearance?) {
-        if (material != this.material || appearance != this.appearance) {
+    fun update(material: Material?, plan: MaterialPlan?, appearance: App8Appearance?) {
+        if (material != this.material || plan != fixedPlan || appearance != this.appearance) {
             this.material = material
+            this.fixedPlan = plan
             this.appearance = appearance
             cachedPlan = null
             invalidateDraw()
@@ -97,9 +102,10 @@ private class DslMaterialNode(
     }
 
     private fun plan(): MaterialPlan {
+        fixedPlan?.let { return it.also { cachedPlan = it } }
         val a = appearance ?: currentValueOf(LocalApp8Appearance)
         cachedPlan?.let { if (cachedFor == a) return it }
-        return material.resolve(a).also { cachedPlan = it; cachedFor = a }
+        return (material?.resolve(a) ?: MaterialPlan.EMPTY).also { cachedPlan = it; cachedFor = a }
     }
 
     override fun onGloballyPositioned(coordinates: LayoutCoordinates) {
