@@ -1,0 +1,475 @@
+B:true
+B:false
+I:42
+D:3.14
+S:"hello"
+S:"world"
+NULL
+[I:1,I:2,I:3]
+[I:1,S:"a",B:true,NULL,D:2.5]
+[I:1,I:3]
+[]
+S:"John"
+I:25
+B:true
+[S:"apple",S:"banana",S:"cherry"]
+{age=I:30,email=S:"jane@example.com",firstName=S:"Jane",lastName=S:"Doe"}
+ERR:Undefined variable: 'undefinedVar'
+N
+S:"John Doe"
+N
+S:"apple"
+I:5
+I:6
+I:12
+D:5.0
+D:3.5
+D:0.3333333333333333
+I:1
+I:-1
+D:1.5
+ERR:Modulo by zero
+ERR:Division by zero
+ERR:Division by zero
+I:30
+I:50
+I:2499
+I:25
+D:0.30000000000000004
+I:3
+S:"Hello World"
+S:"John is 25 years old"
+S:"x1.5"
+S:"x2.0"
+S:"xtrue"
+S:"x"
+S:"xOptional([\"apple\", \"banana\", \"cherry\"])"
+S:"x"
+I:2
+I:2
+S:"truex"
+[S:"apple",S:"banana",S:"cherry",S:"apple",S:"banana",S:"cherry"]
+ERR:Cannot add values of incompatible types
+ERR:Cannot add values of incompatible types
+ERR:Cannot add values of incompatible types
+I:3
+I:10
+ERR:Cannot subtract non-numeric values
+I:16
+I:26
+D:nan
+D:inf
+I:-25
+D:-24.99
+I:-3
+I:-1
+ERR:Cannot negate non-numeric value
+I:5
+B:true
+B:false
+B:true
+B:false
+B:true
+B:false
+B:true
+B:false
+B:true
+B:true
+B:false
+B:true
+B:true
+B:false
+B:true
+B:true
+B:true
+B:false
+B:true
+B:true
+B:true
+B:true
+B:false
+B:true
+B:false
+B:true
+B:false
+B:false
+B:true
+B:true
+B:true
+B:false
+B:true
+B:false
+B:true
+B:false
+B:true
+B:false
+B:true
+B:true
+B:true
+B:false
+B:true
+B:false
+B:false
+B:true
+B:true
+B:true
+B:true
+B:true
+B:true
+B:true
+B:false
+B:false
+B:false
+B:true
+B:true
+B:true
+B:false
+B:false
+B:true
+B:false
+B:true
+B:false
+B:false
+B:true
+B:true
+B:false
+B:true
+B:true
+S:"adult"
+S:"yes"
+S:"no"
+I:2
+S:"Jane"
+I:30
+N
+I:3
+I:4
+I:3
+I:3
+N
+N
+[I:1,{c=S:"deep"}]
+S:"deep"
+N
+N
+S:"apple"
+S:"cherry"
+N
+N
+S:"banana"
+S:"banana"
+ERR:Array index must be a number
+S:"banana"
+N
+N
+S:"Jeans"
+I:3
+I:5
+I:3
+I:3
+I:4
+I:0
+I:0
+ERR:length() expects 1 argument
+ERR:length() expects 1 argument
+B:true
+B:false
+B:true
+B:true
+B:true
+B:true
+B:true
+B:true
+B:true
+B:false
+B:false
+B:true
+B:false
+B:true
+B:false
+B:false
+B:false
+B:true
+B:false
+[{active=B:true,categoryId=I:10,id=I:1,name=S:"Shirt",price=I:35},{active=B:true,categoryId=I:20,id=I:2,name=S:"Jeans",price=I:80},{active=B:false,categoryId=I:10,id=I:3,name=S:"Jacket",price=D:120.5},{active=B:true,categoryId=I:20,id=I:4,name=S:"Dress",price=I:60}]
+[{active=B:true,categoryId=I:10,id=I:1,name=S:"Shirt",price=I:35},{active=B:true,categoryId=I:20,id=I:2,name=S:"Jeans",price=I:80},{active=B:true,categoryId=I:20,id=I:4,name=S:"Dress",price=I:60}]
+[{active=B:true,categoryId=I:20,id=I:2,name=S:"Jeans",price=I:80},{active=B:false,categoryId=I:10,id=I:3,name=S:"Jacket",price=D:120.5},{active=B:true,categoryId=I:20,id=I:4,name=S:"Dress",price=I:60}]
+[{active=B:true,categoryId=I:10,id=I:1,name=S:"Shirt",price=I:35},{active=B:false,categoryId=I:10,id=I:3,name=S:"Jacket",price=D:120.5}]
+[]
+[I:4,I:5,I:9,I:6]
+[]
+[S:"Shirt",S:"Jeans",S:"Jacket",S:"Dress"]
+[I:6,I:2,I:8,I:2,I:10,I:18,I:4,I:12]
+[D:1.5,D:0.5,D:2.0,D:0.5,D:2.5,D:4.5,D:1.0,D:3.0]
+[{active=B:true,categoryId=I:10,id=I:1,name=S:"Shirt",price=I:35},{active=B:true,categoryId=I:20,id=I:2,name=S:"Jeans",price=I:80},{active=B:false,categoryId=I:10,id=I:3,name=S:"Jacket",price=D:120.5},{active=B:true,categoryId=I:20,id=I:4,name=S:"Dress",price=I:60}]
+{active=B:true,categoryId=I:20,id=I:2,name=S:"Jeans",price=I:80}
+{active=B:true,categoryId=I:10,id=I:1,name=S:"Shirt",price=I:35}
+{active=B:false,categoryId=I:10,id=I:3,name=S:"Jacket",price=D:120.5}
+N
+N
+I:6
+{active=B:true,categoryId=I:20,id=I:4,name=S:"Dress",price=I:60}
+N
+[{active=B:true,categoryId=I:10,id=I:1,name=S:"Shirt",price=I:35},{active=B:true,categoryId=I:20,id=I:2,name=S:"Jeans",price=I:80},{active=B:false,categoryId=I:10,id=I:3,name=S:"Jacket",price=D:120.5},{active=B:true,categoryId=I:20,id=I:4,name=S:"Dress",price=I:60}]
+[I:35,I:80,I:60]
+I:123
+I:0
+I:0
+I:5
+I:0
+I:12
+I:-12
+I:0
+I:0
+I:0
+D:3.14
+D:1000.0
+D:0.0
+D:2.0
+D:0.5
+D:5.0
+D:8.0
+D:inf
+S:"42"
+S:"true"
+S:"3.0"
+S:"2.5"
+S:"0.3333333333333333"
+S:"1e+20"
+ERR:Expected ')' after function arguments
+S:"Optional([0.1, 0.2, 0.30000000000000004, 1.005, 2.5, -2.5, 1e-07, 123456789012.5])"
+S:""
+S:""
+S:"Optional([\"apple\", \"banana\", \"cherry\"])"
+S:"Jane"
+S:"Optional([\"b\": [1, [\"c\": \"deep\"]]])"
+S:"Optional([:])"
+S:"Optional([])"
+S:"Optional([1, \"2\", 3.5, true, <null>, \"abc\"])"
+B:true
+B:false
+B:false
+[]
+[]
+S:"HELLO"
+S:"JOHN"
+S:"STRASSE"
+S:""
+S:"mixed"
+S:"hello"
+S:"hello world"
+S:""
+S:"x"
+S:"hello there"
+S:"bbb"
+S:"foo"
+S:""
+[S:"a",S:"b",S:"c"]
+[S:"hello",S:"world"]
+[S:"a",S:"b",S:"c"]
+[S:"👍🏽",S:"o",S:"k"]
+[S:"a",S:"",S:"b",S:""]
+[S:""]
+S:"ell"
+S:"llo"
+S:"hi"
+S:""
+S:""
+S:""
+S:"he"
+S:"el"
+S:"ok"
+S:"👍🏽"
+S:""
+S:"hello"
+S:""
+B:true
+B:false
+B:true
+B:true
+B:false
+[S:"apple",S:"banana",S:"cherry"]
+[S:"cherry",S:"banana",S:"apple"]
+[I:1,I:1,I:2,I:3,I:4,I:5,I:6,I:9]
+[I:9,I:6,I:5,I:4,I:3,I:2,I:1,I:1]
+[NULL,I:1,B:true,S:"2",D:3.5,S:"abc"]
+[S:"B",S:"C",S:"a",S:"b"]
+[S:"1",S:"9",S:"10"]
+[I:1,I:1,I:2,I:3,I:4,I:5,I:6,I:9]
+[S:"cherry",S:"banana",S:"apple"]
+[]
+S:"apple, banana, cherry"
+S:"applebananacherry"
+S:"1|2|3.5|true||abc"
+S:"0.1 0.2 0.30000000000000004 1.005 2.5 -2.5 1e-07 123456789012.5"
+S:"31415926"
+I:31
+D:123456789014.105
+D:7.5
+D:0.30000000000000004
+I:0
+[S:"apple",S:"banana",S:"cherry",I:3,I:1,I:4,I:1,I:5,I:9,I:2,I:6]
+[S:"apple",S:"banana",S:"cherry",I:3,I:1,I:4,I:1,I:5,I:9,I:2,I:6]
+[S:"banana",S:"cherry"]
+[S:"apple",S:"banana"]
+[S:"apple",S:"banana",S:"cherry"]
+[S:"apple",S:"banana",S:"cherry"]
+[]
+[]
+I:5
+I:4
+I:-3
+I:3
+D:4.6
+D:4.57
+D:5.0
+D:1.0
+I:0
+S:"x"
+I:25
+I:4
+I:-5
+I:5
+I:-4
+I:0
+I:5
+D:5.5
+I:0
+I:1
+I:3
+D:1.5
+I:5
+I:0
+I:1
+S:"Jan 12"
+S:"Jan 12, 2026"
+S:"Jan 12, 2026"
+S:"January 12, 2026"
+S:"Monday, Jan 12"
+S:"Mon"
+S:""
+S:"Jan 12, 2026"
+S:"Jan 13, 2026"
+S:"2026-01-12 10:30"
+S:"05:00"
+S:"Jan 5, 2026"
+S:""
+S:""
+S:""
+S:"Mon, 12 Jan 2026"
+S:"2:30 PM"
+S:""
+S:"14:30"
+S:"2:30 PM"
+S:"12:05 AM"
+S:""
+S:"0:00"
+S:"0:42"
+S:"1:30"
+S:"1:01:01"
+S:"1:00:00"
+S:"-1:-15"
+S:"0:59"
+S:"2:05"
+S:"15 min"
+S:"1h"
+S:"1h 30min"
+S:"2h"
+S:"0 min"
+S:"-30 min"
+I:5
+I:0
+I:5
+I:0
+I:0
+I:2
+I:0
+I:0
+S:""
+S:"just now"
+I:0
+S:"$24.99"
+S:"$0.00"
+S:"€24.99"
+S:"¥1,234"
+S:"£1,234.50"
+S:"CHF 1,234.50"
+S:"XYZ 1,234.50"
+S:"$1,234.50"
+S:"ABC 1,234.50"
+S:"$1,234.50"
+S:"$1,234.50"
+S:"BHD 1,234.500"
+S:"CA$1,234.50"
+S:"-$5.00"
+S:"$0.02"
+S:"$1.12"
+S:"$1,234,567.89"
+S:"$12.50"
+S:""
+S:"NaN"
+S:"+∞"
+S:"-$0.00"
+S:"6,250"
+S:"1,234,567.891"
+S:"0.012"
+S:"1.235"
+S:"100,000,000,000,000,000,000"
+S:"-1,234.5"
+S:"0"
+S:"-0"
+S:"NaN"
+S:"-0"
+S:"86%"
+S:"100%"
+S:"1%"
+S:"-1%"
+S:""
+S:""
+S:"12"
+S:"1 glass"
+S:"5 glasses"
+S:"0 items"
+S:"1 item"
+S:"1 x"
+S:"0 y"
+ERR:plural() expects 3 arguments: count, singular, plural
+S:"home.greeting"
+S:"John"
+S:""
+B:true
+S:"JOHN"
+S:"apple-banana-cherry"
+[I:5,I:9,I:6]
+[S:"a",S:"b"]
+ERR:Function 'foo' is not allowed
+ERR:Function 'eval' is not allowed
+ERR:Invalid function call
+ERR:Unexpected token at position 3
+ERR:Expected ')' after expression
+ERR:Expected ':' after true value in ternary expression
+ERR:Unterminated string literal
+ERR:Invalid character '@' at position 0
+ERR:Invalid character '=' at position 2
+ERR:Invalid character '&' at position 2
+ERR:Invalid character '|' at position 2
+ERR:Expected identifier after '.'
+ERR:Expected identifier after '.'
+I:25
+I:26
+S:"Hello, John!"
+S:"John is 25"
+S:"Jane Doe"
+ERR:Empty expression
+ERR:Unmatched {{ in expression: {{age
+ERR:Undefined variable: 'undefinedVar'
+I:25
+ERR:Expected identifier after '.'
+D:1.0
+I:7
+S:"it's"
+S:"a\\b"
+S:"tab\there"
+ERR:Undefined variable: '$parent'
+ERR:Undefined variable: '$parent'
+ERR:Undefined variable: '_private'
