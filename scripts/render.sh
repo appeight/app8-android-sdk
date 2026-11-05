@@ -46,21 +46,26 @@ ROOT=$(jq -r '.bundle.assetsRoot // empty' "$ENVELOPE")
 if [[ -n "$ROOT" && -d "$ROOT" ]]; then
   HASH=$(printf '%s' "$ROOT" | shasum | cut -c1-12)
   STAMP=$(find "$ROOT" -type f -exec stat -f '%m' {} + 2>/dev/null | sort -n | tail -1)
-  REMOTE=$DEV/assets/$HASH-$STAMP
-  if [[ "$($ADB shell "[ -d $REMOTE ] && echo ok" | tr -d '\r')" != ok ]]; then
-    STAGE=$DEV/assets/.staging-$HASH-$$
-    $ADB shell "rm -rf $STAGE; mkdir -p $STAGE" >/dev/null 2>&1
-    # One tar instead of many files: Android 12's FUSE layer drops long
-    # multi-file pushes into Android/data ("failed to read copy response").
+  # Unpacked inside the app's internal storage with run-as, so the files belong to
+  # the app: on Android 13+ the app cannot read files the shell user wrote into
+  # its Android/data folder. One tar push also avoids Android 12's FUSE dropping
+  # long multi-file pushes.
+  APPDIR=/data/user/0/$PKG/files/a8assets
+  REMOTE=$APPDIR/$HASH-$STAMP
+  RUNAS="$ADB shell run-as $PKG"
+  if [[ "$($RUNAS sh -c "'[ -d $REMOTE ] && echo ok'" | tr -d '\r')" != ok ]]; then
+    STAGE=$APPDIR/.staging-$HASH-$$
     TAR=$(mktemp -t a8assets).tar
     tar -C "$ROOT" -cf "$TAR" . || die "asset tar failed"
     $ADB push "$TAR" /data/local/tmp/a8assets-$$.tar >/dev/null 2>&1 || { rm -f "$TAR"; die "asset push failed"; }
     rm -f "$TAR"
-    $ADB shell "tar -xf /data/local/tmp/a8assets-$$.tar -C $STAGE && rm /data/local/tmp/a8assets-$$.tar" >/dev/null 2>&1 || die "asset unpack failed"
+    $ADB shell chmod 644 /data/local/tmp/a8assets-$$.tar >/dev/null 2>&1
+    $RUNAS sh -c "'rm -rf $STAGE; mkdir -p $STAGE && tar -xf /data/local/tmp/a8assets-$$.tar -C $STAGE'" >/dev/null 2>&1 || die "asset unpack failed"
+    $ADB shell rm -f /data/local/tmp/a8assets-$$.tar >/dev/null 2>&1
     # Lost the race to another render: theirs is complete, drop ours.
-    $ADB shell "if [ -d $REMOTE ]; then rm -rf $STAGE; else mv $STAGE $REMOTE; fi" >/dev/null 2>&1
+    $RUNAS sh -c "'if [ -d $REMOTE ]; then rm -rf $STAGE; else mv $STAGE $REMOTE; fi'" >/dev/null 2>&1
     # Older copies of the same root are stale.
-    $ADB shell "for d in $DEV/assets/$HASH-*; do [ \"\$d\" = $REMOTE ] || rm -rf \"\$d\"; done" >/dev/null 2>&1 || true
+    $RUNAS sh -c "'for d in $APPDIR/$HASH-*; do [ \"\$d\" = $REMOTE ] || rm -rf \"\$d\"; done'" >/dev/null 2>&1 || true
   fi
   jq --arg r "$REMOTE" '.bundle.assetsRoot = $r' "$ENVELOPE" > "$TMP/job.json"
 fi
