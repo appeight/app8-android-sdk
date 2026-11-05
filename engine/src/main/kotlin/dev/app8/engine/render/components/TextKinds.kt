@@ -151,6 +151,8 @@ internal object ButtonKind : ComponentKind {
         env.color(system.foreground)?.let { return it }
         return when (system.variant) {
             SystemButtonStyle.Variant.filled, SystemButtonStyle.Variant.borderedProminent, SystemButtonStyle.Variant.prominentGlass, null -> Color.White
+            // iOS 26 `.gray()` draws its title in `label`, not the tint (conformance screens/ButtonExamples).
+            SystemButtonStyle.Variant.gray -> IosSystemColors.of("label", env.appearance)
             else -> tint(system, env)
         }
     }
