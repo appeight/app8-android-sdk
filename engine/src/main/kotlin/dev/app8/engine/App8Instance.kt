@@ -25,6 +25,7 @@ import dev.app8.engine.core.model.App
 import dev.app8.engine.events.App8AnalyticsBus
 import dev.app8.engine.events.App8AnalyticsConfig
 import dev.app8.engine.events.App8EventBus
+import dev.app8.engine.navigation.AdaptiveSystemBars
 import dev.app8.engine.navigation.AlertHost
 import dev.app8.engine.navigation.ComposeHostEffects
 import dev.app8.engine.navigation.FlowController
@@ -109,13 +110,13 @@ public class App8Instance internal constructor(
     /** The whole app from `navigation.startFlow` (iOS `startApp()`). Errors go to [onError]. */
     @Composable
     public fun App(modifier: Modifier = Modifier, onError: (App8Error) -> Unit = {}) {
-        Root(modifier, onError) { app -> app.initialScreenId }
+        Root(modifier, onError, flowId = { it.navigation?.startFlow }) { app -> app.initialScreenId }
     }
 
     /** One flow of the manifest, from its start screen (iOS `renderFlow(flowId:)`). */
     @Composable
     public fun Flow(flowId: String, modifier: Modifier = Modifier, onError: (App8Error) -> Unit = {}) {
-        Root(modifier, onError) { app -> app.navigation?.flows?.firstOrNull { it.id == flowId }?.startScreen }
+        Root(modifier, onError, flowId = { flowId }) { app -> app.navigation?.flows?.firstOrNull { it.id == flowId }?.startScreen }
     }
 
     /** A single screen with [params] (iOS `renderScreen(screenId:options:)`); it can still navigate. */
@@ -125,7 +126,13 @@ public class App8Instance internal constructor(
     }
 
     @Composable
-    private fun Root(modifier: Modifier, onError: (App8Error) -> Unit, params: Map<String, Any?> = emptyMap(), start: (App) -> String?) {
+    private fun Root(
+        modifier: Modifier,
+        onError: (App8Error) -> Unit,
+        params: Map<String, Any?> = emptyMap(),
+        flowId: (App) -> String? = { null },
+        start: (App) -> String?,
+    ) {
         val loaded by produceState<Result<App>?>(null) {
             runtime.beginWork()
             value = runCatching { runtime.ensureReady() }
@@ -164,14 +171,8 @@ public class App8Instance internal constructor(
         val context = LocalContext.current
         val view = LocalView.current
         val effects = remember(context, view) { ComposeHostEffects(context, view, runtime.diagnostics) }
-        val flow = remember(app, startScreen) { FlowController(app, startScreen, params) }
-        // Readable system bar icons over DSL content: light icons in dark appearance.
-        androidx.compose.runtime.SideEffect {
-            val window = (view.context as? android.app.Activity)?.window ?: return@SideEffect
-            androidx.core.view.WindowCompat.getInsetsController(window, view).apply {
-                isAppearanceLightStatusBars = !dark
-                isAppearanceLightNavigationBars = !dark
-            }
+        val flow = remember(app, startScreen) {
+            FlowController(app, startScreen, params, flowId(app)) { runtime.diagnostics.warn("navigation", it) }
         }
         MaterialTheme(colorScheme = if (dark) darkColorScheme() else lightColorScheme()) {
             CompositionLocalProvider(
@@ -184,6 +185,8 @@ public class App8Instance internal constructor(
             ) {
                 FlowHost(flow, modifier)
                 AlertHost(effects)
+                // Readable system bar icons over DSL content.
+                AdaptiveSystemBars(flow, dark, runtime.pending)
             }
         }
     }

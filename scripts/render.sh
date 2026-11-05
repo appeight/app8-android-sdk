@@ -39,18 +39,22 @@ trap 'rm -rf "$TMP"' EXIT
 cp "$ENVELOPE" "$TMP/job.json"
 
 # assetsRoot is a Mac path; the emulator can't read it. Push the directory once per
-# (path, newest mtime) and point the envelope at the device copy.
+# (path, newest mtime) and point the envelope at the device copy. The copy is keyed by both
+# and published with an atomic rename, so concurrent renders (several harnesses on one
+# device) never see a half-pushed or deleted directory.
 ROOT=$(jq -r '.bundle.assetsRoot // empty' "$ENVELOPE")
 if [[ -n "$ROOT" && -d "$ROOT" ]]; then
   HASH=$(printf '%s' "$ROOT" | shasum | cut -c1-12)
   STAMP=$(find "$ROOT" -type f -exec stat -f '%m' {} + 2>/dev/null | sort -n | tail -1)
-  REMOTE=$DEV/assets/$HASH
-  if [[ "$($ADB shell cat $REMOTE/.stamp 2>/dev/null | tr -d '\r')" != "$STAMP" ]]; then
-    $ADB shell rm -rf $REMOTE >/dev/null 2>&1 || true
-    $ADB shell mkdir -p $REMOTE
-    $ADB push "$ROOT/." $REMOTE/ >/dev/null 2>&1 || die "asset push failed"
-    printf '%s' "$STAMP" > "$TMP/stamp"
-    $ADB push "$TMP/stamp" $REMOTE/.stamp >/dev/null 2>&1
+  REMOTE=$DEV/assets/$HASH-$STAMP
+  if [[ "$($ADB shell "[ -d $REMOTE ] && echo ok" | tr -d '\r')" != ok ]]; then
+    STAGE=$DEV/assets/.staging-$HASH-$$
+    $ADB shell "rm -rf $STAGE; mkdir -p $STAGE" >/dev/null 2>&1
+    $ADB push "$ROOT/." $STAGE/ >/dev/null 2>&1 || die "asset push failed"
+    # Lost the race to another render: theirs is complete, drop ours.
+    $ADB shell "if [ -d $REMOTE ]; then rm -rf $STAGE; else mv $STAGE $REMOTE; fi" >/dev/null 2>&1
+    # Older copies of the same root are stale.
+    $ADB shell "for d in $DEV/assets/$HASH-*; do [ \"\$d\" = $REMOTE ] || rm -rf \"\$d\"; done" >/dev/null 2>&1 || true
   fi
   jq --arg r "$REMOTE" '.bundle.assetsRoot = $r' "$ENVELOPE" > "$TMP/job.json"
 fi
