@@ -50,7 +50,13 @@ if [[ -n "$ROOT" && -d "$ROOT" ]]; then
   if [[ "$($ADB shell "[ -d $REMOTE ] && echo ok" | tr -d '\r')" != ok ]]; then
     STAGE=$DEV/assets/.staging-$HASH-$$
     $ADB shell "rm -rf $STAGE; mkdir -p $STAGE" >/dev/null 2>&1
-    $ADB push "$ROOT/." $STAGE/ >/dev/null 2>&1 || die "asset push failed"
+    # One tar instead of many files: Android 12's FUSE layer drops long
+    # multi-file pushes into Android/data ("failed to read copy response").
+    TAR=$(mktemp -t a8assets).tar
+    tar -C "$ROOT" -cf "$TAR" . || die "asset tar failed"
+    $ADB push "$TAR" /data/local/tmp/a8assets-$$.tar >/dev/null 2>&1 || { rm -f "$TAR"; die "asset push failed"; }
+    rm -f "$TAR"
+    $ADB shell "tar -xf /data/local/tmp/a8assets-$$.tar -C $STAGE && rm /data/local/tmp/a8assets-$$.tar" >/dev/null 2>&1 || die "asset unpack failed"
     # Lost the race to another render: theirs is complete, drop ours.
     $ADB shell "if [ -d $REMOTE ]; then rm -rf $STAGE; else mv $STAGE $REMOTE; fi" >/dev/null 2>&1
     # Older copies of the same root are stale.
