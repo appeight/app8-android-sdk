@@ -67,6 +67,8 @@ public class ExpressionEvaluator {
                     val condition = evaluate(node.condition, context)
                     evaluate(if (toBool(condition)) node.trueValue else node.falseValue, context)
                 }
+                // A nil element becomes null so positions are preserved.
+                is ExpressionNode.ArrayLiteral -> node.elements.map { evaluate(it, context) ?: Values.Null }
             }
         } finally {
             evalDepth--
@@ -568,8 +570,8 @@ public class ExpressionEvaluator {
     }
 
     /**
-     * Swift `toString(_:)`. Note the Swift implementation passes an `Any?` to
-     * `String(describing:)`, so collections render wrapped in `Optional(...)`.
+     * Swift `toString(_:)`. Arrays / objects → compact JSON with sorted keys (JS
+     * `JSON.stringify` shape), e.g. `[1,"a",true]`, `{"a":"x","b":1}`.
      */
     private fun toString(value: Any?): String {
         if (value is String) return value
@@ -577,7 +579,8 @@ public class ExpressionEvaluator {
         Values.asInt(value)?.let { return it.toString() }
         Values.asDouble(value)?.let { return SwiftCompat.doubleDescription(it) }
         if (value == null || value === Values.Null) return ""
-        return "Optional(" + Values.describe(value) + ")"
+        if (value is List<*> || value is Map<*, *>) CompactJson.encode(value)?.let { return it }
+        return Values.describe(value)
     }
 
     private fun compareForSort(a: Any?, b: Any?): Int {

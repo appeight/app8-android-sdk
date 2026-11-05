@@ -101,6 +101,8 @@ internal class ScreenSession private constructor(
                 if (store.getLocalVariables().containsKey(name)) {
                     runCatching { store.setValue(name, v) }
                         .onFailure { runtime.diagnostics.warn("params", "'$name' on '$screenId': ${it.message}") }
+                    // An injected param is the variable's definition-time value: `resetVariables` restores it.
+                    store.getLocalVariables()[name]?.captureInitialValue()
                 } else {
                     store.defineVariable(name, VariableDefinition(VariableType.inferType(v), v))
                 }

@@ -68,5 +68,12 @@ public interface VariableStoreProtocol {
     /** Parent store, for `$parent` access in nested scopes. */
     public fun getParentStore(): VariableStoreProtocol?
 
+    /** Removes every variable from the store (teardown / screen replacement). */
     public fun reset()
+
+    /**
+     * Restores every local (non-computed) variable to the value it had right after definition,
+     * then recomputes local computed dependents. Variables are kept; parent stores are untouched.
+     */
+    public fun resetToInitialValues()
 }

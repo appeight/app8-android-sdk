@@ -41,6 +41,9 @@ internal object StackKind : ComponentKind {
         var m = modifier
         val radius = p?.cornerRadius ?: 0.0
         val bg = p?.backgroundColor?.let { node.string(it) }?.takeIf { it.isNotEmpty() }?.let { Color(ColorHex.parseOrFallback(it).argb) }
+        // `cornerRadius` clips the arranged children, with or without a background (docs: "clips
+        // children to rounded bounds"). The clip follows any material shadow in [modifier], so the
+        // shadow still draws outside the bounds, as iOS clips its inner contentView.
         if (radius > 0) m = m.clip(RoundedCornerShape(radius.toFloat().dp))
         if (bg != null) m = m.background(bg)
         Box(m) { ChildrenLayout(node, Modifier.fillMaxSize()) }

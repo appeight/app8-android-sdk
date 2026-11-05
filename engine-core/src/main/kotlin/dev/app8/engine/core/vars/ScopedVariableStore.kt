@@ -118,6 +118,7 @@ public class ScopedVariableStore(parent: VariableStoreProtocol? = null) : Variab
         }
 
         cancellables.add(variable.valueChanged.subscribe { anyVariableChangedSubject.send(name) })
+        variable.captureInitialValue()
         localVariables[name] = variable
     }
 
@@ -141,25 +142,35 @@ public class ScopedVariableStore(parent: VariableStoreProtocol? = null) : Variab
         throw VariableException.UndefinedVariable(name)
     }
 
-    /** See [VariableStore.setMultipleValues] for the (faithfully ported) failure-mode caveat. */
+    /**
+     * Names are validated (local + parent chain) before anything is written, locally or in the
+     * parent. Failure handling as [VariableStore.setMultipleValues].
+     */
     override fun setMultipleValues(updates: Map<String, Any?>) {
-        val localChanges = LinkedHashSet<String>()
+        val localUpdates = LinkedHashMap<String, Any?>()
         val parentUpdates = LinkedHashMap<String, Any?>()
-        isUpdating = true
         for ((name, value) in updates) {
-            val variable = localVariables[name]
-            if (variable != null) {
-                variable.setValue(value)
-                localChanges.add(name)
-            } else if (parent?.hasVariable(name) == true) {
-                parentUpdates[name] = value
-            } else {
-                throw VariableException.UndefinedVariable(name)
+            when {
+                localVariables.containsKey(name) -> localUpdates[name] = value
+                parent?.hasVariable(name) == true -> parentUpdates[name] = value
+                else -> throw VariableException.UndefinedVariable(name)
             }
         }
-        if (parentUpdates.isNotEmpty()) parent?.setMultipleValues(parentUpdates)
-        support.updateDependentVariablesForMultiple(localChanges)
+        val localChanges = LinkedHashSet<String>()
+        isUpdating = true
+        try {
+            for ((name, value) in localUpdates) {
+                localVariables.getValue(name).setValue(value)
+                localChanges.add(name)
+            }
+            if (parentUpdates.isNotEmpty()) parent?.setMultipleValues(parentUpdates)
+        } catch (e: Exception) {
+            isUpdating = false
+            runCatching { support.updateDependentVariablesForMultiple(localChanges) }
+            throw e
+        }
         isUpdating = false
+        support.updateDependentVariablesForMultiple(localChanges)
     }
 
     override fun hasVariable(name: String): Boolean =
@@ -202,6 +213,18 @@ public class ScopedVariableStore(parent: VariableStoreProtocol? = null) : Variab
         support.graph.reset()
         cancellables.forEach { it.cancel() }
         cancellables.clear()
+    }
+
+    override fun resetToInitialValues() {
+        val names = localVariables.filterValues { !it.isComputed }.keys.toList()
+        isUpdating = true
+        for (name in names) localVariables[name]?.restoreInitialValue()
+        isUpdating = false
+        try {
+            support.updateDependentVariablesForMultiple(names.toSet())
+        } catch (e: Exception) {
+            logger?.error("resetToInitialValues: failed to recompute dependents: ${e.message}")
+        }
     }
 
     private fun updateDependentVariables(changedVariable: String) {

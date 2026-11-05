@@ -40,6 +40,7 @@ public class DependencyExtractor {
                 extract(node.trueValue, into)
                 extract(node.falseValue, into)
             }
+            is ExpressionNode.ArrayLiteral -> for (element in node.elements) extract(element, into)
             is ExpressionNode.Literal -> Unit
         }
     }
