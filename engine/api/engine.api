@@ -131,6 +131,7 @@ public final class dev/app8/engine/App8Instance {
 	public final fun diagnostics ()Ljava/util/List;
 	public final fun getAnalyticsBus ()Ldev/app8/engine/events/App8AnalyticsBus;
 	public final fun getAnalyticsConfig ()Ldev/app8/engine/events/App8AnalyticsConfig;
+	public final fun getCurrentFlowId ()Ljava/lang/String;
 	public final fun getCurrentLocale ()Ljava/lang/String;
 	public final fun getEventBus ()Ldev/app8/engine/events/App8EventBus;
 	public final fun getFontProvider ()Ldev/app8/engine/style/App8FontProvider;
@@ -138,6 +139,7 @@ public final class dev/app8/engine/App8Instance {
 	public final fun getPendingWork ()Lkotlinx/coroutines/flow/StateFlow;
 	public final fun getTextScaling ()Ldev/app8/engine/style/App8TextScaling;
 	public final fun getUserInterfaceStyle ()Ldev/app8/engine/UserInterfaceStyle;
+	public final fun navigate ([Ldev/app8/engine/App8NavigationRequest;)V
 	public final fun prefetch (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun setAnalyticsConfig (Ldev/app8/engine/events/App8AnalyticsConfig;)V
 	public final fun setFontProvider (Ldev/app8/engine/style/App8FontProvider;)V
@@ -155,6 +157,76 @@ public final class dev/app8/engine/App8LogLevel : java/lang/Enum {
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Ldev/app8/engine/App8LogLevel;
 	public static fun values ()[Ldev/app8/engine/App8LogLevel;
+}
+
+public abstract interface class dev/app8/engine/App8NavigationRequest {
+}
+
+public final class dev/app8/engine/App8NavigationRequest$CompleteFlow : dev/app8/engine/App8NavigationRequest {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Ldev/app8/engine/App8NavigationRequest$CompleteFlow;
+	public static synthetic fun copy$default (Ldev/app8/engine/App8NavigationRequest$CompleteFlow;Ljava/lang/String;ILjava/lang/Object;)Ldev/app8/engine/App8NavigationRequest$CompleteFlow;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDestination ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/app8/engine/App8NavigationRequest$Dismiss : dev/app8/engine/App8NavigationRequest {
+	public static final field $stable I
+	public static final field INSTANCE Ldev/app8/engine/App8NavigationRequest$Dismiss;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/app8/engine/App8NavigationRequest$Pop : dev/app8/engine/App8NavigationRequest {
+	public static final field $stable I
+	public static final field INSTANCE Ldev/app8/engine/App8NavigationRequest$Pop;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/app8/engine/App8NavigationRequest$PopToRoot : dev/app8/engine/App8NavigationRequest {
+	public static final field $stable I
+	public static final field INSTANCE Ldev/app8/engine/App8NavigationRequest$PopToRoot;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/app8/engine/App8NavigationRequest$Push : dev/app8/engine/App8NavigationRequest {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;Ljava/util/Map;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/Map;
+	public final fun copy (Ljava/lang/String;Ljava/util/Map;)Ldev/app8/engine/App8NavigationRequest$Push;
+	public static synthetic fun copy$default (Ldev/app8/engine/App8NavigationRequest$Push;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)Ldev/app8/engine/App8NavigationRequest$Push;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getParams ()Ljava/util/Map;
+	public final fun getScreenId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/app8/engine/App8NavigationRequest$SelectTab : dev/app8/engine/App8NavigationRequest {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/Integer;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/Integer;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/Integer;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/Integer;Ljava/lang/String;)Ldev/app8/engine/App8NavigationRequest$SelectTab;
+	public static synthetic fun copy$default (Ldev/app8/engine/App8NavigationRequest$SelectTab;Ljava/lang/Integer;Ljava/lang/String;ILjava/lang/Object;)Ldev/app8/engine/App8NavigationRequest$SelectTab;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()Ljava/lang/String;
+	public final fun getIndex ()Ljava/lang/Integer;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class dev/app8/engine/App8View : android/widget/FrameLayout {
