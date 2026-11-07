@@ -55,6 +55,10 @@ internal fun TabBarHost(session: ScreenSession, flow: FlowController, layer: Lay
         TabState(tabs.indexOfFirst { it.id == content.initialTab }.coerceAtLeast(0), tabs.size, tabs.map { it.id })
     }
     val stacks = remember(session) { tabs.map { StackState(Route(it.screen)) } }
+    androidx.compose.runtime.DisposableEffect(state, stacks) {
+        flow.registerTabs(layer, state, stacks)
+        onDispose { flow.unregisterTabs(state) }
+    }
     val holder = rememberSaveableStateHolder()
     val navInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding().value.toDouble()
     fun hex(s: String?) = s?.let { Color(ColorHex.parseOrFallback(it).argb) }

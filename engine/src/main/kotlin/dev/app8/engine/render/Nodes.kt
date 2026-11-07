@@ -100,6 +100,7 @@ internal fun NodeView(node: RenderNode) {
     val tyTarget = (props?.transformTranslateY?.let { node.number(it.value) } ?: 0.0).toFloat() + (style?.transform?.translateY ?: 0.0).toFloat()
     val ty by animateFloatAsState(tyTarget, props?.transformTranslateY?.animation.toSpec(node), label = "ty")
     val rotation = (style?.transform?.rotation ?: 0.0).toFloat()
+    val blend = style?.blendMode?.toCompose()
 
     val material = env.material(style?.material)
     val bgHex = props?.backgroundColor?.let { node.string(it.value) }?.takeIf { it.isNotEmpty() }
@@ -117,6 +118,12 @@ internal fun NodeView(node: RenderNode) {
         translationX = tx * density
         translationY = ty * density
         rotationZ = rotation
+        // `style.blendMode` (iOS `layer.compositingFilter`): the layer draws offscreen, then
+        // blends onto what its parent drew before it (siblings below, a video, the background).
+        if (blend != null) {
+            blendMode = blend
+            compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen
+        }
     }
     if (material != null) m = m.dslMaterial(material, env.appearance)
     if (bgHex != null || bg != Color.Transparent) {
@@ -283,5 +290,28 @@ internal fun <T> Animation?.toSpecOf(node: RenderNode): AnimationSpec<T> {
                 Animation.NamedCurve.easeInOut -> FastOutSlowInEasing
             },
         )
+    }
+}
+
+/** DSL `blendMode` → Compose (CSS / Figma semantics); `normal` draws as usual. */
+internal fun dev.app8.engine.core.model.style.BlendMode.toCompose(): androidx.compose.ui.graphics.BlendMode? {
+    val B = androidx.compose.ui.graphics.BlendMode
+    return when (this) {
+        dev.app8.engine.core.model.style.BlendMode.normal -> null
+        dev.app8.engine.core.model.style.BlendMode.multiply -> B.Multiply
+        dev.app8.engine.core.model.style.BlendMode.screen -> B.Screen
+        dev.app8.engine.core.model.style.BlendMode.overlay -> B.Overlay
+        dev.app8.engine.core.model.style.BlendMode.darken -> B.Darken
+        dev.app8.engine.core.model.style.BlendMode.lighten -> B.Lighten
+        dev.app8.engine.core.model.style.BlendMode.colorDodge -> B.ColorDodge
+        dev.app8.engine.core.model.style.BlendMode.colorBurn -> B.ColorBurn
+        dev.app8.engine.core.model.style.BlendMode.softLight -> B.Softlight
+        dev.app8.engine.core.model.style.BlendMode.hardLight -> B.Hardlight
+        dev.app8.engine.core.model.style.BlendMode.difference -> B.Difference
+        dev.app8.engine.core.model.style.BlendMode.exclusion -> B.Exclusion
+        dev.app8.engine.core.model.style.BlendMode.hue -> B.Hue
+        dev.app8.engine.core.model.style.BlendMode.saturation -> B.Saturation
+        dev.app8.engine.core.model.style.BlendMode.color -> B.Color
+        dev.app8.engine.core.model.style.BlendMode.luminosity -> B.Luminosity
     }
 }
