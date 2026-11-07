@@ -102,6 +102,23 @@ public class App8Instance internal constructor(
 
     public fun clearDiagnostics(): Unit = runtime.diagnostics.clear()
 
+    /** The navigation state of the composed [App]/[Flow]/[Screen]; null until it is on screen. */
+    private var flow: FlowController? = null
+    private val queued = ArrayList<App8NavigationRequest>()
+
+    /**
+     * Navigates the running app from the host (iOS: post a `NavigationRequest`). Requests made
+     * before the app is on screen run once it is. Push and pop are ignored while a modal is
+     * presented, as on iOS.
+     */
+    public fun navigate(vararg requests: App8NavigationRequest) {
+        val current = flow
+        if (current == null) queued += requests else requests.forEach(current::enqueue)
+    }
+
+    /** The current flow's id (`navigation.flows[].id`), or null before the app is on screen. */
+    public val currentFlowId: String? get() = flow?.currentFlowId
+
     /** Loads the app manifest, styles, translations and templates. @throws App8Error */
     public suspend fun prefetch() {
         val app = runtime.ensureReady()
@@ -184,6 +201,12 @@ public class App8Instance internal constructor(
                     (content as? dev.app8.engine.core.model.ComponentContent<*, *>)?.transition?.screenOrNull
                 },
             )
+        }
+        androidx.compose.runtime.DisposableEffect(flow) {
+            this@App8Instance.flow = flow
+            queued.forEach(flow::enqueue)
+            queued.clear()
+            onDispose { if (this@App8Instance.flow === flow) this@App8Instance.flow = null }
         }
         // System chrome takes the app's colors, never Material's baseline purple
         // (app8-dsl platforms.md, "Android system colors"); wallpaper colors only on opt-in.

@@ -115,6 +115,69 @@ internal class FlowController(
     var chromeEpoch: Int by androidx.compose.runtime.mutableIntStateOf(0)
     val layers: SnapshotStateList<Layer> = mutableStateListOf(Layer(StackState(Route(startScreen, params)), null))
 
+    /** The base flow's tab bar while it is on screen (TabBarHost registers it). */
+    private var tabs: Pair<TabState, List<StackState>>? = null
+    private val pending = ArrayDeque<dev.app8.engine.App8NavigationRequest>()
+    /** After a host `completeFlow`, requests wait this long (ms, uptime) for the new flow's tab bar. */
+    private var awaitTabsUntil = 0L
+
+    fun registerTabs(layer: Layer, state: TabState, stacks: List<StackState>) {
+        if (layers.firstOrNull() !== layer) return
+        tabs = state to stacks
+        drain()
+    }
+
+    fun unregisterTabs(state: TabState) {
+        if (tabs?.first === state) tabs = null
+    }
+
+    /** A host request (App8Instance.navigate); runs in order, see [App8NavigationRequest]. */
+    fun enqueue(request: dev.app8.engine.App8NavigationRequest) {
+        pending += request
+        drain()
+    }
+
+    private fun drain() {
+        while (pending.isNotEmpty()) {
+            val waiting = tabs == null && android.os.SystemClock.uptimeMillis() < awaitTabsUntil
+            if (waiting && pending.first() !is dev.app8.engine.App8NavigationRequest.CompleteFlow) {
+                scope?.launch {
+                    kotlinx.coroutines.delay((awaitTabsUntil - android.os.SystemClock.uptimeMillis()).coerceAtLeast(1))
+                    drain()
+                }
+                return
+            }
+            apply(pending.removeFirst())
+        }
+    }
+
+    private fun apply(request: dev.app8.engine.App8NavigationRequest) {
+        val modal = layers.size > 1
+        // The active stack: the top modal's, else the selected tab's, else the base stack.
+        val stack = layers.lastOrNull()?.takeIf { modal }?.stack
+            ?: tabs?.let { (state, stacks) -> stacks.getOrNull(state.selected) }
+            ?: layers.firstOrNull()?.stack
+            ?: return
+        when (request) {
+            is dev.app8.engine.App8NavigationRequest.Push -> if (!modal) {
+                push(stack, request.screenId, request.params.mapValues { (_, v) -> if (v is kotlinx.serialization.json.JsonElement) dev.app8.engine.core.vars.Values.fromJson(v) else v }, null)
+            }
+            dev.app8.engine.App8NavigationRequest.Pop -> if (!modal) stack.pop(toRoot = false)
+            dev.app8.engine.App8NavigationRequest.PopToRoot -> if (!modal) stack.pop(toRoot = true)
+            dev.app8.engine.App8NavigationRequest.Dismiss -> dismissTop()
+            is dev.app8.engine.App8NavigationRequest.SelectTab -> tabs?.first?.select(request.index, request.id)
+                ?: warn("selectTab: no tab bar on screen")
+            is dev.app8.engine.App8NavigationRequest.CompleteFlow -> {
+                val before = currentFlowId
+                completeFlow(request.destination)
+                if (currentFlowId != before) {
+                    tabs = null
+                    awaitTabsUntil = android.os.SystemClock.uptimeMillis() + 1500
+                }
+            }
+        }
+    }
+
     fun present(
         screenId: String,
         params: Map<String, Any?>,
