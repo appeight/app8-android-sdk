@@ -272,7 +272,7 @@ internal object VideoKind : ComponentKind {
     private suspend fun materialize(context: Context, node: RenderNode, s: VideoSource): File? = withContext(Dispatchers.IO) {
         val ext = (s.name ?: s.url)?.substringAfterLast('.', "")?.lowercase()?.takeIf { it in setOf("mp4", "mov", "m4v", "webm") } ?: "mp4"
         val safe = s.key.filter { it.isLetterOrDigit() }.takeLast(96).ifEmpty { "video" }
-        val out = File(context.cacheDir, "app8-video-$safe.$ext")
+        val out = File(VideoTempFiles.directory(context, node.runtime.dataSource), "$safe.$ext")
         if (out.exists() && out.length() > 0) return@withContext out
         val names = listOfNotNull(s.name) + (s.name?.takeIf { '.' !in it }?.let { n -> listOf("$n.mp4", "$n.mov", "$n.m4v") } ?: emptyList())
         val bytes = runCatching { node.runtime.dataSource.getAsset(s.id, s.name) }.getOrNull()
