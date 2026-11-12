@@ -8,6 +8,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontSynthesis
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -178,6 +179,8 @@ internal fun TextModel.toResolvedText(
         textDecoration = if (decorations.isEmpty()) null else TextDecoration.combine(decorations),
         lineHeight = lineHeight,
         lineHeightStyle = lineHeightStyle,
+        // Avoid a lone word on the last line, like iOS's .pushOut strategy.
+        lineBreak = LineBreak.Paragraph,
     )
 
     val lines = numberOfLines ?: 0
