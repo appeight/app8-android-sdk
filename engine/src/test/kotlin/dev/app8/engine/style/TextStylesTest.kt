@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontSynthesis
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -91,6 +92,9 @@ class TextStylesTest {
         assertEquals(TextOverflow.MiddleEllipsis, r("""{ "fontSize": 12, "lineBreakMode": "truncateMiddle" }""").overflow)
         assertEquals(TextOverflow.StartEllipsis, r("""{ "fontSize": 12, "lineBreakMode": "truncateHead" }""").overflow)
         assertEquals(TextOverflow.Clip, r("""{ "fontSize": 12, "lineBreakMode": "clip" }""").overflow)
+        // Labels avoid orphans (iOS .pushOut) on every style, with or without a line height.
+        assertEquals(LineBreak.Paragraph, r("""{ "fontSize": 12 }""").style.lineBreak)
+        assertEquals(LineBreak.Paragraph, r("""{ "fontSize": 30, "lineHeight": { "type": "multiplier", "value": 1.05 } }""").style.lineBreak)
         val shrink = r("""{ "fontSize": 12, "adjustsFontSizeToFitWidth": true }""")
         assertEquals(true, shrink.adjustsFontSizeToFitWidth)
         assertEquals(0.5f, shrink.minimumScaleFactor)
