@@ -59,4 +59,7 @@ public interface VariableLogger {
     public fun debug(message: String)
     public fun warning(message: String)
     public fun error(message: String)
+
+    /** A warning with a stable diagnostics code (`variable.persist.typeMismatch`). */
+    public fun warning(code: String, message: String): Unit = warning("$code: $message")
 }
