@@ -137,7 +137,7 @@ internal val NATIVE_ZOOM_SPRING = spring<Float>(dampingRatio = 1f, stiffness = 2
  * [own], both in window px), plus an interactive [drag] offset (px) that shrinks the screen as
  * it follows the finger. Without a source the screen cross-fades.
  */
-internal fun GraphicsLayerScope.applyNativeZoom(progress: Float, own: Rect, source: ZoomSourceFrame?, drag: Offset = Offset.Zero) {
+internal fun GraphicsLayerScope.applyNativeZoom(progress: Float, own: Rect, source: ZoomSourceFrame?, drag: Offset = Offset.Zero, dismissing: Boolean = false) {
     val f = progress.coerceIn(0f, 1.2f)
     transformOrigin = TransformOrigin(0f, 0f)
     val w = own.width
@@ -177,8 +177,9 @@ internal fun GraphicsLayerScope.applyNativeZoom(progress: Float, own: Rect, sour
     val radius = (source.cornerPx * (1f - f.coerceIn(0f, 1f)) + (if (drag != Offset.Zero) 24f * density else 0f)) / scale
     shape = ZoomClipShape(Rect(clipLeft, clipTop, clipLeft + rw / scale, clipTop + rh / scale), radius)
     clip = true
-    // The incoming content fades in over the first part of the growth.
-    alpha = (progress * 4f).coerceIn(0f, 1f)
+    // The incoming content fades in over the first part of the growth; a dismissal shrinks
+    // fully opaque into the source (which reappears when the screen is gone).
+    alpha = if (dismissing) 1f else (progress * 4f).coerceIn(0f, 1f)
 }
 
 private fun GraphicsLayerScope.applyDrag(drag: Offset, w: Float, h: Float) {
@@ -258,7 +259,7 @@ internal fun NativeZoomModal(
         var m: Modifier = Modifier.fillMaxSize()
             .onGloballyPositioned { own = it.boundsInRoot() }
             .graphicsLayer {
-                applyNativeZoom(progress.value, own, sources.frame(origin.session, origin.key), Offset(dragX.value, dragY.value))
+                applyNativeZoom(progress.value, own, sources.frame(origin.session, origin.key), Offset(dragX.value, dragY.value), dismissing = closing || dismissing)
             }
         val gesture = origin.dismissGesture
         if (!dismissing && !closing && gesture != ScreenTransition.DismissGesture.none) {

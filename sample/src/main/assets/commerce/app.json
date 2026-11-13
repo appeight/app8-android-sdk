@@ -1,0 +1,130 @@
+{
+ "id": "commerce-fixture",
+ "title": "Commerce fixture",
+ "defaultUserInterfaceStyle": "light",
+ "navigation": {
+  "startFlow": "main",
+  "flows": [
+   {
+    "id": "main",
+    "startScreen": "tabs"
+   }
+  ]
+ },
+ "variables": {
+  "products": {
+   "type": "array",
+   "initialValue": [
+    {
+     "handle": "item-a",
+     "title": "Sample Product 146",
+     "price": "\u00a320.00",
+     "image": "p-sample-product-146",
+     "variant": "50ml",
+     "variants": [
+      {
+       "value": "30ml",
+       "label": "30ml"
+      },
+      {
+       "value": "50ml",
+       "label": "50ml"
+      },
+      {
+       "value": "100ml",
+       "label": "100ml"
+      }
+     ],
+     "images": [
+      {
+       "image": "p-sample-product-146"
+      },
+      {
+       "image": "p-sample-product-105"
+      },
+      {
+       "image": "p-sample-product-x"
+      }
+     ]
+    },
+    {
+     "handle": "item-b",
+     "title": "Sample Product 105",
+     "price": "\u00a321.00",
+     "image": "p-sample-product-105",
+     "variant": "50ml",
+     "variants": [
+      {
+       "value": "30ml",
+       "label": "30ml"
+      },
+      {
+       "value": "50ml",
+       "label": "50ml"
+      },
+      {
+       "value": "100ml",
+       "label": "100ml"
+      }
+     ],
+     "images": [
+      {
+       "image": "p-sample-product-105"
+      },
+      {
+       "image": "p-sample-product-161"
+      }
+     ]
+    },
+    {
+     "handle": "item-c",
+     "title": "sample-product-x",
+     "price": "\u00a322.00",
+     "image": "p-sample-product-x",
+     "variant": "50ml",
+     "variants": [
+      {
+       "value": "30ml",
+       "label": "30ml"
+      },
+      {
+       "value": "50ml",
+       "label": "50ml"
+      },
+      {
+       "value": "100ml",
+       "label": "100ml"
+      }
+     ],
+     "images": [
+      {
+       "image": "p-sample-product-x"
+      },
+      {
+       "image": "p-sample-product-146"
+      }
+     ]
+    }
+   ]
+  },
+  "cart": {
+   "type": "array",
+   "initialValue": [],
+   "persist": true
+  },
+  "wishlist": {
+   "type": "array",
+   "initialValue": [],
+   "persist": true
+  },
+  "selectedVariants": {
+   "type": "object",
+   "initialValue": {},
+   "persist": true
+  },
+  "galleryPage": {
+   "type": "number",
+   "initialValue": 0
+  }
+ }
+}

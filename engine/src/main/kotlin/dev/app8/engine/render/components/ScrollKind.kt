@@ -179,17 +179,16 @@ internal object ScrollKind : ComponentKind {
                 modifier = Modifier.fillMaxSize().zoomable(zoomState, onDoubleClick = doubleTap),
             ) { measurables, constraints ->
                 val s = solved.value
+                // The zoomed content fills the scroll view (its `width` / `height` = superview
+                // constraints solve against the content view, which zoom does not use).
                 val placeables = measurables.map { m ->
-                    val f = s.local[m.layoutId as? String]
-                    m.measure(
-                        Constraints.fixed(
-                            ((f?.width ?: 0.0) * density).roundToInt().coerceAtLeast(0),
-                            ((f?.height ?: 0.0) * density).roundToInt().coerceAtLeast(0),
-                        ),
-                    ) to f
+                    val f = s.local[m.layoutId as? String]?.takeIf { it.width > 0.0 && it.height > 0.0 }
+                    val w = f?.let { (it.width * density).roundToInt() } ?: constraints.maxWidth
+                    val h = f?.let { (it.height * density).roundToInt() } ?: constraints.maxHeight
+                    m.measure(Constraints.fixed(w.coerceAtLeast(0), h.coerceAtLeast(0))) to f
                 }
                 layout(constraints.maxWidth, constraints.maxHeight) {
-                    for ((pl, f) in placeables) if (f != null) pl.place(px(f.x, density), px(f.y, density))
+                    for ((pl, f) in placeables) pl.place(f?.let { px(it.x, density) } ?: 0, f?.let { px(it.y, density) } ?: 0)
                 }
             }
         }

@@ -278,4 +278,5 @@ internal fun Action.toVariableAction(): VariableAction = VariableAction(
     field = field,
     updates = updates?.mapValues { (_, v) -> AnyCodableValue.fromJson(v) },
     scope = scope?.name,
+    key = key,
 )
