@@ -37,6 +37,8 @@ public data class Action(
     val by: Double? = null,
     val matchBy: String? = null,
     val field: String? = null,
+    /** updateVariable: with an object variable, set only this key (expression). */
+    val key: String? = null,
     val updates: Map<String, JsonElement>? = null,
     val scope: VariableScope? = null,
     val tabIndex: Int? = null,
@@ -108,6 +110,7 @@ internal fun decodeAction(c: Cursor): Action {
         by = c.optDouble("by"),
         matchBy = c.optString("matchBy"),
         field = c.optString("field"),
+        key = c.attempt { it.optString("key") },
         updates = c.opt("updates", ::decodeAnyMap),
         scope = c.optEnum<Action.VariableScope>("scope"),
         tabIndex = c.optInt("tabIndex"),

@@ -43,6 +43,8 @@ public data class VariableAction(
     val updates: Map<String, AnyCodableValue>? = null,
     /** resetVariables: `component`, `screen` (default), `app` or `all`; unknown values act as the default. */
     val scope: String? = null,
+    /** updateVariable: with an `object` variable, set only this key (may be an expression). */
+    val key: String? = null,
 ) {
     public val actionType: VariableActionType? get() = VariableActionType.fromRawValue(type)
 

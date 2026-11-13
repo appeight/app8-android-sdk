@@ -455,11 +455,15 @@ internal object CollectionKind : ComponentKind {
     @Composable
     private fun TopLevelHorizontal(model: CollectionModel, sections: List<CollectionSection>, p: CollectionProperties, width: Double) {
         val config = p.layout
-        val st = CollectionPlan.topLevelStyle(config, false)
+        val base = CollectionPlan.topLevelStyle(config, false)
         val items = remember(sections) { sections.flatMap { it.items } }
         val keys = remember(sections) { sections.flatMap { it.keys } }
         val top = config?.contentInsets?.top ?: 0.0
-        Box(Modifier.fillMaxSize().padding(top = top.dp)) {
+        androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize().padding(top = top.dp)) {
+            // `itemHeight: "fill"`: each item is as tall as the frame minus the vertical insets.
+            val st = if (config?.itemHeightFill == true && constraints.hasBoundedHeight) {
+                base.copy(itemHeight = (maxHeight.value.toDouble() - (config.contentInsets?.bottom ?: 0.0)).coerceAtLeast(0.0))
+            } else base
             if (CollectionPlan.usesNativePaging(config)) {
                 NativePager(model, items, keys, st, width, config?.currentPageVariable)
             } else {

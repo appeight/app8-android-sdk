@@ -1,0 +1,34 @@
+{
+ "type": "tabBarScreen",
+ "id": "tabs",
+ "content": {
+  "tabs": [
+   {
+    "id": "shop",
+    "label": "Shop",
+    "icon": "bag",
+    "screen": "shop"
+   },
+   {
+    "id": "bag",
+    "label": "Bag",
+    "icon": "basket",
+    "screen": "bag",
+    "badge": "{{length(cart)}}"
+   },
+   {
+    "id": "wish",
+    "label": "Wishlist",
+    "icon": "heart",
+    "screen": "bag",
+    "badge": "{{length(wishlist)}}",
+    "badgeColor": "#C0392B"
+   }
+  ],
+  "initialTab": "shop",
+  "tintColor": "#2D4D3A",
+  "unselectedColor": "#555555",
+  "badgeColor": "#2D4D3A",
+  "badgeTextColor": "#FFFFFF"
+ }
+}

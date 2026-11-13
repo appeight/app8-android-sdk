@@ -97,3 +97,31 @@ class PersistedVariablesTest {
         assertEquals("blue", eval("{{sel[other.handle] != null ? sel[other.handle] : other.variant}}"))
     }
 }
+
+/** DSL 0.5 addendum: `updateVariable` with `key`, horizontal `itemWidth` / `itemHeight: "fill"`. */
+class UpdateVariableKeyTest {
+    @Test
+    fun updateVariableKeyWritesOneEntry() {
+        val store = VariableStore()
+        store.defineVariable("sel", VariableDefinition(VariableType.OBJECT, mapOf("a" to "1")))
+        store.defineVariable("product", VariableDefinition(VariableType.OBJECT, mapOf("handle" to "b")))
+        val action = dev.app8.engine.core.vars.actions.VariableAction.fromJson(
+            """{"type":"updateVariable","variableName":"sel","key":"{{product.handle}}","value":"50ml"}""",
+        )
+        dev.app8.engine.core.vars.actions.VariableActionHandler().execute(action, store, VariableContext(store))
+        assertEquals(mapOf("a" to "1", "b" to "50ml"), store.getValue("sel"))
+    }
+
+    @Test
+    fun fillItemSizeDecodes() {
+        val c = dev.app8.engine.core.model.DslDecoder().decodeComponent(
+            """{"type":"collection","id":"g","content":{"properties":{"data":"{{x}}","layout":{"type":"horizontal","itemWidth":"fill","itemHeight":"fill","pagingStyle":"paging"}}}}""",
+        )
+        val layout = (c as dev.app8.engine.core.model.ComponentEntity<*>).content
+            .let { it as dev.app8.engine.core.model.CollectionContent }.properties.layout!!
+        assertTrue(layout.itemWidthFill)
+        assertTrue(layout.itemHeightFill)
+        assertNull(layout.itemWidth)
+        assertNull(layout.itemHeight)
+    }
+}

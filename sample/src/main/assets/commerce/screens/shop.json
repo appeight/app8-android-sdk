@@ -1,0 +1,351 @@
+{
+ "type": "screen",
+ "id": "shop",
+ "content": {
+  "navigationBar": {
+   "title": "Shop"
+  },
+  "children": [
+   {
+    "id": "list",
+    "type": "collection",
+    "content": {
+     "properties": {
+      "data": "{{products}}",
+      "layout": {
+       "type": "vertical",
+       "itemSpacing": 16,
+       "estimatedItemHeight": 260
+      }
+     },
+     "template": {
+      "id": "card",
+      "type": "view",
+      "content": {
+       "contextMenu": {
+        "preview": {
+         "component": {
+          "id": "preview",
+          "type": "view",
+          "content": {
+           "properties": {
+            "backgroundColor": "#F2F4EC"
+           },
+           "children": [
+            {
+             "id": "pImg",
+             "type": "image",
+             "content": {
+              "properties": {
+               "type": "remoteAsset",
+               "name": "{{item.image}}"
+              },
+              "style": {
+               "contentMode": "scaleAspectFill"
+              },
+              "layout": {
+               "height": 260,
+               "constraints": [
+                {
+                 "type": "top",
+                 "target": "superview"
+                },
+                {
+                 "type": "leading",
+                 "target": "superview"
+                },
+                {
+                 "type": "trailing",
+                 "target": "superview"
+                }
+               ]
+              }
+             }
+            },
+            {
+             "id": "pTitle",
+             "type": "label",
+             "content": {
+              "properties": {
+               "text": "{{item.title}}"
+              },
+              "style": {
+               "text": {
+                "id": "title"
+               }
+              },
+              "layout": {
+               "constraints": [
+                {
+                 "type": "top",
+                 "target": "pImg",
+                 "attribute": "bottom",
+                 "constant": 12
+                },
+                {
+                 "type": "leading",
+                 "target": "superview",
+                 "constant": 16
+                },
+                {
+                 "type": "bottom",
+                 "target": "superview",
+                 "constant": 16
+                }
+               ]
+              }
+             }
+            }
+           ]
+          }
+         },
+         "height": 320
+        },
+        "items": [
+         {
+          "id": "add",
+          "title": "Add to bag",
+          "icon": "bag",
+          "actions": [
+           {
+            "type": "appendToArray",
+            "variableName": "cart",
+            "value": "{{item.handle}}"
+           }
+          ]
+         },
+         {
+          "id": "wish",
+          "title": "{{wishlist.includes(item.handle) ? 'Remove from wishlist' : 'Add to wishlist'}}",
+          "icon": "{{wishlist.includes(item.handle) ? 'heart.fill' : 'heart'}}",
+          "actions": [
+           {
+            "type": "toggleArrayValue",
+            "variableName": "wishlist",
+            "value": "{{item.handle}}"
+           }
+          ]
+         },
+         {
+          "id": "view",
+          "title": "View product",
+          "subtitle": "{{item.title}}",
+          "icon": "arrow.up.right",
+          "actions": [
+           {
+            "type": "navigation",
+            "nextScreen": "product",
+            "params": {
+             "product": "{{item}}"
+            }
+           }
+          ]
+         },
+         {
+          "id": "clear",
+          "title": "Clear bag",
+          "icon": "trash",
+          "destructive": true,
+          "actions": [
+           {
+            "type": "updateVariable",
+            "variableName": "cart",
+            "value": []
+           }
+          ]
+         }
+        ],
+        "onPreviewTap": [
+         {
+          "type": "navigation",
+          "nextScreen": "product",
+          "params": {
+           "product": "{{item}}"
+          }
+         }
+        ]
+       },
+       "children": [
+        {
+         "id": "cardImage",
+         "type": "image",
+         "content": {
+          "properties": {
+           "type": "remoteAsset",
+           "name": "{{item.image}}"
+          },
+          "style": {
+           "contentMode": "scaleAspectFill",
+           "material": [
+            {
+             "id": "cardCorner",
+             "type": "corner",
+             "content": {
+              "radius": 12
+             }
+            }
+           ]
+          },
+          "transition": {
+           "key": "{{'card-' + item.handle}}"
+          },
+          "layout": {
+           "height": 200,
+           "constraints": [
+            {
+             "type": "top",
+             "target": "superview"
+            },
+            {
+             "type": "leading",
+             "target": "superview",
+             "constant": 16
+            },
+            {
+             "type": "trailing",
+             "target": "superview",
+             "constant": -16
+            }
+           ]
+          }
+         }
+        },
+        {
+         "id": "cardTitle",
+         "type": "label",
+         "content": {
+          "properties": {
+           "text": "{{item.title}}"
+          },
+          "style": {
+           "text": {
+            "id": "body"
+           }
+          },
+          "layout": {
+           "constraints": [
+            {
+             "type": "top",
+             "target": "cardImage",
+             "attribute": "bottom",
+             "constant": 8
+            },
+            {
+             "type": "leading",
+             "target": "superview",
+             "constant": 16
+            }
+           ]
+          }
+         }
+        },
+        {
+         "id": "variantMenu",
+         "type": "picker",
+         "content": {
+          "properties": {
+           "displayMode": "menu",
+           "options": "{{item.variants}}",
+           "selectedValue": "{{selectedVariants[item.handle] != null ? selectedVariants[item.handle] : item.variant}}",
+           "bindVariable": "selectedVariants",
+           "bindKey": "{{item.handle}}"
+          },
+          "style": {
+           "label": {
+            "fontSize": 13,
+            "color": "#8A8A8A"
+           },
+           "indicator": "chevron.up.chevron.down"
+          },
+          "layout": {
+           "constraints": [
+            {
+             "type": "top",
+             "target": "cardTitle",
+             "attribute": "bottom",
+             "constant": 4
+            },
+            {
+             "type": "leading",
+             "target": "superview",
+             "constant": 16
+            },
+            {
+             "type": "bottom",
+             "target": "superview",
+             "constant": -12
+            }
+           ]
+          }
+         }
+        }
+       ]
+      }
+     },
+     "actions": {
+      "onItemTap": {
+       "type": "navigation",
+       "nextScreen": "product",
+       "params": {
+        "product": "{{item}}"
+       },
+       "transition": {
+        "preset": "zoom",
+        "mode": "push",
+        "sourceKey": "{{'card-' + item.handle}}"
+       }
+      }
+     },
+     "layout": {
+      "constraints": [
+       {
+        "type": "top",
+        "target": "superview"
+       },
+       {
+        "type": "leading",
+        "target": "superview"
+       },
+       {
+        "type": "trailing",
+        "target": "superview"
+       },
+       {
+        "type": "bottom",
+        "target": "superview"
+       }
+      ]
+     }
+    }
+   },
+   {
+    "id": "selLabel",
+    "type": "label",
+    "content": {
+     "properties": {
+      "text": "Variants: {{selectedVariants}}  Bag: {{length(cart)}}"
+     },
+     "style": {
+      "text": {
+       "id": "muted"
+      }
+     },
+     "layout": {
+      "constraints": [
+       {
+        "type": "bottom",
+        "target": "safeArea",
+        "constant": -8
+       },
+       {
+        "type": "leading",
+        "target": "superview",
+        "constant": 16
+       }
+      ]
+     }
+    }
+   }
+  ]
+ }
+}

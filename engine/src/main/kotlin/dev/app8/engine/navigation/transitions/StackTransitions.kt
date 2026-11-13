@@ -173,7 +173,7 @@ internal fun TransitionFrame(route: Route, stack: StackState, shared: SharedTran
             m.graphicsLayer {
                 if (zoomOrigin != null) {
                     val progress = if (visible <= 1f) visible else 2f - visible
-                    applyNativeZoom(progress, ownBounds, runtime.zoomSources.frame(zoomOrigin.session, zoomOrigin.key))
+                    applyNativeZoom(progress, ownBounds, runtime.zoomSources.frame(zoomOrigin.session, zoomOrigin.key), dismissing = role?.pop == true)
                 } else if (participant != null && role != null) {
                     applyKeyframes(participant, role.fraction(visible), size.width, size.height)
                 }
