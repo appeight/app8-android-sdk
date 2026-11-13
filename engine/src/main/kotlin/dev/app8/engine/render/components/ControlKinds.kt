@@ -272,7 +272,8 @@ internal object PickerKind : ComponentKind {
             val title = title(node, p)
             val fs = text.style.fontSize.value.toDouble()
             val hasIndicator = indicatorName(style) != null
-            val iconSize = style.indicatorSize ?: (fs * 0.8)
+            // A Material Symbol draws its glyph in about 80% of the em box; scale it to match the SF Symbol.
+            val iconSize = (style.indicatorSize ?: (fs * 0.8)) * MATERIAL_GLYPH_SCALE
             val spacing = style.indicatorSpacing ?: 6.0
             return LayoutTraits(
                 intrinsic = IntrinsicMeasure {
@@ -371,6 +372,9 @@ internal object PickerKind : ComponentKind {
     }
 }
 
+/** Material Symbols fill ~80% of the em box where an SF Symbol fills its point size. */
+private const val MATERIAL_GLYPH_SCALE = 1.25
+
 /**
  * Picker menu look (`style.label` / `style.indicator`): the selected label in the brand font and
  * a trailing Material icon, anchoring a Material 3 [DropdownMenu] with a leading check on the
@@ -395,7 +399,7 @@ private fun PullDown(
     val fs = text.style.fontSize.value
     val glyph = (style.indicator ?: "chevron.up.chevron.down").takeIf { it.isNotEmpty() }
         ?.let { MaterialSymbols.resolve(context, it, env.runtime.diagnostics, node.id) }
-    val iconSize = style.indicatorSize?.toFloat() ?: (fs * 0.8f)
+    val iconSize = (style.indicatorSize?.toFloat() ?: (fs * 0.8f)) * MATERIAL_GLYPH_SCALE.toFloat()
     val iconColor = hexColor(style.indicatorColor) ?: text.style.color
     val title = options.firstOrNull { it.value == sel }?.label ?: p.placeholder ?: "Select"
     var expanded by remember(node) { mutableStateOf(false) }

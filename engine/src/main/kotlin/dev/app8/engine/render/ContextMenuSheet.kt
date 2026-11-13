@@ -32,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerEventTimeoutCancellationException
 import androidx.compose.ui.input.pointer.pointerInput
@@ -168,7 +169,9 @@ internal fun ContextMenuSheet(node: RenderNode, menu: ContextMenu, state: Contex
                 ) {
                     // Not interactive: any tap inside runs `onPreviewTap`.
                     Box(
-                        Modifier.width(width.dp).height(height.dp).clickable(
+                        Modifier.width(width.dp).height(height.dp)
+                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+                            .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
                         ) { close { runMenuActions(dispatcher, node, menu.onPreviewTap) } },
