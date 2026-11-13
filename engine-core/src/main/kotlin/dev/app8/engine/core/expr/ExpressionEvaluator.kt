@@ -540,6 +540,18 @@ public class ExpressionEvaluator {
     private fun evaluateArrayAccess(array: ExpressionNode, index: ExpressionNode, context: VariableContext): Any? {
         val arrayValue = evaluate(array, context)
         val indexValue = evaluate(index, context)
+        // Object key access: `map[key]` reads a property; a number reads the key of its
+        // string form (`counts[3]` reads `counts["3"]`). A missing key gives null.
+        Values.asMap(arrayValue)?.let { map ->
+            val key = when (indexValue) {
+                is String -> indexValue
+                null, Values.Null -> return null
+                else -> toNumber(indexValue)?.let { n ->
+                    if (n % 1.0 == 0.0 && kotlin.math.abs(n) < 1e15) n.toLong().toString() else n.toString()
+                } ?: return null
+            }
+            return map[key]
+        }
         val list = Values.asList(arrayValue) ?: return null
         val idx = toNumber(indexValue)?.let { SwiftCompat.toIntTruncating(it) }
             ?: throw ExpressionException.ParseError("Array index must be a number")

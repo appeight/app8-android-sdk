@@ -18,6 +18,10 @@ public data class TabBarScreenContent(
     val initialTab: String? = null,
     val tintColor: String? = null,
     val unselectedColor: String? = null,
+    /** Badge background on every tab (default system red / Material error). */
+    val badgeColor: String? = null,
+    /** Badge text color (default white / Material onError). */
+    val badgeTextColor: String? = null,
 ) : EntityContent {
     override val properties: Any? get() = null
     override val style: Any? get() = null
@@ -34,6 +38,8 @@ internal fun decodeTabBarScreenContent(c: Cursor): TabBarScreenContent {
         initialTab = c.optString("initialTab"),
         tintColor = c.optString("tintColor"),
         unselectedColor = c.optString("unselectedColor"),
+        badgeColor = c.optString("badgeColor"),
+        badgeTextColor = c.optString("badgeTextColor"),
     )
 }
 

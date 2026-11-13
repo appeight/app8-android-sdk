@@ -275,13 +275,25 @@ public data class PickerStyle(
     override val transform: Transform? = null,
     val text: Wrapped<TextModel> = Wrapped.none(),
     val selectedSegmentTintColor: String? = null,
-) : BaseStyle
+    /** Menu mode: pull-down button title style; opts into the plain pull-down look. */
+    val label: Wrapped<TextModel> = Wrapped.none(),
+    /** Menu mode: SF Symbol after the title (default `chevron.up.chevron.down`, `""` hides it). */
+    val indicator: String? = null,
+    val indicatorColor: String? = null,
+    val indicatorSize: Double? = null,
+    val indicatorSpacing: Double? = null,
+) : BaseStyle {
+    /** True when `label` or `indicator` opts into the plain pull-down look. */
+    public val isPullDown: Boolean get() = label.base != null || label.direct != null || indicator != null
+}
 
 internal fun decodePickerStyle(c: Cursor): PickerStyle {
     val b = decodeBase(c)
     return PickerStyle(
         b.contentMode, b.material, b.alpha, b.transform,
         c.wrapped("text", ::decodeTextModel), c.optString("selectedSegmentTintColor"),
+        c.wrapped("label", ::decodeTextModel), c.optString("indicator"), c.optString("indicatorColor"),
+        c.optDouble("indicatorSize"), c.optDouble("indicatorSpacing"),
     )
 }
 

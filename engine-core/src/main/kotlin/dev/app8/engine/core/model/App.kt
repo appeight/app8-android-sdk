@@ -20,6 +20,8 @@ public data class App(
     val platforms: Platforms? = null,
     /** DSL version the app needs (`"dsl": "1.1"`). */
     val dsl: String? = null,
+    /** The app's id (`"id"`): names per-app storage such as persisted variables. */
+    val id: String? = null,
 ) {
     /** The start screen of the start flow. */
     public val initialScreenId: String?
@@ -61,6 +63,7 @@ internal fun decodeApp(c: Cursor): App {
         // New in DSL 1.1 and not on iOS yet: decoded leniently so a malformed block never rejects the app.
         platforms = c.attempt { it.opt("platforms", ::decodePlatforms) },
         dsl = c.attempt { it.opt("dsl") { v -> v.stringOrNull() ?: v.doubleOrNull()?.toString() } },
+        id = c.attempt { it.optString("id") },
     )
 }
 

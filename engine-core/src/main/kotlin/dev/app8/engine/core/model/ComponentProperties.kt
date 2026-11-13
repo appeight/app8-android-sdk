@@ -129,7 +129,17 @@ public data class ScrollViewProperties(
     val keyboardDismissMode: KeyboardDismissMode? = null,
     val decelerationRate: DecelerationRate? = null,
     val autoScroll: AutoScroll? = null,
+    val minimumZoomScale: Double? = null,
+    /** Above 1 turns pinch zoom on. */
+    val maximumZoomScale: Double? = null,
+    /** Default: true when zoom is on. */
+    val doubleTapZoom: Boolean? = null,
+    /** iOS stretchy header. Android: parsed, no custom effect (system stretch overscroll). */
+    val stretchesTopChild: Boolean? = null,
 ) {
+    /** True when `maximumZoomScale` > 1. */
+    public val isZoomEnabled: Boolean get() = (maximumZoomScale ?: 1.0) > 1.0
+
     @Suppress("EnumEntryName")
     public enum class Direction { vertical, horizontal }
 
@@ -162,6 +172,10 @@ internal fun decodeScrollViewProperties(c: Cursor): ScrollViewProperties {
             a.obj()
             ScrollViewProperties.AutoScroll(a.reqDouble("speed"), a.optBool("infinite"), a.optDouble("loopGap"))
         },
+        minimumZoomScale = c.optDouble("minimumZoomScale"),
+        maximumZoomScale = c.optDouble("maximumZoomScale"),
+        doubleTapZoom = c.optBool("doubleTapZoom"),
+        stretchesTopChild = c.optBool("stretchesTopChild"),
     )
 }
 
@@ -237,6 +251,10 @@ public data class PickerProperties(
     val displayMode: DisplayMode? = null,
     val placeholder: String? = null,
     val isEnabled: String? = null,
+    /** With an `object` variable in [bindVariable]: the key the selection is written under (expression). */
+    val bindKey: String? = null,
+    /** `options` given as an expression (`"{{item.variants}}"`) resolving to `[{value, label}]`. */
+    val optionsExpression: String? = null,
 ) {
     public data class Option(val value: String, val label: String, val icon: String? = null)
 
@@ -248,6 +266,7 @@ internal fun decodePickerProperties(c: Cursor): PickerProperties {
     c.obj()
     return PickerProperties(
         options = c.opt("options") { a ->
+            if (a.stringOrNull() != null) return@opt null
             a.list { o -> o.obj(); PickerProperties.Option(o.reqString("value"), o.reqString("label"), o.optString("icon")) }
         },
         selectedValue = c.optString("selectedValue"),
@@ -255,6 +274,8 @@ internal fun decodePickerProperties(c: Cursor): PickerProperties {
         displayMode = c.optEnum<PickerProperties.DisplayMode>("displayMode"),
         placeholder = c.optString("placeholder"),
         isEnabled = c.optString("isEnabled"),
+        bindKey = c.optString("bindKey"),
+        optionsExpression = c.opt("options") { it.stringOrNull() },
     )
 }
 

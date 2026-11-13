@@ -53,11 +53,13 @@ public data class Tab(
     val screen: String,
     /** Badge, usually an expression (`"{{length(cart)}}"`). Empty, `0` or null hides it. */
     val badge: String? = null,
+    /** This tab's badge background; overrides the bar's `badgeColor`. */
+    val badgeColor: String? = null,
 )
 
 internal fun decodeTab(c: Cursor): Tab {
     c.obj()
-    return Tab(c.reqString("id"), c.reqString("label"), c.reqString("icon"), c.reqString("screen"), c.optString("badge"))
+    return Tab(c.reqString("id"), c.reqString("label"), c.reqString("icon"), c.reqString("screen"), c.optString("badge"), c.optString("badgeColor"))
 }
 
 /** Navigation bar of a screen. */

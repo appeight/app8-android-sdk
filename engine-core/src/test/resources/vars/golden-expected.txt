@@ -160,7 +160,7 @@ S:"banana"
 S:"banana"
 ERR:Array index must be a number
 S:"banana"
-N
+S:"Jane"
 N
 S:"Jeans"
 I:3
