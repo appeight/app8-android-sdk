@@ -180,7 +180,10 @@ internal object ButtonKind : ComponentKind {
         return LayoutTraits(
             intrinsic = IntrinsicMeasure {
                 val s = env.measure(text, r.text, null)
-                Size(s.width + r.padH * 2, s.height + r.padV * 2)
+                // `style.system.image`: a symbol as tall as the title font, beside the title.
+                val img = r.system?.image?.let { r.text.style.fontSize.value.toDouble() * 1.2 } ?: 0.0
+                val gap = if (img > 0.0 && r.title.isNotEmpty()) (r.system?.imagePadding ?: 6.0) else 0.0
+                Size(s.width + img + gap + r.padH * 2, maxOf(s.height, img) + r.padV * 2)
             },
             signature = "${r.title}${r.text}${r.system}",
         )
@@ -218,9 +221,64 @@ internal object ButtonKind : ComponentKind {
         }
         if (!enabled) m = m.graphicsLayer { alpha = 0.4f }
         else m = m.clip(shape).then(tapModifier(node, node.content, ripple(), always = true))
+        val image = system?.image
         Box(m, contentAlignment = Alignment.Center) {
-            DslText(AnnotatedString(r.title), r.text.copy(style = r.text.style.copy(textAlign = r.text.style.textAlign.takeUnless { it == TextAlign.Unspecified } ?: TextAlign.Center)))
+            if (image == null) {
+                DslText(AnnotatedString(r.title), r.text.copy(style = r.text.style.copy(textAlign = r.text.style.textAlign.takeUnless { it == TextAlign.Unspecified } ?: TextAlign.Center)))
+            } else {
+                SystemButtonContent(node, r.title, r.text, system, image)
+            }
             ChildrenLayout(node, Modifier.fillMaxSize())
+        }
+    }
+}
+
+/** A system button's image (Material for an SF Symbol, or an asset) beside its title, per `imagePlacement`. */
+@Composable
+private fun SystemButtonContent(
+    node: RenderNode,
+    title: String,
+    text: dev.app8.engine.style.ResolvedText,
+    system: SystemButtonStyle,
+    image: SystemButtonStyle.Image,
+) {
+    val env = LocalRenderEnv.current
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val size = text.style.fontSize.value * 1.2f
+    val icon: @Composable () -> Unit = {
+        when (image.type) {
+            SystemButtonStyle.Image.Kind.symbol -> {
+                val name = node.string(image.name) ?: image.name
+                val glyph = dev.app8.engine.icons.MaterialSymbols.resolve(context, name, env.runtime.diagnostics, node.id)
+                if (glyph != null) {
+                    androidx.compose.foundation.text.BasicText(
+                        glyph.text,
+                        style = androidx.compose.ui.text.TextStyle(
+                            color = text.style.color,
+                            fontSize = env.textSize(size),
+                            fontFamily = dev.app8.engine.icons.MaterialSymbols.family(glyph.filled, 500, size),
+                        ),
+                    )
+                }
+            }
+            SystemButtonStyle.Image.Kind.asset -> Unit
+        }
+    }
+    val label: @Composable () -> Unit = { if (title.isNotEmpty()) DslText(AnnotatedString(title), text) }
+    val gap = androidx.compose.ui.unit.Dp(if (title.isNotEmpty()) (system.imagePadding ?: 6.0).toFloat() else 0f)
+    when (system.imagePlacement) {
+        SystemButtonStyle.ImagePlacement.top, SystemButtonStyle.ImagePlacement.bottom ->
+            androidx.compose.foundation.layout.Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(gap),
+            ) {
+                if (system.imagePlacement == SystemButtonStyle.ImagePlacement.top) { icon(); label() } else { label(); icon() }
+            }
+        else -> androidx.compose.foundation.layout.Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(gap),
+        ) {
+            if (system.imagePlacement == SystemButtonStyle.ImagePlacement.trailing) { label(); icon() } else { icon(); label() }
         }
     }
 }

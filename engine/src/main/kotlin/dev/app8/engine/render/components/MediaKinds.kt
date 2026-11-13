@@ -95,6 +95,7 @@ internal object ImageKind : ComponentKind {
  * pointSize, 17 by default).
  */
 internal object IconKind : ComponentKind {
+    private val ICON_HUGGING = dev.app8.engine.core.layout.AxisValues(750f, 750f)
     private fun pointSize(node: RenderNode): Double = (node.content.style as? IconStyle)?.symbolFontSize ?: 17.0
 
     override fun traits(node: RenderNode, env: RenderEnv): LayoutTraits {
@@ -102,7 +103,9 @@ internal object IconKind : ComponentKind {
         if (props.model !is IconProperties.Model.Symbol) return LayoutTraits.NONE
         val pt = pointSize(node)
         // An SF Symbol image at point size P is about 1.1P × 1.2P (web render.ts measures the same).
-        return LayoutTraits(intrinsic = IntrinsicMeasure { Size(pt * 1.1, pt * 1.2) }, signature = "icon@$pt")
+        // An icon hugs its glyph at defaultHigh (iOS CIconView), so a stack's extra space goes
+        // to a label rather than pulling a row of icons apart (rating stars).
+        return LayoutTraits(intrinsic = IntrinsicMeasure { Size(pt * 1.1, pt * 1.2) }, hugging = ICON_HUGGING, signature = "icon@$pt")
     }
 
     @Composable

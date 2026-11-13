@@ -109,7 +109,7 @@ internal class App8Runtime(
         }
         if (model.variables?.values?.any { persistFlag(it) } == true) {
             // Stored values load before the first screen renders.
-            val persistence = DataStoreVariablePersistence(appContext, model.id ?: model.bundleId ?: appContext.packageName)
+            val persistence = DataStoreVariablePersistence(appContext, model.id ?: model.bundleId ?: model.title ?: appContext.packageName)
             persistence.preload()
             appStore.persistence = persistence
         }
