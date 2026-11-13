@@ -1343,10 +1343,11 @@ public final class dev/app8/engine/core/model/Animation$Timing$SpringTiming : de
 
 public final class dev/app8/engine/core/model/App {
 	public fun <init> ()V
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/App$UserInterfaceStyle;Ldev/app8/engine/core/model/App$Navigation;Ljava/util/List;Ljava/util/List;Ldev/app8/engine/core/model/ScreenTransition;Ljava/util/Map;Ldev/app8/engine/core/model/App$Platforms;Ljava/lang/String;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/App$UserInterfaceStyle;Ldev/app8/engine/core/model/App$Navigation;Ljava/util/List;Ljava/util/List;Ldev/app8/engine/core/model/ScreenTransition;Ljava/util/Map;Ldev/app8/engine/core/model/App$Platforms;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/App$UserInterfaceStyle;Ldev/app8/engine/core/model/App$Navigation;Ljava/util/List;Ljava/util/List;Ldev/app8/engine/core/model/ScreenTransition;Ljava/util/Map;Ldev/app8/engine/core/model/App$Platforms;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/App$UserInterfaceStyle;Ldev/app8/engine/core/model/App$Navigation;Ljava/util/List;Ljava/util/List;Ldev/app8/engine/core/model/ScreenTransition;Ljava/util/Map;Ldev/app8/engine/core/model/App$Platforms;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component10 ()Ljava/lang/String;
+	public final fun component11 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/lang/String;
 	public final fun component3 ()Ldev/app8/engine/core/model/App$UserInterfaceStyle;
 	public final fun component4 ()Ldev/app8/engine/core/model/App$Navigation;
@@ -1355,14 +1356,15 @@ public final class dev/app8/engine/core/model/App {
 	public final fun component7 ()Ldev/app8/engine/core/model/ScreenTransition;
 	public final fun component8 ()Ljava/util/Map;
 	public final fun component9 ()Ldev/app8/engine/core/model/App$Platforms;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/App$UserInterfaceStyle;Ldev/app8/engine/core/model/App$Navigation;Ljava/util/List;Ljava/util/List;Ldev/app8/engine/core/model/ScreenTransition;Ljava/util/Map;Ldev/app8/engine/core/model/App$Platforms;Ljava/lang/String;)Ldev/app8/engine/core/model/App;
-	public static synthetic fun copy$default (Ldev/app8/engine/core/model/App;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/App$UserInterfaceStyle;Ldev/app8/engine/core/model/App$Navigation;Ljava/util/List;Ljava/util/List;Ldev/app8/engine/core/model/ScreenTransition;Ljava/util/Map;Ldev/app8/engine/core/model/App$Platforms;Ljava/lang/String;ILjava/lang/Object;)Ldev/app8/engine/core/model/App;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/App$UserInterfaceStyle;Ldev/app8/engine/core/model/App$Navigation;Ljava/util/List;Ljava/util/List;Ldev/app8/engine/core/model/ScreenTransition;Ljava/util/Map;Ldev/app8/engine/core/model/App$Platforms;Ljava/lang/String;Ljava/lang/String;)Ldev/app8/engine/core/model/App;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/App;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/App$UserInterfaceStyle;Ldev/app8/engine/core/model/App$Navigation;Ljava/util/List;Ljava/util/List;Ldev/app8/engine/core/model/ScreenTransition;Ljava/util/Map;Ldev/app8/engine/core/model/App$Platforms;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ldev/app8/engine/core/model/App;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAnimations ()Ljava/util/List;
 	public final fun getBundleId ()Ljava/lang/String;
 	public final fun getDefaultTransition ()Ldev/app8/engine/core/model/ScreenTransition;
 	public final fun getDefaultUserInterfaceStyle ()Ldev/app8/engine/core/model/App$UserInterfaceStyle;
 	public final fun getDsl ()Ljava/lang/String;
+	public final fun getId ()Ljava/lang/String;
 	public final fun getInitialScreenId ()Ljava/lang/String;
 	public final fun getNavigation ()Ldev/app8/engine/core/model/App$Navigation;
 	public final fun getPlatforms ()Ldev/app8/engine/core/model/App$Platforms;
@@ -1799,8 +1801,8 @@ public abstract interface class dev/app8/engine/core/model/Component {
 }
 
 public final class dev/app8/engine/core/model/ComponentContent : dev/app8/engine/core/model/StatefulContent {
-	public fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/Gestures;Ldev/app8/engine/core/model/Interaction;Ldev/app8/engine/core/model/Accessibility;Ljava/lang/String;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/NavigationBar;Ldev/app8/engine/core/model/ComponentTransition;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ldev/app8/engine/core/model/EdgeInsets;Ljava/util/List;Ljava/util/List;)V
-	public synthetic fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/Gestures;Ldev/app8/engine/core/model/Interaction;Ldev/app8/engine/core/model/Accessibility;Ljava/lang/String;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/NavigationBar;Ldev/app8/engine/core/model/ComponentTransition;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ldev/app8/engine/core/model/EdgeInsets;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/Gestures;Ldev/app8/engine/core/model/Interaction;Ldev/app8/engine/core/model/Accessibility;Ljava/lang/String;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/NavigationBar;Ldev/app8/engine/core/model/ComponentTransition;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ldev/app8/engine/core/model/EdgeInsets;Ljava/util/List;Ljava/util/List;Ldev/app8/engine/core/model/ContextMenu;)V
+	public synthetic fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/Gestures;Ldev/app8/engine/core/model/Interaction;Ldev/app8/engine/core/model/Accessibility;Ljava/lang/String;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/NavigationBar;Ldev/app8/engine/core/model/ComponentTransition;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ldev/app8/engine/core/model/EdgeInsets;Ljava/util/List;Ljava/util/List;Ldev/app8/engine/core/model/ContextMenu;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/Object;
 	public final fun component10 ()Ljava/util/Map;
 	public final fun component11 ()Ljava/util/Map;
@@ -1815,6 +1817,7 @@ public final class dev/app8/engine/core/model/ComponentContent : dev/app8/engine
 	public final fun component2 ()Ljava/lang/Object;
 	public final fun component20 ()Ljava/util/List;
 	public final fun component21 ()Ljava/util/List;
+	public final fun component22 ()Ldev/app8/engine/core/model/ContextMenu;
 	public final fun component3 ()Ldev/app8/engine/core/model/Layout;
 	public final fun component4 ()Ljava/util/Map;
 	public final fun component5 ()Ljava/util/Map;
@@ -1822,14 +1825,15 @@ public final class dev/app8/engine/core/model/ComponentContent : dev/app8/engine
 	public final fun component7 ()Ldev/app8/engine/core/model/Interaction;
 	public final fun component8 ()Ldev/app8/engine/core/model/Accessibility;
 	public final fun component9 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/Gestures;Ldev/app8/engine/core/model/Interaction;Ldev/app8/engine/core/model/Accessibility;Ljava/lang/String;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/NavigationBar;Ldev/app8/engine/core/model/ComponentTransition;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ldev/app8/engine/core/model/EdgeInsets;Ljava/util/List;Ljava/util/List;)Ldev/app8/engine/core/model/ComponentContent;
-	public static synthetic fun copy$default (Ldev/app8/engine/core/model/ComponentContent;Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/Gestures;Ldev/app8/engine/core/model/Interaction;Ldev/app8/engine/core/model/Accessibility;Ljava/lang/String;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/NavigationBar;Ldev/app8/engine/core/model/ComponentTransition;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ldev/app8/engine/core/model/EdgeInsets;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Ldev/app8/engine/core/model/ComponentContent;
+	public final fun copy (Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/Gestures;Ldev/app8/engine/core/model/Interaction;Ldev/app8/engine/core/model/Accessibility;Ljava/lang/String;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/NavigationBar;Ldev/app8/engine/core/model/ComponentTransition;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ldev/app8/engine/core/model/EdgeInsets;Ljava/util/List;Ljava/util/List;Ldev/app8/engine/core/model/ContextMenu;)Ldev/app8/engine/core/model/ComponentContent;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/ComponentContent;Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/Gestures;Ldev/app8/engine/core/model/Interaction;Ldev/app8/engine/core/model/Accessibility;Ljava/lang/String;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/NavigationBar;Ldev/app8/engine/core/model/ComponentTransition;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ldev/app8/engine/core/model/EdgeInsets;Ljava/util/List;Ljava/util/List;Ldev/app8/engine/core/model/ContextMenu;ILjava/lang/Object;)Ldev/app8/engine/core/model/ComponentContent;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getAccessibility ()Ldev/app8/engine/core/model/Accessibility;
 	public fun getActions ()Ljava/util/Map;
 	public final fun getAdditionalSafeAreaInsets ()Ldev/app8/engine/core/model/EdgeInsets;
 	public fun getAnalytics ()Ljava/util/Map;
 	public fun getChildren ()Ljava/util/List;
+	public final fun getContextMenu ()Ldev/app8/engine/core/model/ContextMenu;
 	public fun getDefaultStateName ()Ljava/lang/String;
 	public final fun getDismissKeyboardOnTap ()Ljava/lang/Boolean;
 	public final fun getElementTransition ()Ldev/app8/engine/core/model/ScreenTransition$ElementTransition;
@@ -2038,6 +2042,67 @@ public final class dev/app8/engine/core/model/ComponentType$Known : dev/app8/eng
 	public fun getRaw ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun isOneOf ([Ldev/app8/engine/core/model/ComponentType$Key;)Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/app8/engine/core/model/ContextMenu {
+	public fun <init> ()V
+	public fun <init> (Ldev/app8/engine/core/model/ContextMenu$Preview;Ljava/util/List;Ljava/util/List;Ljava/lang/String;)V
+	public synthetic fun <init> (Ldev/app8/engine/core/model/ContextMenu$Preview;Ljava/util/List;Ljava/util/List;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ldev/app8/engine/core/model/ContextMenu$Preview;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Ldev/app8/engine/core/model/ContextMenu$Preview;Ljava/util/List;Ljava/util/List;Ljava/lang/String;)Ldev/app8/engine/core/model/ContextMenu;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/ContextMenu;Ldev/app8/engine/core/model/ContextMenu$Preview;Ljava/util/List;Ljava/util/List;Ljava/lang/String;ILjava/lang/Object;)Ldev/app8/engine/core/model/ContextMenu;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getItems ()Ljava/util/List;
+	public final fun getOnPreviewTap ()Ljava/util/List;
+	public final fun getPreview ()Ldev/app8/engine/core/model/ContextMenu$Preview;
+	public fun hashCode ()I
+	public final fun isEnabled ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/app8/engine/core/model/ContextMenu$Item {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Z
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Ljava/util/List;)Ldev/app8/engine/core/model/ContextMenu$Item;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/ContextMenu$Item;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Ldev/app8/engine/core/model/ContextMenu$Item;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getActions ()Ljava/util/List;
+	public final fun getDestructive ()Z
+	public final fun getHidden ()Ljava/lang/String;
+	public final fun getIcon ()Ljava/lang/String;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getSubtitle ()Ljava/lang/String;
+	public final fun getTitle ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isEnabled ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/app8/engine/core/model/ContextMenu$Preview {
+	public fun <init> (Ldev/app8/engine/core/model/Component;Ljava/lang/Double;Ljava/lang/Double;)V
+	public synthetic fun <init> (Ldev/app8/engine/core/model/Component;Ljava/lang/Double;Ljava/lang/Double;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ldev/app8/engine/core/model/Component;
+	public final fun component2 ()Ljava/lang/Double;
+	public final fun component3 ()Ljava/lang/Double;
+	public final fun copy (Ldev/app8/engine/core/model/Component;Ljava/lang/Double;Ljava/lang/Double;)Ldev/app8/engine/core/model/ContextMenu$Preview;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/ContextMenu$Preview;Ldev/app8/engine/core/model/Component;Ljava/lang/Double;Ljava/lang/Double;ILjava/lang/Object;)Ldev/app8/engine/core/model/ContextMenu$Preview;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getComponent ()Ldev/app8/engine/core/model/Component;
+	public final fun getHeight ()Ljava/lang/Double;
+	public final fun getWidth ()Ljava/lang/Double;
+	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -3041,20 +3106,24 @@ public final class dev/app8/engine/core/model/PageControlProperties {
 
 public final class dev/app8/engine/core/model/PickerProperties {
 	public fun <init> ()V
-	public fun <init> (Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/PickerProperties$DisplayMode;Ljava/lang/String;Ljava/lang/String;)V
-	public synthetic fun <init> (Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/PickerProperties$DisplayMode;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/PickerProperties$DisplayMode;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/PickerProperties$DisplayMode;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/util/List;
 	public final fun component2 ()Ljava/lang/String;
 	public final fun component3 ()Ljava/lang/String;
 	public final fun component4 ()Ldev/app8/engine/core/model/PickerProperties$DisplayMode;
 	public final fun component5 ()Ljava/lang/String;
 	public final fun component6 ()Ljava/lang/String;
-	public final fun copy (Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/PickerProperties$DisplayMode;Ljava/lang/String;Ljava/lang/String;)Ldev/app8/engine/core/model/PickerProperties;
-	public static synthetic fun copy$default (Ldev/app8/engine/core/model/PickerProperties;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/PickerProperties$DisplayMode;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ldev/app8/engine/core/model/PickerProperties;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun copy (Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/PickerProperties$DisplayMode;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ldev/app8/engine/core/model/PickerProperties;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/PickerProperties;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/PickerProperties$DisplayMode;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ldev/app8/engine/core/model/PickerProperties;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBindKey ()Ljava/lang/String;
 	public final fun getBindVariable ()Ljava/lang/String;
 	public final fun getDisplayMode ()Ldev/app8/engine/core/model/PickerProperties$DisplayMode;
 	public final fun getOptions ()Ljava/util/List;
+	public final fun getOptionsExpression ()Ljava/lang/String;
 	public final fun getPlaceholder ()Ljava/lang/String;
 	public final fun getSelectedValue ()Ljava/lang/String;
 	public fun hashCode ()I
@@ -3176,6 +3245,15 @@ public final class dev/app8/engine/core/model/ScreenTransition$Dimming {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class dev/app8/engine/core/model/ScreenTransition$DismissGesture : java/lang/Enum {
+	public static final field any Ldev/app8/engine/core/model/ScreenTransition$DismissGesture;
+	public static final field down Ldev/app8/engine/core/model/ScreenTransition$DismissGesture;
+	public static final field none Ldev/app8/engine/core/model/ScreenTransition$DismissGesture;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/app8/engine/core/model/ScreenTransition$DismissGesture;
+	public static fun values ()[Ldev/app8/engine/core/model/ScreenTransition$DismissGesture;
+}
+
 public final class dev/app8/engine/core/model/ScreenTransition$Edge : java/lang/Enum {
 	public static final field bottom Ldev/app8/engine/core/model/ScreenTransition$Edge;
 	public static final field leading Ldev/app8/engine/core/model/ScreenTransition$Edge;
@@ -3218,12 +3296,15 @@ public final class dev/app8/engine/core/model/ScreenTransition$Fallback : java/l
 
 public final class dev/app8/engine/core/model/ScreenTransition$Inline : dev/app8/engine/core/model/ScreenTransition {
 	public fun <init> ()V
-	public fun <init> (Ljava/lang/String;Ldev/app8/engine/core/model/ScreenTransition$Mode;Ldev/app8/engine/core/model/ScreenTransition$Preset;Ldev/app8/engine/core/model/ScreenTransition$Edge;Ldev/app8/engine/core/model/Animation;Ldev/app8/engine/core/model/ScreenTransition$Participant;Ldev/app8/engine/core/model/ScreenTransition$Participant;Ldev/app8/engine/core/model/ScreenTransition$Reverse;Ldev/app8/engine/core/model/ScreenTransition$Raise;Ldev/app8/engine/core/model/ScreenTransition$Dimming;Ldev/app8/engine/core/model/ScreenTransition$InteractiveConfig;Ldev/app8/engine/core/model/ScreenTransition$ModalPresentation;)V
-	public synthetic fun <init> (Ljava/lang/String;Ldev/app8/engine/core/model/ScreenTransition$Mode;Ldev/app8/engine/core/model/ScreenTransition$Preset;Ldev/app8/engine/core/model/ScreenTransition$Edge;Ldev/app8/engine/core/model/Animation;Ldev/app8/engine/core/model/ScreenTransition$Participant;Ldev/app8/engine/core/model/ScreenTransition$Participant;Ldev/app8/engine/core/model/ScreenTransition$Reverse;Ldev/app8/engine/core/model/ScreenTransition$Raise;Ldev/app8/engine/core/model/ScreenTransition$Dimming;Ldev/app8/engine/core/model/ScreenTransition$InteractiveConfig;Ldev/app8/engine/core/model/ScreenTransition$ModalPresentation;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ldev/app8/engine/core/model/ScreenTransition$Mode;Ldev/app8/engine/core/model/ScreenTransition$Preset;Ldev/app8/engine/core/model/ScreenTransition$Edge;Ldev/app8/engine/core/model/Animation;Ldev/app8/engine/core/model/ScreenTransition$Participant;Ldev/app8/engine/core/model/ScreenTransition$Participant;Ldev/app8/engine/core/model/ScreenTransition$Reverse;Ldev/app8/engine/core/model/ScreenTransition$Raise;Ldev/app8/engine/core/model/ScreenTransition$Dimming;Ldev/app8/engine/core/model/ScreenTransition$InteractiveConfig;Ldev/app8/engine/core/model/ScreenTransition$ModalPresentation;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/ScreenTransition$DismissGesture;)V
+	public synthetic fun <init> (Ljava/lang/String;Ldev/app8/engine/core/model/ScreenTransition$Mode;Ldev/app8/engine/core/model/ScreenTransition$Preset;Ldev/app8/engine/core/model/ScreenTransition$Edge;Ldev/app8/engine/core/model/Animation;Ldev/app8/engine/core/model/ScreenTransition$Participant;Ldev/app8/engine/core/model/ScreenTransition$Participant;Ldev/app8/engine/core/model/ScreenTransition$Reverse;Ldev/app8/engine/core/model/ScreenTransition$Raise;Ldev/app8/engine/core/model/ScreenTransition$Dimming;Ldev/app8/engine/core/model/ScreenTransition$InteractiveConfig;Ldev/app8/engine/core/model/ScreenTransition$ModalPresentation;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/ScreenTransition$DismissGesture;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component10 ()Ldev/app8/engine/core/model/ScreenTransition$Dimming;
 	public final fun component11 ()Ldev/app8/engine/core/model/ScreenTransition$InteractiveConfig;
 	public final fun component12 ()Ldev/app8/engine/core/model/ScreenTransition$ModalPresentation;
+	public final fun component13 ()Ljava/lang/String;
+	public final fun component14 ()Ljava/lang/String;
+	public final fun component15 ()Ldev/app8/engine/core/model/ScreenTransition$DismissGesture;
 	public final fun component2 ()Ldev/app8/engine/core/model/ScreenTransition$Mode;
 	public final fun component3 ()Ldev/app8/engine/core/model/ScreenTransition$Preset;
 	public final fun component4 ()Ldev/app8/engine/core/model/ScreenTransition$Edge;
@@ -3232,11 +3313,13 @@ public final class dev/app8/engine/core/model/ScreenTransition$Inline : dev/app8
 	public final fun component7 ()Ldev/app8/engine/core/model/ScreenTransition$Participant;
 	public final fun component8 ()Ldev/app8/engine/core/model/ScreenTransition$Reverse;
 	public final fun component9 ()Ldev/app8/engine/core/model/ScreenTransition$Raise;
-	public final fun copy (Ljava/lang/String;Ldev/app8/engine/core/model/ScreenTransition$Mode;Ldev/app8/engine/core/model/ScreenTransition$Preset;Ldev/app8/engine/core/model/ScreenTransition$Edge;Ldev/app8/engine/core/model/Animation;Ldev/app8/engine/core/model/ScreenTransition$Participant;Ldev/app8/engine/core/model/ScreenTransition$Participant;Ldev/app8/engine/core/model/ScreenTransition$Reverse;Ldev/app8/engine/core/model/ScreenTransition$Raise;Ldev/app8/engine/core/model/ScreenTransition$Dimming;Ldev/app8/engine/core/model/ScreenTransition$InteractiveConfig;Ldev/app8/engine/core/model/ScreenTransition$ModalPresentation;)Ldev/app8/engine/core/model/ScreenTransition$Inline;
-	public static synthetic fun copy$default (Ldev/app8/engine/core/model/ScreenTransition$Inline;Ljava/lang/String;Ldev/app8/engine/core/model/ScreenTransition$Mode;Ldev/app8/engine/core/model/ScreenTransition$Preset;Ldev/app8/engine/core/model/ScreenTransition$Edge;Ldev/app8/engine/core/model/Animation;Ldev/app8/engine/core/model/ScreenTransition$Participant;Ldev/app8/engine/core/model/ScreenTransition$Participant;Ldev/app8/engine/core/model/ScreenTransition$Reverse;Ldev/app8/engine/core/model/ScreenTransition$Raise;Ldev/app8/engine/core/model/ScreenTransition$Dimming;Ldev/app8/engine/core/model/ScreenTransition$InteractiveConfig;Ldev/app8/engine/core/model/ScreenTransition$ModalPresentation;ILjava/lang/Object;)Ldev/app8/engine/core/model/ScreenTransition$Inline;
+	public final fun copy (Ljava/lang/String;Ldev/app8/engine/core/model/ScreenTransition$Mode;Ldev/app8/engine/core/model/ScreenTransition$Preset;Ldev/app8/engine/core/model/ScreenTransition$Edge;Ldev/app8/engine/core/model/Animation;Ldev/app8/engine/core/model/ScreenTransition$Participant;Ldev/app8/engine/core/model/ScreenTransition$Participant;Ldev/app8/engine/core/model/ScreenTransition$Reverse;Ldev/app8/engine/core/model/ScreenTransition$Raise;Ldev/app8/engine/core/model/ScreenTransition$Dimming;Ldev/app8/engine/core/model/ScreenTransition$InteractiveConfig;Ldev/app8/engine/core/model/ScreenTransition$ModalPresentation;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/ScreenTransition$DismissGesture;)Ldev/app8/engine/core/model/ScreenTransition$Inline;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/ScreenTransition$Inline;Ljava/lang/String;Ldev/app8/engine/core/model/ScreenTransition$Mode;Ldev/app8/engine/core/model/ScreenTransition$Preset;Ldev/app8/engine/core/model/ScreenTransition$Edge;Ldev/app8/engine/core/model/Animation;Ldev/app8/engine/core/model/ScreenTransition$Participant;Ldev/app8/engine/core/model/ScreenTransition$Participant;Ldev/app8/engine/core/model/ScreenTransition$Reverse;Ldev/app8/engine/core/model/ScreenTransition$Raise;Ldev/app8/engine/core/model/ScreenTransition$Dimming;Ldev/app8/engine/core/model/ScreenTransition$InteractiveConfig;Ldev/app8/engine/core/model/ScreenTransition$ModalPresentation;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/ScreenTransition$DismissGesture;ILjava/lang/Object;)Ldev/app8/engine/core/model/ScreenTransition$Inline;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAlignmentKey ()Ljava/lang/String;
 	public final fun getAnimation ()Ldev/app8/engine/core/model/Animation;
 	public final fun getDimming ()Ldev/app8/engine/core/model/ScreenTransition$Dimming;
+	public final fun getDismissGesture ()Ldev/app8/engine/core/model/ScreenTransition$DismissGesture;
 	public final fun getEdge ()Ldev/app8/engine/core/model/ScreenTransition$Edge;
 	public final fun getFrom ()Ldev/app8/engine/core/model/ScreenTransition$Participant;
 	public final fun getId ()Ljava/lang/String;
@@ -3248,9 +3331,11 @@ public final class dev/app8/engine/core/model/ScreenTransition$Inline : dev/app8
 	public final fun getPreset ()Ldev/app8/engine/core/model/ScreenTransition$Preset;
 	public final fun getRaise ()Ldev/app8/engine/core/model/ScreenTransition$Raise;
 	public final fun getReverse ()Ldev/app8/engine/core/model/ScreenTransition$Reverse;
+	public final fun getSourceKey ()Ljava/lang/String;
 	public final fun getTo ()Ldev/app8/engine/core/model/ScreenTransition$Participant;
 	public fun hashCode ()I
 	public fun inline (Lkotlin/jvm/functions/Function1;)Ldev/app8/engine/core/model/ScreenTransition$Inline;
+	public final fun isNativeZoom ()Z
 	public fun isPointer ()Z
 	public final fun normalizeAnimation (Lkotlin/jvm/functions/Function1;)Ldev/app8/engine/core/model/ScreenTransition$Inline;
 	public fun toString ()Ljava/lang/String;
@@ -3578,11 +3663,15 @@ public final class dev/app8/engine/core/model/ScreenTransition$Translation$Compa
 
 public final class dev/app8/engine/core/model/ScrollViewProperties {
 	public fun <init> ()V
-	public fun <init> (Ldev/app8/engine/core/model/ScrollViewProperties$Direction;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/Double;Ldev/app8/engine/core/model/EdgeInsets;Ldev/app8/engine/core/model/ScrollViewProperties$ContentInsetAdjustment;Ljava/lang/Boolean;Ljava/lang/Boolean;Ldev/app8/engine/core/model/ScrollViewProperties$KeyboardDismissMode;Ldev/app8/engine/core/model/ScrollViewProperties$DecelerationRate;Ldev/app8/engine/core/model/ScrollViewProperties$AutoScroll;)V
-	public synthetic fun <init> (Ldev/app8/engine/core/model/ScrollViewProperties$Direction;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/Double;Ldev/app8/engine/core/model/EdgeInsets;Ldev/app8/engine/core/model/ScrollViewProperties$ContentInsetAdjustment;Ljava/lang/Boolean;Ljava/lang/Boolean;Ldev/app8/engine/core/model/ScrollViewProperties$KeyboardDismissMode;Ldev/app8/engine/core/model/ScrollViewProperties$DecelerationRate;Ldev/app8/engine/core/model/ScrollViewProperties$AutoScroll;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ldev/app8/engine/core/model/ScrollViewProperties$Direction;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/Double;Ldev/app8/engine/core/model/EdgeInsets;Ldev/app8/engine/core/model/ScrollViewProperties$ContentInsetAdjustment;Ljava/lang/Boolean;Ljava/lang/Boolean;Ldev/app8/engine/core/model/ScrollViewProperties$KeyboardDismissMode;Ldev/app8/engine/core/model/ScrollViewProperties$DecelerationRate;Ldev/app8/engine/core/model/ScrollViewProperties$AutoScroll;Ljava/lang/Double;Ljava/lang/Double;Ljava/lang/Boolean;Ljava/lang/Boolean;)V
+	public synthetic fun <init> (Ldev/app8/engine/core/model/ScrollViewProperties$Direction;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/Double;Ldev/app8/engine/core/model/EdgeInsets;Ldev/app8/engine/core/model/ScrollViewProperties$ContentInsetAdjustment;Ljava/lang/Boolean;Ljava/lang/Boolean;Ldev/app8/engine/core/model/ScrollViewProperties$KeyboardDismissMode;Ldev/app8/engine/core/model/ScrollViewProperties$DecelerationRate;Ldev/app8/engine/core/model/ScrollViewProperties$AutoScroll;Ljava/lang/Double;Ljava/lang/Double;Ljava/lang/Boolean;Ljava/lang/Boolean;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ldev/app8/engine/core/model/ScrollViewProperties$Direction;
 	public final fun component10 ()Ldev/app8/engine/core/model/ScrollViewProperties$DecelerationRate;
 	public final fun component11 ()Ldev/app8/engine/core/model/ScrollViewProperties$AutoScroll;
+	public final fun component12 ()Ljava/lang/Double;
+	public final fun component13 ()Ljava/lang/Double;
+	public final fun component14 ()Ljava/lang/Boolean;
+	public final fun component15 ()Ljava/lang/Boolean;
 	public final fun component2 ()Ljava/lang/Boolean;
 	public final fun component3 ()Ljava/lang/String;
 	public final fun component4 ()Ljava/lang/Double;
@@ -3591,8 +3680,8 @@ public final class dev/app8/engine/core/model/ScrollViewProperties {
 	public final fun component7 ()Ljava/lang/Boolean;
 	public final fun component8 ()Ljava/lang/Boolean;
 	public final fun component9 ()Ldev/app8/engine/core/model/ScrollViewProperties$KeyboardDismissMode;
-	public final fun copy (Ldev/app8/engine/core/model/ScrollViewProperties$Direction;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/Double;Ldev/app8/engine/core/model/EdgeInsets;Ldev/app8/engine/core/model/ScrollViewProperties$ContentInsetAdjustment;Ljava/lang/Boolean;Ljava/lang/Boolean;Ldev/app8/engine/core/model/ScrollViewProperties$KeyboardDismissMode;Ldev/app8/engine/core/model/ScrollViewProperties$DecelerationRate;Ldev/app8/engine/core/model/ScrollViewProperties$AutoScroll;)Ldev/app8/engine/core/model/ScrollViewProperties;
-	public static synthetic fun copy$default (Ldev/app8/engine/core/model/ScrollViewProperties;Ldev/app8/engine/core/model/ScrollViewProperties$Direction;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/Double;Ldev/app8/engine/core/model/EdgeInsets;Ldev/app8/engine/core/model/ScrollViewProperties$ContentInsetAdjustment;Ljava/lang/Boolean;Ljava/lang/Boolean;Ldev/app8/engine/core/model/ScrollViewProperties$KeyboardDismissMode;Ldev/app8/engine/core/model/ScrollViewProperties$DecelerationRate;Ldev/app8/engine/core/model/ScrollViewProperties$AutoScroll;ILjava/lang/Object;)Ldev/app8/engine/core/model/ScrollViewProperties;
+	public final fun copy (Ldev/app8/engine/core/model/ScrollViewProperties$Direction;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/Double;Ldev/app8/engine/core/model/EdgeInsets;Ldev/app8/engine/core/model/ScrollViewProperties$ContentInsetAdjustment;Ljava/lang/Boolean;Ljava/lang/Boolean;Ldev/app8/engine/core/model/ScrollViewProperties$KeyboardDismissMode;Ldev/app8/engine/core/model/ScrollViewProperties$DecelerationRate;Ldev/app8/engine/core/model/ScrollViewProperties$AutoScroll;Ljava/lang/Double;Ljava/lang/Double;Ljava/lang/Boolean;Ljava/lang/Boolean;)Ldev/app8/engine/core/model/ScrollViewProperties;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/ScrollViewProperties;Ldev/app8/engine/core/model/ScrollViewProperties$Direction;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/Double;Ldev/app8/engine/core/model/EdgeInsets;Ldev/app8/engine/core/model/ScrollViewProperties$ContentInsetAdjustment;Ljava/lang/Boolean;Ljava/lang/Boolean;Ldev/app8/engine/core/model/ScrollViewProperties$KeyboardDismissMode;Ldev/app8/engine/core/model/ScrollViewProperties$DecelerationRate;Ldev/app8/engine/core/model/ScrollViewProperties$AutoScroll;Ljava/lang/Double;Ljava/lang/Double;Ljava/lang/Boolean;Ljava/lang/Boolean;ILjava/lang/Object;)Ldev/app8/engine/core/model/ScrollViewProperties;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAutoScroll ()Ldev/app8/engine/core/model/ScrollViewProperties$AutoScroll;
 	public final fun getBounces ()Ljava/lang/Boolean;
@@ -3600,12 +3689,17 @@ public final class dev/app8/engine/core/model/ScrollViewProperties {
 	public final fun getContentInsetAdjustment ()Ldev/app8/engine/core/model/ScrollViewProperties$ContentInsetAdjustment;
 	public final fun getDecelerationRate ()Ldev/app8/engine/core/model/ScrollViewProperties$DecelerationRate;
 	public final fun getDirection ()Ldev/app8/engine/core/model/ScrollViewProperties$Direction;
+	public final fun getDoubleTapZoom ()Ljava/lang/Boolean;
 	public final fun getKeyboardDismissMode ()Ldev/app8/engine/core/model/ScrollViewProperties$KeyboardDismissMode;
+	public final fun getMaximumZoomScale ()Ljava/lang/Double;
+	public final fun getMinimumZoomScale ()Ljava/lang/Double;
 	public final fun getOutputVariable ()Ljava/lang/String;
 	public final fun getPagingEnabled ()Ljava/lang/Boolean;
 	public final fun getScrollThreshold ()Ljava/lang/Double;
 	public final fun getShowsIndicator ()Ljava/lang/Boolean;
+	public final fun getStretchesTopChild ()Ljava/lang/Boolean;
 	public fun hashCode ()I
+	public final fun isZoomEnabled ()Z
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -3857,17 +3951,19 @@ public final class dev/app8/engine/core/model/StylesSerializer : dev/app8/engine
 }
 
 public final class dev/app8/engine/core/model/Tab {
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/lang/String;
 	public final fun component3 ()Ljava/lang/String;
 	public final fun component4 ()Ljava/lang/String;
 	public final fun component5 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ldev/app8/engine/core/model/Tab;
-	public static synthetic fun copy$default (Ldev/app8/engine/core/model/Tab;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ldev/app8/engine/core/model/Tab;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ldev/app8/engine/core/model/Tab;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/Tab;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ldev/app8/engine/core/model/Tab;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBadge ()Ljava/lang/String;
+	public final fun getBadgeColor ()Ljava/lang/String;
 	public final fun getIcon ()Ljava/lang/String;
 	public final fun getId ()Ljava/lang/String;
 	public final fun getLabel ()Ljava/lang/String;
@@ -3877,18 +3973,22 @@ public final class dev/app8/engine/core/model/Tab {
 }
 
 public final class dev/app8/engine/core/model/TabBarScreenContent : dev/app8/engine/core/model/EntityContent {
-	public fun <init> (Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
-	public synthetic fun <init> (Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/util/List;
 	public final fun component2 ()Ljava/lang/String;
 	public final fun component3 ()Ljava/lang/String;
 	public final fun component4 ()Ljava/lang/String;
-	public final fun copy (Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ldev/app8/engine/core/model/TabBarScreenContent;
-	public static synthetic fun copy$default (Ldev/app8/engine/core/model/TabBarScreenContent;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ldev/app8/engine/core/model/TabBarScreenContent;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun copy (Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ldev/app8/engine/core/model/TabBarScreenContent;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/TabBarScreenContent;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ldev/app8/engine/core/model/TabBarScreenContent;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getAccessibility ()Ldev/app8/engine/core/model/Accessibility;
 	public fun getActions ()Ljava/util/Map;
 	public fun getAnalytics ()Ljava/util/Map;
+	public final fun getBadgeColor ()Ljava/lang/String;
+	public final fun getBadgeTextColor ()Ljava/lang/String;
 	public fun getChildren ()Ljava/util/List;
 	public fun getGestures ()Ldev/app8/engine/core/model/Gestures;
 	public final fun getInitialTab ()Ljava/lang/String;
@@ -5024,25 +5124,36 @@ public final class dev/app8/engine/core/model/style/PageControlStyle : dev/app8/
 
 public final class dev/app8/engine/core/model/style/PickerStyle : dev/app8/engine/core/model/style/BaseStyle {
 	public fun <init> ()V
-	public fun <init> (Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/String;)V
-	public synthetic fun <init> (Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/String;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Double;Ljava/lang/Double;)V
+	public synthetic fun <init> (Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/String;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Double;Ljava/lang/Double;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ldev/app8/engine/core/model/style/ContentMode;
+	public final fun component10 ()Ljava/lang/Double;
+	public final fun component11 ()Ljava/lang/Double;
 	public final fun component2 ()Ldev/app8/engine/core/model/style/Wrapped;
 	public final fun component3 ()Ljava/lang/Double;
 	public final fun component4 ()Ldev/app8/engine/core/model/style/Transform;
 	public final fun component5 ()Ldev/app8/engine/core/model/style/Wrapped;
 	public final fun component6 ()Ljava/lang/String;
-	public final fun copy (Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/String;)Ldev/app8/engine/core/model/style/PickerStyle;
-	public static synthetic fun copy$default (Ldev/app8/engine/core/model/style/PickerStyle;Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/String;ILjava/lang/Object;)Ldev/app8/engine/core/model/style/PickerStyle;
+	public final fun component7 ()Ldev/app8/engine/core/model/style/Wrapped;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun component9 ()Ljava/lang/String;
+	public final fun copy (Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/String;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Double;Ljava/lang/Double;)Ldev/app8/engine/core/model/style/PickerStyle;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/style/PickerStyle;Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/String;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Double;Ljava/lang/Double;ILjava/lang/Object;)Ldev/app8/engine/core/model/style/PickerStyle;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getAlpha ()Ljava/lang/Double;
 	public fun getBlendMode ()Ldev/app8/engine/core/model/style/BlendMode;
 	public fun getContentMode ()Ldev/app8/engine/core/model/style/ContentMode;
+	public final fun getIndicator ()Ljava/lang/String;
+	public final fun getIndicatorColor ()Ljava/lang/String;
+	public final fun getIndicatorSize ()Ljava/lang/Double;
+	public final fun getIndicatorSpacing ()Ljava/lang/Double;
+	public final fun getLabel ()Ldev/app8/engine/core/model/style/Wrapped;
 	public fun getMaterial ()Ldev/app8/engine/core/model/style/Wrapped;
 	public final fun getSelectedSegmentTintColor ()Ljava/lang/String;
 	public final fun getText ()Ldev/app8/engine/core/model/style/Wrapped;
 	public fun getTransform ()Ldev/app8/engine/core/model/style/Transform;
 	public fun hashCode ()I
+	public final fun isPullDown ()Z
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -5730,6 +5841,16 @@ public final class dev/app8/engine/core/vars/DependencyGraph {
 	public final fun reset ()V
 }
 
+public final class dev/app8/engine/core/vars/InMemoryVariablePersistence : dev/app8/engine/core/vars/VariablePersistence {
+	public fun <init> ()V
+	public fun <init> (Ljava/util/Map;)V
+	public synthetic fun <init> (Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getValues ()Ljava/util/Map;
+	public fun remove (Ljava/lang/String;)V
+	public fun save (Ljava/lang/String;Ljava/lang/String;)V
+	public fun stored (Ljava/lang/String;)Ljava/lang/String;
+}
+
 public final class dev/app8/engine/core/vars/InputParameterDefinition {
 	public static final field Companion Ldev/app8/engine/core/vars/InputParameterDefinition$Companion;
 	public fun <init> (Ldev/app8/engine/core/vars/VariableType;ZLdev/app8/engine/core/vars/AnyCodableValue;)V
@@ -5891,11 +6012,12 @@ public final class dev/app8/engine/core/vars/VariableContext {
 
 public final class dev/app8/engine/core/vars/VariableDefinition {
 	public static final field Companion Ldev/app8/engine/core/vars/VariableDefinition$Companion;
-	public fun <init> (Ldev/app8/engine/core/vars/VariableType;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;Ldev/app8/engine/core/vars/VariablePreview;)V
-	public synthetic fun <init> (Ldev/app8/engine/core/vars/VariableType;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;Ldev/app8/engine/core/vars/VariablePreview;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ldev/app8/engine/core/vars/VariableType;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;Ldev/app8/engine/core/vars/VariablePreview;Ljava/lang/Boolean;)V
+	public synthetic fun <init> (Ldev/app8/engine/core/vars/VariableType;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;Ldev/app8/engine/core/vars/VariablePreview;Ljava/lang/Boolean;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getComputed ()Ljava/lang/String;
 	public final fun getHasExternalSource ()Z
 	public final fun getInitialValue ()Ldev/app8/engine/core/vars/AnyCodableValue;
+	public final fun getPersist ()Ljava/lang/Boolean;
 	public final fun getPreview ()Ldev/app8/engine/core/vars/VariablePreview;
 	public final fun getRawInitialValue ()Ljava/lang/Object;
 	public final fun getSchema ()Ljava/lang/String;
@@ -5962,6 +6084,17 @@ public abstract interface class dev/app8/engine/core/vars/VariableLogger {
 	public abstract fun debug (Ljava/lang/String;)V
 	public abstract fun error (Ljava/lang/String;)V
 	public abstract fun warning (Ljava/lang/String;)V
+	public fun warning (Ljava/lang/String;Ljava/lang/String;)V
+}
+
+public final class dev/app8/engine/core/vars/VariableLogger$DefaultImpls {
+	public static fun warning (Ldev/app8/engine/core/vars/VariableLogger;Ljava/lang/String;Ljava/lang/String;)V
+}
+
+public abstract interface class dev/app8/engine/core/vars/VariablePersistence {
+	public abstract fun remove (Ljava/lang/String;)V
+	public abstract fun save (Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun stored (Ljava/lang/String;)Ljava/lang/String;
 }
 
 public final class dev/app8/engine/core/vars/VariablePreview {
@@ -5998,6 +6131,7 @@ public final class dev/app8/engine/core/vars/VariableStore : dev/app8/engine/cor
 	public fun getAnyVariableChanged ()Ldev/app8/engine/core/vars/ChangePublisher;
 	public final fun getLogger ()Ldev/app8/engine/core/vars/VariableLogger;
 	public fun getParentStore ()Ldev/app8/engine/core/vars/VariableStoreProtocol;
+	public final fun getPersistence ()Ldev/app8/engine/core/vars/VariablePersistence;
 	public fun getValue (Ljava/lang/String;)Ljava/lang/Object;
 	public fun hasVariable (Ljava/lang/String;)Z
 	public fun reset ()V
@@ -6005,6 +6139,7 @@ public final class dev/app8/engine/core/vars/VariableStore : dev/app8/engine/cor
 	public fun setExternalValue (Ljava/lang/String;Ljava/lang/Object;)V
 	public final fun setLogger (Ldev/app8/engine/core/vars/VariableLogger;)V
 	public fun setMultipleValues (Ljava/util/Map;)V
+	public final fun setPersistence (Ldev/app8/engine/core/vars/VariablePersistence;)V
 	public fun setValue (Ljava/lang/String;Ljava/lang/Object;)V
 }
 

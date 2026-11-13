@@ -161,11 +161,15 @@ internal class ActionDispatcher(
             val inline = transition?.inline { id -> runtime.app?.transitions?.firstNotNullOfOrNull { (it as? ScreenTransition.Inline)?.takeIf { t -> t.id == id } } }
             val customModal = inline != null && (inline.mode ?: inline.preset?.defaultMode) == ScreenTransition.Mode.modal &&
                 inline.preset != ScreenTransition.Preset.system
+            val zoom = inline?.takeIf { it.isNativeZoom }?.let { z -> zoomOrigin(node, z, context) }
             when {
+                // A native zoom with a modal presentation (`fullScreen` …) is a custom modal.
+                zoom != null && presentation != null && presentation != Action.PresentationStyle.push ->
+                    navigator.present(next, params, Action.PresentationStyle.fullScreen, action.detents, action.grabber, inline, zoom)
                 presentation != null && presentation != Action.PresentationStyle.push ->
                     navigator.present(next, params, presentation, action.detents, action.grabber)
-                customModal -> navigator.present(next, params, Action.PresentationStyle.fullScreen, action.detents, action.grabber, inline)
-                else -> navigator.push(next, params, inline)
+                customModal -> navigator.present(next, params, Action.PresentationStyle.fullScreen, action.detents, action.grabber, inline, zoom)
+                else -> navigator.push(next, params, inline, zoom)
             }
             posted = true
         }
@@ -177,6 +181,22 @@ internal class ActionDispatcher(
             if (action.isBack == true) props["is_back"] = true
             analytics(node, App8AnalyticsEvent.Auto.NAVIGATION_PUSHED, props)
         }
+    }
+
+    /**
+     * The native zoom's source: `sourceKey` now (the action's scope) and again in the presenting
+     * screen's scope when the dismissal starts.
+     */
+    private fun zoomOrigin(node: RenderNode, t: ScreenTransition.Inline, context: VariableContext): dev.app8.engine.navigation.transitions.ZoomOrigin? {
+        val raw = t.sourceKey ?: return null
+        val key = node.string(raw, context)?.takeIf { it.isNotEmpty() } ?: return null
+        val session = node.session
+        return dev.app8.engine.navigation.transitions.ZoomOrigin(
+            session = session,
+            initialKey = key,
+            rekey = { runCatching { session.root.string(raw, session.root.scope.untracked) }.getOrNull() },
+            dismissGesture = t.dismissGesture ?: ScreenTransition.DismissGesture.any,
+        )
     }
 
     private fun showAlert(node: RenderNode, action: Action, context: VariableContext) {

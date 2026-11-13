@@ -34,6 +34,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
+import dev.app8.engine.render.Coerce
+import dev.app8.engine.render.resolve
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
@@ -470,8 +472,14 @@ internal object CollectionKind : ComponentKind {
     @Composable
     private fun NativePager(model: CollectionModel, items: List<CollectionItem>, keys: List<String>, st: SectionStyle, width: Double, pageVariable: String?) {
         val env = LocalRenderEnv.current
-        val state = rememberPagerState { items.size }
-        PageVariable(model, pageVariable) { CollectionPlan.pageIndex((state.currentPage + state.currentPageOffsetFraction) * width, width) }
+        val state = rememberPagerState(initialPage = initialPage(model, pageVariable, items.size)) { items.size }
+        PageVariable(
+            model, pageVariable,
+            scrollTo = { target, animate ->
+                val t = target.coerceIn(0, (state.pageCount - 1).coerceAtLeast(0))
+                if (animate) state.animateScrollToPage(t) else state.scrollToPage(t)
+            },
+        ) { CollectionPlan.pageIndex((state.currentPage + state.currentPageOffsetFraction) * width, width) }
         val w = (width - st.insets.left - st.insets.right).coerceAtLeast(0.0)
         HorizontalPager(
             state = state,
@@ -524,8 +532,14 @@ internal object CollectionKind : ComponentKind {
         }
         val groupKey: (Int) -> String = { g -> "c:" + keys[groups[g][0]] }
         if (st.paging != Paging.CONTINUOUS && itemW != null) {
-            val state = rememberPagerState { groups.size }
-            PageVariable(model, pageVariable) {
+            val state = rememberPagerState(initialPage = initialPage(model, pageVariable, groups.size)) { groups.size }
+            PageVariable(
+                model, pageVariable,
+                scrollTo = { target, animate ->
+                    val t = target.coerceIn(0, (state.pageCount - 1).coerceAtLeast(0))
+                    if (animate) state.animateScrollToPage(t) else state.scrollToPage(t)
+                },
+            ) {
                 CollectionPlan.pageIndex((state.currentPage + state.currentPageOffsetFraction) * (itemW + st.itemSpacing), width)
             }
             HorizontalPager(
@@ -545,7 +559,13 @@ internal object CollectionKind : ComponentKind {
             else rememberSnapFlingBehavior(state, if (st.paging == Paging.CENTERED) SnapPosition.Center else SnapPosition.Start)
             if (pageVariable != null) {
                 val density = LocalDensity.current.density
-                PageVariable(model, pageVariable) {
+                PageVariable(
+                    model, pageVariable,
+                    scrollTo = { target, animate ->
+                        val t = target.coerceIn(0, (groups.size - 1).coerceAtLeast(0))
+                        if (animate) state.animateScrollToItem(t) else state.scrollToItem(t)
+                    },
+                ) {
                     val step = (itemW ?: 0.0) + st.itemSpacing
                     val offset = if (itemW != null) state.firstVisibleItemIndex * step + state.firstVisibleItemScrollOffset / density
                     else state.firstVisibleItemIndex.toDouble() * width
@@ -564,19 +584,47 @@ internal object CollectionKind : ComponentKind {
         }
     }
 
-    /** `currentPageVariable`: written whenever the page under the offset changes (iOS `handlePageChange`). */
+    /** The page the `currentPageVariable` holds when the collection first composes. */
+    private fun initialPage(model: CollectionModel, name: String?, count: Int): Int {
+        name ?: return 0
+        val v = runCatching { model.node.scope.store.getValue(name) }.getOrNull()
+        return (Coerce.double(v)?.toInt() ?: 0).coerceIn(0, (count - 1).coerceAtLeast(0))
+    }
+
+    /**
+     * `currentPageVariable`, two-way: written whenever the page under the offset changes (iOS
+     * `handlePageChange`), and a write from elsewhere scrolls to that page: without animation
+     * on the first sync (the collection was off screen), animated afterwards.
+     */
     @Composable
-    private fun PageVariable(model: CollectionModel, name: String?, page: () -> Int) {
+    private fun PageVariable(
+        model: CollectionModel,
+        name: String?,
+        scrollTo: (suspend (Int, Boolean) -> Unit)? = null,
+        page: () -> Int,
+    ) {
         if (name == null) return
         val node = model.node
         val current = rememberUpdatedState(page)
+        val synced = remember(node, name) { androidx.compose.runtime.mutableStateOf(scrollTo == null) }
         LaunchedEffect(node, name) {
             var last = -1
-            snapshotFlow { current.value() }.collect { p ->
-                if (p != last) {
+            snapshotFlow { if (synced.value) current.value() else null }.collect { p ->
+                if (p != null && p != last) {
                     last = p
                     runCatching { node.scope.store.setValue(name, p.toLong()) }
                 }
+            }
+        }
+        if (scrollTo == null) return
+        LaunchedEffect(node, name) {
+            var first = true
+            snapshotFlow { Coerce.double(node.resolve("{{$name}}"))?.toInt() }.collect { target ->
+                if (target != null && target != current.value()) {
+                    runCatching { scrollTo(target, !first) }
+                }
+                first = false
+                synced.value = true
             }
         }
     }

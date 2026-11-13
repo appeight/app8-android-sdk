@@ -31,6 +31,7 @@ import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
 import androidx.compose.animation.SharedTransitionLayout
 import dev.app8.engine.navigation.transitions.CustomModal
+import dev.app8.engine.navigation.transitions.NativeZoomModal
 import dev.app8.engine.navigation.transitions.MaterialTransitions
 import dev.app8.engine.navigation.transitions.TransitionFrame
 import dev.app8.engine.navigation.transitions.stackTransitionSpec
@@ -103,6 +104,22 @@ internal const val SHEET_HANDLE_BLOCK = 48f
 @Composable
 private fun ModalLayer(flow: FlowController, layer: Layer) {
     val custom = layer.transition
+    val zoom = layer.zoom
+    if (custom != null && custom.nativeZoom && zoom != null) {
+        NativeZoomModal(
+            origin = zoom,
+            sources = LocalRenderEnv.current.runtime.zoomSources,
+            dismissing = layer.dismissing,
+            onDismissRequest = { flow.dismiss(layer) },
+            onRemoved = { flow.remove(layer) },
+            backEnabled = layer.stack.entries.size <= 1,
+        ) {
+            Box(Modifier.fillMaxSize().background(IosSystemColors.of("systemBackground", LocalRenderEnv.current.appearance))) {
+                StackHost(flow, layer, layer.stack, null, Chrome())
+            }
+        }
+        return
+    }
     if (custom != null) {
         CustomModal(
             transition = custom,

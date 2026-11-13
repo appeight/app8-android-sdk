@@ -60,6 +60,9 @@ internal class App8Runtime(
     val propertyResolver = PropertyResolver(translations)
     val appStore = VariableStore().apply { logger = diagnostics }
 
+    /** Keyed elements' frames, for the native zoom transition (`zoom` + `sourceKey`). */
+    val zoomSources = dev.app8.engine.navigation.transitions.ZoomSources()
+
     var app: App? = null
         private set
     /** Snapshot state: a streamed style update (`streamStyles`) recomposes what reads it. */
@@ -103,6 +106,12 @@ internal class App8Runtime(
             throw e
         } catch (e: Exception) {
             throw App8Error.AppDecodeFailed(e)
+        }
+        if (model.variables?.values?.any { persistFlag(it) } == true) {
+            // Stored values load before the first screen renders.
+            val persistence = DataStoreVariablePersistence(appContext, model.id ?: model.bundleId ?: appContext.packageName)
+            persistence.preload()
+            appStore.persistence = persistence
         }
         model.variables?.let { defineAppVariables(it) }
 
@@ -206,6 +215,9 @@ internal class App8Runtime(
         }
         reportedErrors = entries.size
     }
+
+    private fun persistFlag(element: JsonElement): Boolean =
+        ((element as? kotlinx.serialization.json.JsonObject)?.get("persist") as? kotlinx.serialization.json.JsonPrimitive)?.content == "true"
 
     private fun defineAppVariables(raw: Map<String, JsonElement>) {
         val defs = decodeVariableDefinitions(raw, diagnostics)

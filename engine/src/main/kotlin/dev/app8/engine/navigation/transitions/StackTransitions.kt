@@ -16,6 +16,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.runtime.setValue
 import androidx.navigation3.scene.Scene
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import dev.app8.engine.core.model.ScreenTransition
@@ -142,6 +145,19 @@ internal fun TransitionFrame(route: Route, stack: StackState, shared: SharedTran
         val isTo = role.entering != role.pop
         if (role.transition.raise == ScreenTransition.Raise.incoming) isTo else !isTo
     }
+    // Native zoom (`zoom` + `sourceKey`): the route that zooms is the pushed one (entering on
+    // push, leaving on pop); its bounds morph from the source element. Predictive back seeks
+    // `visible`, so the gesture scrubs the shrink.
+    val zoomOrigin = route.zoom?.takeIf { role != null && role.transition.nativeZoom && role.entering != role.pop }
+    val runtime = dev.app8.engine.render.LocalRenderEnv.current.runtime
+    var ownBounds by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(androidx.compose.ui.geometry.Rect.Zero) }
+    if (route.zoom != null) {
+        // Hidden while this route is on the stack (or animating out).
+        HideZoomSource(runtime.zoomSources, route.zoom)
+    }
+    if (zoomOrigin != null && role?.pop == true) {
+        androidx.compose.runtime.LaunchedEffect(zoomOrigin) { zoomOrigin.refreshKey(runtime.zoomSources) }
+    }
     val body: @Composable () -> Unit = {
         var m: Modifier = Modifier.fillMaxSize()
         if (shared != null) {
@@ -150,9 +166,17 @@ internal fun TransitionFrame(route: Route, stack: StackState, shared: SharedTran
                 m = m.renderInSharedTransitionScopeOverlay(renderInOverlay = { onTop }, zIndexInOverlay = -1f)
             }
         }
+        if (zoomOrigin != null) {
+            m = m.onGloballyPositioned { ownBounds = it.boundsInRoot() }
+        }
         Box(
             m.graphicsLayer {
-                if (participant != null && role != null) applyKeyframes(participant, role.fraction(visible), size.width, size.height)
+                if (zoomOrigin != null) {
+                    val progress = if (visible <= 1f) visible else 2f - visible
+                    applyNativeZoom(progress, ownBounds, runtime.zoomSources.frame(zoomOrigin.session, zoomOrigin.key))
+                } else if (participant != null && role != null) {
+                    applyKeyframes(participant, role.fraction(visible), size.width, size.height)
+                }
             },
         ) { content() }
     }
@@ -213,3 +237,4 @@ private fun timingRectSpec(a: dev.app8.engine.core.model.Animation.Inline): andr
         is dev.app8.engine.core.model.Animation.Timing.Curve -> androidx.compose.animation.core.tween(ms, delay, androidx.compose.animation.core.FastOutSlowInEasing)
     }
 }
+
