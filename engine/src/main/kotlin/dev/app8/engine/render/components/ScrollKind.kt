@@ -1,5 +1,8 @@
 package dev.app8.engine.render.components
 
+import androidx.compose.foundation.layout.fillMaxSize
+import me.saket.telephoto.zoomable.zoomable
+
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
@@ -55,6 +58,10 @@ internal object ScrollKind : ComponentKind {
     @Composable
     override fun Render(node: RenderNode, modifier: Modifier) {
         val p = props(node)
+        if (p.isZoomEnabled) {
+            ZoomContent(node, p, modifier)
+            return
+        }
         val vertical = p.direction != ScrollViewProperties.Direction.horizontal
         val state = rememberScrollState()
         val solved = LocalSolved.current
@@ -132,6 +139,57 @@ internal object ScrollKind : ComponentKind {
                 val extra = if (infinite) contentLength.intValue + loopGapPx.roundToInt() else 0
                 layout(if (vertical) w else maxOf(w, extra * 2), if (vertical) maxOf(h, extra * 2) else h) {
                     for ((pl, f) in placeables) if (f != null) pl.place(px(f.x + left, d), px(f.y + top, d))
+                }
+            }
+        }
+    }
+
+    /**
+     * Pinch zoom (`maximumZoomScale` > 1, iOS `viewForZooming`): telephoto's `zoomable` on the
+     * content, which fills the scroll view. Over-zoom rubber-bands and springs back; double tap
+     * zooms to the tap point (2.5× or the maximum, whichever is smaller) and back out. Inside a
+     * horizontal pager the pan goes to the pager at a content edge or at scale 1.
+     * `stretchesTopChild` has no custom effect on Android (system stretch overscroll).
+     */
+    @Composable
+    private fun ZoomContent(node: RenderNode, p: ScrollViewProperties, modifier: Modifier) {
+        val max = (p.maximumZoomScale ?: 1.0).toFloat()
+        val min = (p.minimumZoomScale ?: 1.0).toFloat().coerceIn(0.1f, 1f)
+        val zoomState = me.saket.telephoto.zoomable.rememberZoomableState(
+            zoomSpec = me.saket.telephoto.zoomable.ZoomSpec(maxZoomFactor = max, minZoomFactor = min),
+        )
+        val doubleTap = if (p.doubleTapZoom != false) {
+            me.saket.telephoto.zoomable.DoubleClickToZoomListener.cycle(maxZoomFactor = minOf(2.5f, max))
+        } else null
+        val output = p.outputVariable
+        if (output != null) {
+            LaunchedEffect(node, zoomState) {
+                snapshotFlow { zoomState.contentTransformation.scale.scaleX }.collect { scale ->
+                    if (node.scope.store.hasVariable(output) && !scale.isNaN()) {
+                        runCatching { node.scope.store.setValue(output, mapOf("offset" to 0.0, "zoomScale" to scale.toDouble())) }
+                    }
+                }
+            }
+        }
+        val solved = LocalSolved.current
+        val density = LocalDensity.current.density
+        Box(modifier.clipToBounds()) {
+            Layout(
+                content = { for (child in node.children) key(child.key) { NodeView(child) } },
+                modifier = Modifier.fillMaxSize().zoomable(zoomState, onDoubleClick = doubleTap),
+            ) { measurables, constraints ->
+                val s = solved.value
+                val placeables = measurables.map { m ->
+                    val f = s.local[m.layoutId as? String]
+                    m.measure(
+                        Constraints.fixed(
+                            ((f?.width ?: 0.0) * density).roundToInt().coerceAtLeast(0),
+                            ((f?.height ?: 0.0) * density).roundToInt().coerceAtLeast(0),
+                        ),
+                    ) to f
+                }
+                layout(constraints.maxWidth, constraints.maxHeight) {
+                    for ((pl, f) in placeables) if (f != null) pl.place(px(f.x, density), px(f.y, density))
                 }
             }
         }
