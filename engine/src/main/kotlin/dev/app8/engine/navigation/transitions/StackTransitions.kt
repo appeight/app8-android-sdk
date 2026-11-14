@@ -171,13 +171,15 @@ internal fun TransitionFrame(route: Route, stack: StackState, shared: SharedTran
         }
         HideZoomSource(runtime.zoomSources, route.zoom, active = !landed)
     }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val window = androidx.compose.ui.platform.LocalWindowInfo.current.containerSize
     // The push zoom's own clock (default timing): starts when the screen is ready.
     val zoomIn = androidx.compose.runtime.remember(route) { androidx.compose.animation.core.Animatable(0f) }
     val ownClock = zoomOrigin != null && role?.pop == false && role.transition.animation == ResolvedTransition.NATIVE_ZOOM_ANIMATION
     if (ownClock && zoomOrigin != null) {
         androidx.compose.runtime.LaunchedEffect(zoomOrigin) {
             if (zoomIn.value < 1f) {
-                awaitZoomReady(zoomOrigin)
+                awaitZoomReady(zoomOrigin, runtime.zoomSources, runtime.imageLoader, context, window)
                 zoomIn.animateTo(1f, NATIVE_ZOOM_IN)
             }
         }
@@ -186,6 +188,13 @@ internal fun TransitionFrame(route: Route, stack: StackState, shared: SharedTran
         ownClock -> zoomIn.value
         visible <= 1f -> visible
         else -> 2f - visible
+    }
+    if (zoomOrigin != null) {
+        // The shared-element morph, drawn by the alignment element while the zoom runs.
+        androidx.compose.runtime.DisposableEffect(zoomOrigin, ownClock) {
+            zoomOrigin.alignment.ghost = { zoomOrigin.photoGhost(zoomProgress(), ownBounds, runtime.zoomSources.frame(zoomOrigin.session, zoomOrigin.key)) }
+            onDispose { zoomOrigin.alignment.ghost = null }
+        }
     }
     if (zoomOrigin != null && role?.pop == true) {
         androidx.compose.runtime.LaunchedEffect(zoomOrigin) { zoomOrigin.refreshKey(runtime.zoomSources) }
@@ -215,7 +224,8 @@ internal fun TransitionFrame(route: Route, stack: StackState, shared: SharedTran
                 m = m.drawWithContent {
                     drawContent()
                     val key = zoomOrigin.key
-                    drawZoomGhost(
+                    val progress = zoomProgress()
+                    if (zoomOrigin.photoGhost(progress, ownBounds, runtime.zoomSources.frame(zoomOrigin.session, key)) == null) drawZoomGhost(
                         zoomProgress(), ownBounds, runtime.zoomSources.frame(zoomOrigin.session, key), runtime.zoomSources.layer(zoomOrigin.session, key),
                         zoomOrigin.alignmentRect(), dismissing = role?.pop == true,
                     )
