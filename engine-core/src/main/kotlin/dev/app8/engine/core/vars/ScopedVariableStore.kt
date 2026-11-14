@@ -101,6 +101,9 @@ public class ScopedVariableStore(parent: VariableStoreProtocol? = null) : Variab
     // region Definition
 
     override fun defineVariable(name: String, definition: VariableDefinition) {
+        if (definition.persist == true) {
+            logger?.warning("variable.persist.scope", "`persist` on screen / component variable '$name' is ignored (app scope only)")
+        }
         val variable = Variable(name, definition)
         support.initialize(name, variable, definition, logger)
 

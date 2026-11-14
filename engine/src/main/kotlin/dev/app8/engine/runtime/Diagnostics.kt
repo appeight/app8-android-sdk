@@ -30,6 +30,7 @@ internal class Diagnostics(var level: App8LogLevel) : VariableLogger {
 
     override fun debug(message: String) = log(message)
     override fun warning(message: String) = warn("variables", message)
+    override fun warning(code: String, message: String) = warn(code, message)
     override fun error(message: String) = warn("variables", message)
 
     companion object {

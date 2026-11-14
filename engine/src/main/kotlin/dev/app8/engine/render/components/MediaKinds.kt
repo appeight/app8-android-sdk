@@ -53,20 +53,22 @@ internal fun ContentMode?.toScale(default: ContentMode): Pair<ContentScale, Alig
 }
 
 /** `image` (UIImageView, clipsToBounds, aspect fill by default), loaded with Coil. */
+/** An `image` node's picture (asset or remote URL), or null for other nodes / no model. */
+internal fun imageRef(node: RenderNode): AssetRef? = when (val m = (node.content.properties as? ImageProperties)?.model) {
+    is ImageProperties.Model.LocalAsset -> AssetRef(null, node.string(m.name), null)
+    is ImageProperties.Model.RemoteAsset -> {
+        val url = m.asset.url?.let { node.string(it) }?.takeIf { it.isNotEmpty() }
+        AssetRef(m.asset.id, m.asset.name?.let { node.string(it) }?.takeIf { it.isNotEmpty() }, url)
+    }
+    else -> null
+}?.takeIf { it.id != null || it.name != null || it.url != null }
+
 internal object ImageKind : ComponentKind {
     @Composable
     override fun Render(node: RenderNode, modifier: Modifier) {
         val env = LocalRenderEnv.current
-        val props = node.content.properties as? ImageProperties
         val style = node.content.style as? ImageStyle
-        val ref: AssetRef? = when (val m = props?.model) {
-            is ImageProperties.Model.LocalAsset -> AssetRef(null, node.string(m.name), null)
-            is ImageProperties.Model.RemoteAsset -> {
-                val url = m.asset.url?.let { node.string(it) }?.takeIf { it.isNotEmpty() }
-                AssetRef(m.asset.id, m.asset.name?.let { node.string(it) }?.takeIf { it.isNotEmpty() }, url)
-            }
-            else -> null
-        }
+        val ref: AssetRef? = imageRef(node)
         val (scale, alignment) = style?.contentMode.toScale(ContentMode.scaleAspectFill)
         val tint = env.color(style?.tintColor)
         val template = style?.renderingMode == ImageStyle.RenderingMode.alwaysTemplate
@@ -95,6 +97,7 @@ internal object ImageKind : ComponentKind {
  * pointSize, 17 by default).
  */
 internal object IconKind : ComponentKind {
+    private val ICON_HUGGING = dev.app8.engine.core.layout.AxisValues(750f, 750f)
     private fun pointSize(node: RenderNode): Double = (node.content.style as? IconStyle)?.symbolFontSize ?: 17.0
 
     override fun traits(node: RenderNode, env: RenderEnv): LayoutTraits {
@@ -102,7 +105,9 @@ internal object IconKind : ComponentKind {
         if (props.model !is IconProperties.Model.Symbol) return LayoutTraits.NONE
         val pt = pointSize(node)
         // An SF Symbol image at point size P is about 1.1P × 1.2P (web render.ts measures the same).
-        return LayoutTraits(intrinsic = IntrinsicMeasure { Size(pt * 1.1, pt * 1.2) }, signature = "icon@$pt")
+        // An icon hugs its glyph at defaultHigh (iOS CIconView), so a stack's extra space goes
+        // to a label rather than pulling a row of icons apart (rating stars).
+        return LayoutTraits(intrinsic = IntrinsicMeasure { Size(pt * 1.1, pt * 1.2) }, hugging = ICON_HUGGING, signature = "icon@$pt")
     }
 
     @Composable

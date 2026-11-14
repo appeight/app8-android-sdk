@@ -21,6 +21,8 @@ internal data class Route(
     /** The transition that pushed this route (and pops it); null = the platform default. */
     val transition: ResolvedTransition? = null,
     val id: Long = nextId.incrementAndGet(),
+    /** Native zoom source (`zoom` + `sourceKey`). */
+    val zoom: dev.app8.engine.navigation.transitions.ZoomOrigin? = null,
 ) {
     private companion object {
         val nextId = AtomicLong()
@@ -68,6 +70,8 @@ internal class Layer(
     val grabber: Boolean? = null,
     /** A custom modal transition (`mode: modal`); null for system presentations. */
     val transition: ResolvedTransition? = null,
+    /** Native zoom source (`zoom` + `sourceKey`). */
+    val zoom: dev.app8.engine.navigation.transitions.ZoomOrigin? = null,
 ) {
     /** A custom modal plays its exit animation first; the host removes the layer when done. */
     var dismissing: Boolean by androidx.compose.runtime.mutableStateOf(false)
@@ -185,9 +189,10 @@ internal class FlowController(
         detents: List<Action.SheetDetent>?,
         grabber: Boolean?,
         transition: ScreenTransition? = null,
+        zoom: dev.app8.engine.navigation.transitions.ZoomOrigin? = null,
     ) {
         val resolved = ResolvedTransition.resolve(transition, app)?.takeIf { it.isAnimated || it.kind == ResolvedTransition.Kind.None }
-        layers += Layer(StackState(Route(screenId, params)), presentation, detents, grabber, resolved)
+        layers += Layer(StackState(Route(screenId, params)), presentation, detents, grabber, resolved, zoom?.takeIf { resolved?.nativeZoom == true })
     }
 
     /** Dismisses [layer]: a custom modal animates out first (see [Layer.dismissing]). */
@@ -209,9 +214,10 @@ internal class FlowController(
      * Pushes [screenId] (iOS: action transition → target screen default → app default). With
      * no action transition the target screen is loaded first to read its default.
      */
-    fun push(stack: StackState, screenId: String, params: Map<String, Any?>, transition: ScreenTransition?) {
+    fun push(stack: StackState, screenId: String, params: Map<String, Any?>, transition: ScreenTransition?, zoom: dev.app8.engine.navigation.transitions.ZoomOrigin? = null) {
         if (transition != null) {
-            stack.push(Route(screenId, params, ResolvedTransition.resolve(transition, app)))
+            val resolved = ResolvedTransition.resolve(transition, app)
+            stack.push(Route(screenId, params, resolved, zoom = zoom?.takeIf { resolved?.nativeZoom == true }))
             return
         }
         val load = screenTransition
@@ -250,15 +256,15 @@ internal class StackNavigator(
     private val stack: StackState,
     private val tabs: TabState?,
 ) : Navigator {
-    override fun push(screenId: String, params: Map<String, Any?>, transition: ScreenTransition?) =
-        flow.push(stack, screenId, params, transition)
+    override fun push(screenId: String, params: Map<String, Any?>, transition: ScreenTransition?, zoom: dev.app8.engine.navigation.transitions.ZoomOrigin?) =
+        flow.push(stack, screenId, params, transition, zoom)
 
     override fun pop(toRoot: Boolean) {
         if (!stack.pop(toRoot)) flow.dismiss(layer)
     }
 
-    override fun present(screenId: String, params: Map<String, Any?>, presentation: Action.PresentationStyle, detents: List<Action.SheetDetent>?, grabber: Boolean?, transition: ScreenTransition?) =
-        flow.present(screenId, params, presentation, detents, grabber, transition)
+    override fun present(screenId: String, params: Map<String, Any?>, presentation: Action.PresentationStyle, detents: List<Action.SheetDetent>?, grabber: Boolean?, transition: ScreenTransition?, zoom: dev.app8.engine.navigation.transitions.ZoomOrigin?) =
+        flow.present(screenId, params, presentation, detents, grabber, transition, zoom)
 
     /** iOS `dismiss`: closes the presented modal this screen is in; on the base flow, pops. */
     override fun dismiss() {

@@ -27,7 +27,16 @@ public sealed interface ScreenTransition {
         val dimming: Dimming? = null,
         val interactive: InteractiveConfig? = null,
         val presentation: ModalPresentation? = null,
+        /** Native zoom: `content.transition.key` of the source element on the presenting screen (expression). */
+        val sourceKey: String? = null,
+        /** Native zoom: element on the incoming screen the source lines up with (expression). */
+        val alignmentKey: String? = null,
+        /** Native zoom: interactive dismissal (default `any`). */
+        val dismissGesture: DismissGesture? = null,
     ) : ScreenTransition {
+        /** `zoom` with a `sourceKey`: the native zoom from a source element. */
+        public val isNativeZoom: Boolean get() = preset == Preset.zoom && !sourceKey.isNullOrEmpty()
+
         /** Replaces a pointer `animation` with its resolved inline form. */
         public fun normalizeAnimation(resolveBy: (String) -> Animation.Inline?): Inline {
             val a = animation ?: return this
@@ -50,6 +59,9 @@ public sealed interface ScreenTransition {
 
     @Suppress("EnumEntryName")
     public enum class Mode { push, modal }
+
+    @Suppress("EnumEntryName")
+    public enum class DismissGesture { any, down, none }
 
     @Suppress("EnumEntryName")
     public enum class Preset {
@@ -228,6 +240,9 @@ internal fun decodeScreenTransitionInline(c: Cursor): ScreenTransition.Inline {
         dimming = c.opt("dimming", ::decodeDimming),
         interactive = c.opt("interactive", ::decodeInteractive),
         presentation = c.opt("presentation", ::decodeModalPresentation),
+        sourceKey = c.optString("sourceKey"),
+        alignmentKey = c.optString("alignmentKey"),
+        dismissGesture = c.optSafeEnum("dismissGesture", ScreenTransition.DismissGesture.any),
     )
 }
 

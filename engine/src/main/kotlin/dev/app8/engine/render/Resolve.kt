@@ -68,6 +68,16 @@ internal object Coerce {
         else -> null
     }
 
+    /** Scalar → string (whole numbers without ".0"); collections and null → null. */
+    fun string(v: Any?): String? = when (v) {
+        is String -> v
+        is Boolean -> v.toString()
+        is Double -> if (v % 1.0 == 0.0 && kotlin.math.abs(v) < 1e15) v.toLong().toString() else v.toString()
+        is Float -> string(v.toDouble())
+        is Number -> v.toString()
+        else -> null
+    }
+
     fun double(v: Any?): Double? = when (v) {
         is Number -> v.toDouble()
         is String -> v.trim().toDoubleOrNull()

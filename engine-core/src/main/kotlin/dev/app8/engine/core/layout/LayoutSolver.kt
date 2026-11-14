@@ -710,6 +710,21 @@ private class LayoutPass(
     private fun snap(v: Double): Double =
         if (scale > 0.0) (v * scale).roundToLong() / scale + 0.0 else v + 0.0
 
+    /**
+     * Whether [info]'s frame counts toward the content height: not inside a hidden view (a
+     * hidden variant of a cell keeps its constraints but takes no room, like UIKit) and not
+     * inside a scroll view's content (it scrolls instead of growing its ancestors).
+     */
+    private fun extendsContent(info: NodeInfo, rootInfo: NodeInfo): Boolean {
+        var cursor: NodeInfo? = info
+        while (cursor != null && cursor !== rootInfo) {
+            if (cursor.node.hidden) return false
+            if (cursor !== info && cursor.content != null) return false
+            cursor = cursor.parent
+        }
+        return true
+    }
+
     private fun collect(rootInfo: NodeInfo) {
         val out = LinkedHashMap<String, Frame>()
         val sizes = LinkedHashMap<String, Size>()
@@ -718,7 +733,7 @@ private class LayoutPass(
             val b = info.box
             val f = Frame(snap(b.x.value), snap(b.y.value), snap(b.w.value), snap(b.h.value))
             out[info.node.key] = f
-            if (info !== rootInfo) bottom = max(bottom, f.maxY)
+            if (info !== rootInfo && extendsContent(info, rootInfo)) bottom = max(bottom, f.maxY)
             info.content?.let { sizes[info.node.key] = Size(snap(it.w.value), snap(it.h.value)) }
         }
         frames = out

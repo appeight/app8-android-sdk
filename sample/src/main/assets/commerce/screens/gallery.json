@@ -1,0 +1,137 @@
+{
+ "type": "screen",
+ "id": "gallery",
+ "content": {
+  "properties": {
+   "backgroundColor": "#000000"
+  },
+  "children": [
+   {
+    "id": "pager",
+    "type": "collection",
+    "content": {
+     "properties": {
+      "data": "{{product.images}}",
+      "layout": {
+       "type": "horizontal",
+       "pagingStyle": "paging",
+       "currentPageVariable": "galleryPage",
+       "itemWidth": "fill",
+       "itemHeight": "fill"
+      }
+     },
+     "template": {
+      "id": "zoomPage",
+      "type": "scrollView",
+      "content": {
+       "properties": {
+        "minimumZoomScale": 1,
+        "maximumZoomScale": 4,
+        "showsIndicator": false,
+        "contentInsetAdjustment": "never"
+       },
+       "children": [
+        {
+         "id": "zoomImage",
+         "type": "image",
+         "content": {
+          "properties": {
+           "type": "remoteAsset",
+           "name": "{{item.image}}"
+          },
+          "style": {
+           "contentMode": "scaleAspectFit"
+          },
+          "layout": {
+           "constraints": [
+            {
+             "type": "top",
+             "target": "superview"
+            },
+            {
+             "type": "leading",
+             "target": "superview"
+            },
+            {
+             "type": "trailing",
+             "target": "superview"
+            },
+            {
+             "type": "bottom",
+             "target": "superview"
+            },
+            {
+             "type": "width",
+             "target": "superview"
+            },
+            {
+             "type": "height",
+             "target": "superview"
+            }
+           ]
+          }
+         }
+        }
+       ]
+      }
+     },
+     "layout": {
+      "constraints": [
+       {
+        "type": "top",
+        "target": "superview"
+       },
+       {
+        "type": "leading",
+        "target": "superview"
+       },
+       {
+        "type": "trailing",
+        "target": "superview"
+       },
+       {
+        "type": "bottom",
+        "target": "superview"
+       }
+      ]
+     }
+    }
+   },
+   {
+    "id": "close",
+    "type": "button",
+    "content": {
+     "properties": {
+      "text": "Close"
+     },
+     "style": {
+      "text": {
+       "fontSize": 17,
+       "color": "#FFFFFF"
+      }
+     },
+     "layout": {
+      "height": 44,
+      "constraints": [
+       {
+        "type": "top",
+        "target": "safeArea",
+        "constant": 8
+       },
+       {
+        "type": "trailing",
+        "target": "superview",
+        "constant": -16
+       }
+      ]
+     },
+     "actions": {
+      "tap": {
+       "type": "dismiss"
+      }
+     }
+    }
+   }
+  ]
+ }
+}

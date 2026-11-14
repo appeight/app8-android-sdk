@@ -16,6 +16,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.runtime.setValue
 import androidx.navigation3.scene.Scene
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import dev.app8.engine.core.model.ScreenTransition
@@ -124,14 +129,23 @@ internal fun TransitionFrame(route: Route, stack: StackState, shared: SharedTran
         }
         else -> null
     }
-    val spec = role?.transition?.animation?.toTransitionSpec()
-    val visible by t.animateFloat(transitionSpec = { spec ?: androidx.compose.animation.core.snap() }, label = "a8-transition") { s ->
+    val spec = role?.transition?.let { tr ->
+        // The native zoom's default timing: cubic ease-out, shorter going back.
+        // Push: the zoom runs on its own clock once the incoming screen is ready
+        // ([awaitZoomReady]); the navigation transition only keeps both screens up meanwhile.
+        if (tr.nativeZoom && tr.animation == ResolvedTransition.NATIVE_ZOOM_ANIMATION) {
+            if (role.pop) NATIVE_ZOOM_OUT else androidx.compose.animation.core.tween(NATIVE_ZOOM_IN_MS + NATIVE_ZOOM_READY_TIMEOUT_MS, easing = androidx.compose.animation.core.LinearEasing)
+        }
+        else tr.animation.toTransitionSpec()
+    }
+    val visibleState = t.animateFloat(transitionSpec = { spec ?: androidx.compose.animation.core.snap() }, label = "a8-transition") { s ->
         when (s) {
             EnterExitState.PreEnter -> 0f
             EnterExitState.Visible -> 1f
             EnterExitState.PostExit -> 2f
         }
     }
+    val visible by visibleState
     val participant = role?.participant
     val active = role?.transition
     // Layering (`raise`): AnimatedContent gives both screens of a transition the same
@@ -142,6 +156,49 @@ internal fun TransitionFrame(route: Route, stack: StackState, shared: SharedTran
         val isTo = role.entering != role.pop
         if (role.transition.raise == ScreenTransition.Raise.incoming) isTo else !isTo
     }
+    // Native zoom (`zoom` + `sourceKey`): the route that zooms is the pushed one (entering on
+    // push, leaving on pop); its bounds morph from the source element. Predictive back seeks
+    // `visible`, so the gesture scrubs the shrink.
+    val zoomOrigin = route.zoom?.takeIf { role != null && role.transition.nativeZoom && role.entering != role.pop }
+    val runtime = dev.app8.engine.render.LocalRenderEnv.current.runtime
+    var ownBounds by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(androidx.compose.ui.geometry.Rect.Zero) }
+    if (route.zoom != null) {
+        // Hidden while this route is on the stack (or animating out). A pop that has landed
+        // shows the source again under the ghost (same pixels) before the screen goes: no blink.
+        val popping = zoomOrigin != null && role?.pop == true
+        val landed by androidx.compose.runtime.remember(popping) {
+            androidx.compose.runtime.derivedStateOf { popping && visibleState.value >= 2f }
+        }
+        HideZoomSource(runtime.zoomSources, route.zoom, active = !landed)
+    }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val window = androidx.compose.ui.platform.LocalWindowInfo.current.containerSize
+    // The push zoom's own clock (default timing): starts when the screen is ready.
+    val zoomIn = androidx.compose.runtime.remember(route) { androidx.compose.animation.core.Animatable(0f) }
+    val ownClock = zoomOrigin != null && role?.pop == false && role.transition.animation == ResolvedTransition.NATIVE_ZOOM_ANIMATION
+    if (ownClock && zoomOrigin != null) {
+        androidx.compose.runtime.LaunchedEffect(zoomOrigin) {
+            if (zoomIn.value < 1f) {
+                awaitZoomReady(zoomOrigin, runtime.zoomSources, runtime.imageLoader, context, window)
+                zoomIn.animateTo(1f, NATIVE_ZOOM_IN)
+            }
+        }
+    }
+    fun zoomProgress(): Float = when {
+        ownClock -> zoomIn.value
+        visible <= 1f -> visible
+        else -> 2f - visible
+    }
+    if (zoomOrigin != null) {
+        // The shared-element morph, drawn by the alignment element while the zoom runs.
+        androidx.compose.runtime.DisposableEffect(zoomOrigin, ownClock) {
+            zoomOrigin.alignment.ghost = { zoomOrigin.photoGhost(zoomProgress(), ownBounds, runtime.zoomSources.frame(zoomOrigin.session, zoomOrigin.key)) }
+            onDispose { zoomOrigin.alignment.ghost = null }
+        }
+    }
+    if (zoomOrigin != null && role?.pop == true) {
+        androidx.compose.runtime.LaunchedEffect(zoomOrigin) { zoomOrigin.refreshKey(runtime.zoomSources) }
+    }
     val body: @Composable () -> Unit = {
         var m: Modifier = Modifier.fillMaxSize()
         if (shared != null) {
@@ -150,11 +207,34 @@ internal fun TransitionFrame(route: Route, stack: StackState, shared: SharedTran
                 m = m.renderInSharedTransitionScopeOverlay(renderInOverlay = { onTop }, zIndexInOverlay = -1f)
             }
         }
-        Box(
-            m.graphicsLayer {
-                if (participant != null && role != null) applyKeyframes(participant, role.fraction(visible), size.width, size.height)
-            },
-        ) { content() }
+        if (zoomOrigin != null) {
+            m = m.onGloballyPositioned { ownBounds = it.boundsInRoot() }
+        }
+        m = m.graphicsLayer {
+            if (zoomOrigin != null) {
+                applyNativeZoom(zoomProgress(), ownBounds, runtime.zoomSources.frame(zoomOrigin.session, zoomOrigin.key), zoomOrigin.alignmentRect())
+            } else if (participant != null && role != null) {
+                applyKeyframes(participant, role.fraction(visible), size.width, size.height)
+            }
+        }
+        val zoom = route.zoom
+        if (zoom != null) {
+            m = m.onPlaced { zoom.alignment.screen = it }
+            if (zoomOrigin != null) {
+                m = m.drawWithContent {
+                    drawContent()
+                    val key = zoomOrigin.key
+                    val progress = zoomProgress()
+                    if (zoomOrigin.photoGhost(progress, ownBounds, runtime.zoomSources.frame(zoomOrigin.session, key)) == null) drawZoomGhost(
+                        zoomProgress(), ownBounds, runtime.zoomSources.frame(zoomOrigin.session, key), runtime.zoomSources.layer(zoomOrigin.session, key),
+                        zoomOrigin.alignmentRect(), dismissing = role?.pop == true,
+                    )
+                }
+            }
+            Box(m) { CompositionLocalProvider(LocalZoomAlignment provides zoom.alignment) { content() } }
+        } else {
+            Box(m) { content() }
+        }
     }
     if (shared != null) {
         CompositionLocalProvider(LocalSharedMorph provides SharedMorph(shared, visibility, active?.takeIf { it.kind == ResolvedTransition.Kind.Shared })) { body() }
@@ -213,3 +293,4 @@ private fun timingRectSpec(a: dev.app8.engine.core.model.Animation.Inline): andr
         is dev.app8.engine.core.model.Animation.Timing.Curve -> androidx.compose.animation.core.tween(ms, delay, androidx.compose.animation.core.FastOutSlowInEasing)
     }
 }
+

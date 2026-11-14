@@ -39,7 +39,16 @@ public class VariableActionHandler {
             ?: throw VariableException.UndefinedVariable("No variable name specified in updateVariable action")
         val value = action.value
             ?: throw VariableException.UndefinedVariable("No value specified in updateVariable action for '$variableName'")
-        store.setValue(variableName, resolveValue(value.value, context))
+        val resolved = resolveValue(value.value, context)
+        val rawKey = action.key
+        if (rawKey == null) {
+            store.setValue(variableName, resolved)
+            return
+        }
+        // `key`: write one entry of an object variable, keep the others.
+        val key = if (rawKey.contains("{{")) propertyResolver.resolveToString(rawKey, context) else rawKey
+        val current = Values.asMap(store.getValue(variableName)) ?: emptyMap()
+        store.setValue(variableName, LinkedHashMap(current).apply { put(key, resolved) })
     }
 
     private fun handleIncrementVariable(action: VariableAction, store: VariableStoreProtocol) {
