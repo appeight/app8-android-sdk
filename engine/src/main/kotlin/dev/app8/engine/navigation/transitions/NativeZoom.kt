@@ -2,8 +2,19 @@ package dev.app8.engine.navigation.transitions
 
 import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.layer.GraphicsLayer
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onPlaced
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
@@ -61,9 +72,18 @@ internal class ZoomOrigin(
     initialKey: String,
     private val rekey: () -> String?,
     val dismissGesture: ScreenTransition.DismissGesture,
+    initialAlignmentKey: String? = null,
+    private val realign: () -> String? = { null },
 ) {
     var key: String by mutableStateOf(initialKey)
         private set
+
+    /** `alignmentKey`: the element on the incoming screen the source lines up with (null: the whole screen). */
+    var alignmentKey: String? by mutableStateOf(initialAlignmentKey)
+        private set
+
+    /** The incoming screen's keyed elements, for [alignmentKey]. */
+    val alignment = ZoomAlignment()
 
     /**
      * Dismissal starts: the key may now name another element. A key that only resolves in the
@@ -71,8 +91,40 @@ internal class ZoomOrigin(
      */
     fun refreshKey(sources: ZoomSources) {
         rekey()?.takeIf { it.isNotEmpty() && sources.frame(session, it) != null }?.let { key = it }
+        realign()?.takeIf { it.isNotEmpty() && alignment.has(it) }?.let { alignmentKey = it }
+    }
+
+    /** The alignment element's rect in the incoming screen's local (untransformed) px, if laid out. */
+    fun alignmentRect(): Rect? = alignmentKey?.let { alignment.rect(it) }
+}
+
+/**
+ * Where the incoming screen's keyed elements are, relative to the screen itself (inside its
+ * zoom transform, so the rect is untransformed). Live [LayoutCoordinates], read when drawing.
+ */
+internal class ZoomAlignment {
+    var screen: LayoutCoordinates? = null
+    private val elements = HashMap<String, LayoutCoordinates>()
+
+    fun put(key: String, coordinates: LayoutCoordinates) {
+        elements[key] = coordinates
+    }
+
+    fun remove(key: String, coordinates: LayoutCoordinates?) {
+        if (coordinates == null || elements[key] === coordinates) elements.remove(key)
+    }
+
+    fun has(key: String): Boolean = elements[key]?.isAttached == true
+
+    fun rect(key: String): Rect? {
+        val s = screen?.takeIf { it.isAttached } ?: return null
+        val e = elements[key]?.takeIf { it.isAttached } ?: return null
+        return runCatching { s.localBoundingBoxOf(e, clipBounds = false) }.getOrNull()?.takeIf { it.width > 0f && it.height > 0f }
     }
 }
+
+/** The zoom alignment of the screen being presented with a native zoom (its keyed elements report here). */
+internal val LocalZoomAlignment = compositionLocalOf<ZoomAlignment?> { null }
 
 /** A source element's window bounds (px) and corner radius (px). */
 internal data class ZoomSourceFrame(val bounds: Rect, val cornerPx: Float)
@@ -84,6 +136,18 @@ internal data class ZoomSourceFrame(val bounds: Rect, val cornerPx: Float)
 internal class ZoomSources {
     private val frames = mutableStateMapOf<Pair<Any, String>, ZoomSourceFrame>()
     private val hidden = mutableStateMapOf<Pair<Any, String>, Int>()
+    private val layers = HashMap<Pair<Any, String>, GraphicsLayer>()
+
+    /** The source's last drawn content (the ghost drawn over the zooming screen). */
+    fun layer(session: Any, key: String): GraphicsLayer? = layers[session to key]?.takeIf { !it.isReleased }
+
+    fun putLayer(session: Any, key: String, layer: GraphicsLayer) {
+        layers[session to key] = layer
+    }
+
+    fun removeLayer(session: Any, key: String, layer: GraphicsLayer) {
+        if (layers[session to key] === layer) layers.remove(session to key)
+    }
 
     fun report(session: Any, key: String, frame: ZoomSourceFrame) {
         frames[session to key] = frame
@@ -109,14 +173,35 @@ internal class ZoomSources {
     }
 }
 
-/** Registers a keyed element as a zoom source, and hides it while its zoom is presented. */
+/**
+ * Registers a keyed element as a zoom source (its frame and its drawn content, for the ghost),
+ * hides it while its zoom is presented, and reports it to the [LocalZoomAlignment] of a screen
+ * that is being zoomed in (the `alignmentKey` target).
+ */
 @Composable
 internal fun Modifier.zoomSource(sources: ZoomSources, session: Any, key: String?, cornerPx: Float): Modifier {
     if (key.isNullOrEmpty()) return this
-    DisposableEffect(sources, session, key) { onDispose { sources.remove(session, key) } }
-    return this
+    val layer = rememberGraphicsLayer()
+    val alignment = LocalZoomAlignment.current
+    val placed = remember { arrayOfNulls<LayoutCoordinates>(1) }
+    DisposableEffect(sources, session, key, layer) {
+        sources.putLayer(session, key, layer)
+        onDispose {
+            sources.remove(session, key)
+            sources.removeLayer(session, key, layer)
+        }
+    }
+    DisposableEffect(alignment, key) { onDispose { alignment?.remove(key, placed[0]) } }
+    var m = this
+    if (alignment != null) m = m.onPlaced { c -> placed[0] = c; alignment.put(key, c) }
+    return m
         .onGloballyPositioned { c -> if (c.isAttached) sources.report(session, key, ZoomSourceFrame(c.boundsInRoot(), cornerPx)) }
         .graphicsLayer { if (sources.isHidden(session, key)) alpha = 0f }
+        .drawWithContent {
+            // Recorded even while hidden: the ghost draws the same content over the zooming screen.
+            layer.record { this@drawWithContent.drawContent() }
+            drawLayer(layer)
+        }
 }
 
 /** Hides the origin's current source element while [active]. */
@@ -129,16 +214,101 @@ internal fun HideZoomSource(sources: ZoomSources, origin: ZoomOrigin, active: Bo
     }
 }
 
-/** Default native zoom timing (container transform): a critically damped spring of about 0.45 s. */
-internal val NATIVE_ZOOM_SPRING = spring<Float>(dampingRatio = 1f, stiffness = 260f, visibilityThreshold = 0.001f)
+/** Native zoom easing: cubic ease-out, `1 - (1 - t)^3`. */
+internal val NativeZoomEasing = CubicBezierEasing(0.33f, 1f, 0.68f, 1f)
+
+/** Native zoom durations (ms): growing in, shrinking back (also finishing or cancelling a gesture). */
+internal const val NATIVE_ZOOM_IN_MS = 360
+internal const val NATIVE_ZOOM_OUT_MS = 320
+
+/** Longest wait for the incoming screen's alignment element before the zoom starts anyway (ms). */
+internal const val NATIVE_ZOOM_READY_TIMEOUT_MS = 300
+
+/**
+ * Waits (frame by frame, at most [NATIVE_ZOOM_READY_TIMEOUT_MS]) until the incoming screen has
+ * laid out its `alignmentKey` element: the screen loads asynchronously, and starting before the
+ * alignment is known would make the screen jump mid-zoom. The ghost covers the source meanwhile.
+ */
+internal suspend fun awaitZoomReady(origin: ZoomOrigin) {
+    if (origin.alignmentKey == null) return
+    val start = withFrameNanos { it }
+    while (origin.alignmentRect() == null) {
+        val now = withFrameNanos { it }
+        if (now - start >= NATIVE_ZOOM_READY_TIMEOUT_MS * 1_000_000L) return
+    }
+}
+
+internal val NATIVE_ZOOM_IN = tween<Float>(NATIVE_ZOOM_IN_MS, easing = NativeZoomEasing)
+internal val NATIVE_ZOOM_OUT = tween<Float>(NATIVE_ZOOM_OUT_MS, easing = NativeZoomEasing)
+
+/**
+ * The incoming screen's transform at one progress: uniform [scale] about the top-left corner,
+ * then [translation] (px), clipped to [clip] (screen-local, untransformed px) with corner
+ * [radius] (local px).
+ */
+internal data class ZoomGeometry(val scale: Float, val translation: Offset, val clip: Rect, val radius: Float)
+
+/**
+ * The native zoom geometry at [progress] (0 = in the source, 1 = the screen's own bounds).
+ * [screen] is the incoming screen's size; [source] the source rect and [sourceCorner] its corner,
+ * both relative to the screen's top-left (px). [alignment] is the `alignmentKey` element on the
+ * incoming screen (screen-local, untransformed); default the whole screen.
+ *
+ * At 0 the screen is scaled and moved so [alignment] lines up with [source] (aspect-filled:
+ * `s0 = max(S.w/A.w, S.h/A.h)`), clipped to a source-shaped rect centred on the alignment rect;
+ * at 1 it is the identity, unclipped. Scale, translation, local clip and radius interpolate
+ * linearly with the progress (the web renderer uses the same math).
+ */
+internal fun zoomGeometry(progress: Float, screen: Size, source: Rect, sourceCorner: Float, alignment: Rect? = null): ZoomGeometry {
+    val f = progress.coerceIn(0f, 1.2f)
+    val w = screen.width
+    val h = screen.height
+    val a = alignment?.takeIf { it.width > 0f && it.height > 0f } ?: Rect(0f, 0f, w, h)
+    val s0 = max(source.width / a.width, source.height / a.height).coerceAtLeast(1e-4f)
+    val cw = source.width / s0
+    val ch = source.height / s0
+    val c0 = Rect(a.center.x - cw / 2, a.center.y - ch / 2, a.center.x + cw / 2, a.center.y + ch / 2)
+    val t0 = Offset(source.left - s0 * c0.left, source.top - s0 * c0.top)
+    fun lerp(x: Float, y: Float) = x + (y - x) * f
+    val scale = lerp(s0, 1f).coerceAtLeast(1e-4f)
+    val clip = Rect(lerp(c0.left, 0f), lerp(c0.top, 0f), lerp(c0.right, w), lerp(c0.bottom, h))
+    val radiusOnScreen = sourceCorner * (1f - f.coerceIn(0f, 1f))
+    return ZoomGeometry(scale, Offset(lerp(t0.x, 0f), lerp(t0.y, 0f)), clip, radiusOnScreen / scale)
+}
+
+/** Interactive drag: the screen follows the finger (px) and shrinks with the distance, about the clip's centre. */
+internal fun ZoomGeometry.dragged(drag: Offset, screen: Size, extraRadius: Float): ZoomGeometry {
+    if (drag == Offset.Zero) return this
+    val k = (1f - hypot(drag.x, drag.y) / max(screen.width, screen.height) * 0.6f).coerceIn(0.4f, 1f)
+    val c = translation + clip.center * scale
+    val t = c + drag + (translation - c) * k
+    val s = scale * k
+    return ZoomGeometry(s, t, clip, (radius * scale * k + extraRadius) / s)
+}
+
+/**
+ * The card photo drawn over the screen during the zoom: aspect-filled in the clip. Growing in it
+ * fades out over the first 40% of the time; shrinking back it fades in over the last half of the
+ * way and lands opaque exactly over the source.
+ */
+internal fun zoomGhostAlpha(progress: Float, dismissing: Boolean): Float {
+    val p = progress.coerceIn(0f, 1f)
+    return if (dismissing) {
+        (1f - 2f * p).coerceIn(0f, 1f)
+    } else {
+        // Time fraction from the cubic ease-out position.
+        val t = 1f - Math.cbrt((1.0 - p)).toFloat()
+        (1f - t / 0.4f).coerceIn(0f, 1f)
+    }
+}
 
 /**
  * The container transform at [progress] (0 = the source rect, 1 = the screen's own bounds
  * [own], both in window px), plus an interactive [drag] offset (px) that shrinks the screen as
- * it follows the finger. Without a source the screen cross-fades.
+ * it follows the finger. [alignment] is the `alignmentKey` element (screen-local). Without a
+ * source the screen cross-fades; with one it stays opaque (the ghost covers the start).
  */
-internal fun GraphicsLayerScope.applyNativeZoom(progress: Float, own: Rect, source: ZoomSourceFrame?, drag: Offset = Offset.Zero, dismissing: Boolean = false) {
-    val f = progress.coerceIn(0f, 1.2f)
+internal fun GraphicsLayerScope.applyNativeZoom(progress: Float, own: Rect, source: ZoomSourceFrame?, alignment: Rect? = null, drag: Offset = Offset.Zero) {
     transformOrigin = TransformOrigin(0f, 0f)
     val w = own.width
     val h = own.height
@@ -148,38 +318,39 @@ internal fun GraphicsLayerScope.applyNativeZoom(progress: Float, own: Rect, sour
         applyDrag(drag, w, h)
         return
     }
-    val s = source.bounds
-    fun lerp(a: Float, b: Float) = a + (b - a) * f
-    var left = lerp(s.left, own.left)
-    var top = lerp(s.top, own.top)
-    var rw = lerp(s.width, w).coerceAtLeast(1f)
-    var rh = lerp(s.height, h).coerceAtLeast(1f)
-    // Interactive drag: the card follows the finger and shrinks with the distance.
-    if (drag != Offset.Zero) {
-        val shrink = (1f - hypot(drag.x, drag.y) / max(w, h) * 0.6f).coerceIn(0.4f, 1f)
-        val cx = left + rw / 2 + drag.x
-        val cy = top + rh / 2 + drag.y
-        rw *= shrink
-        rh *= shrink
-        left = cx - rw / 2
-        top = cy - rh / 2
-    }
-    // Content scaled to fill the morphing bounds (`scaleInSharedContentToBounds`), centered.
-    val scale = max(rw / w, rh / h)
-    val tx = left - own.left + (rw - scale * w) / 2
-    val ty = top - own.top + (rh - scale * h) / 2
-    scaleX = scale
-    scaleY = scale
-    translationX = tx
-    translationY = ty
-    val clipLeft = (left - own.left - tx) / scale
-    val clipTop = (top - own.top - ty) / scale
-    val radius = (source.cornerPx * (1f - f.coerceIn(0f, 1f)) + (if (drag != Offset.Zero) 24f * density else 0f)) / scale
-    shape = ZoomClipShape(Rect(clipLeft, clipTop, clipLeft + rw / scale, clipTop + rh / scale), radius)
+    val g = zoomGeometry(progress, Size(w, h), source.bounds.translate(-own.left, -own.top), source.cornerPx, alignment)
+        .dragged(drag, Size(w, h), if (drag != Offset.Zero) 24f * density else 0f)
+    scaleX = g.scale
+    scaleY = g.scale
+    translationX = g.translation.x
+    translationY = g.translation.y
+    shape = ZoomClipShape(g.clip, g.radius)
     clip = true
-    // The incoming content fades in over the first part of the growth; a dismissal shrinks
-    // fully opaque into the source (which reappears when the screen is gone).
-    alpha = if (dismissing) 1f else (progress * 4f).coerceIn(0f, 1f)
+    alpha = 1f
+}
+
+/**
+ * Draws the source's recorded content ([layer]) aspect-filled in the zoom clip, inside the
+ * screen's layer (local coordinates; the layer's clip rounds it).
+ */
+internal fun DrawScope.drawZoomGhost(progress: Float, own: Rect, source: ZoomSourceFrame?, layer: GraphicsLayer?, alignment: Rect?, dismissing: Boolean) {
+    if (source == null || layer == null || own.width <= 0f || own.height <= 0f) return
+    val a = zoomGhostAlpha(progress, dismissing)
+    if (a <= 0f) return
+    val sw = source.bounds.width
+    val sh = source.bounds.height
+    if (sw <= 0f || sh <= 0f) return
+    val g = zoomGeometry(progress, Size(own.width, own.height), source.bounds.translate(-own.left, -own.top), source.cornerPx, alignment)
+    val c = g.clip
+    val fill = max(c.width / sw, c.height / sh)
+    val canvas = drawContext.canvas
+    canvas.saveLayer(c, Paint().apply { alpha = a })
+    withTransform({
+        clipRect(c.left, c.top, c.right, c.bottom)
+        translate(c.center.x - fill * sw / 2, c.center.y - fill * sh / 2)
+        scale(fill, fill, pivot = Offset.Zero)
+    }) { drawLayer(layer) }
+    canvas.restore()
 }
 
 private fun GraphicsLayerScope.applyDrag(drag: Offset, w: Float, h: Float) {
@@ -219,19 +390,32 @@ internal fun NativeZoomModal(
     val dragY = remember { Animatable(0f) }
     var own by remember { mutableStateOf(Rect.Zero) }
     var closing by remember { mutableStateOf(false) }
+    // Landed: the ghost covers the source exactly; the source shows again one frame before the
+    // screen goes, so there is never a frame without either.
+    var landed by remember { mutableStateOf(false) }
     val acc = remember { floatArrayOf(0f, 0f) }
-    HideZoomSource(sources, origin)
+    HideZoomSource(sources, origin, active = !landed)
 
-    LaunchedEffect(Unit) { progress.animateTo(1f, NATIVE_ZOOM_SPRING) }
+    LaunchedEffect(Unit) {
+        awaitZoomReady(origin)
+        progress.animateTo(1f, NATIVE_ZOOM_IN)
+    }
+
+    suspend fun land() {
+        landed = true
+        withFrameNanos { }
+        withFrameNanos { }
+        onRemoved()
+    }
 
     suspend fun shrinkAway() {
         closing = true
         launchJoin(
-            { progress.animateTo(0f, NATIVE_ZOOM_SPRING) },
-            { dragX.animateTo(0f, tween(300, easing = FastOutSlowInEasing)) },
-            { dragY.animateTo(0f, tween(300, easing = FastOutSlowInEasing)) },
+            { progress.animateTo(0f, NATIVE_ZOOM_OUT) },
+            { dragX.animateTo(0f, NATIVE_ZOOM_OUT) },
+            { dragY.animateTo(0f, NATIVE_ZOOM_OUT) },
         )
-        onRemoved()
+        land()
     }
 
     LaunchedEffect(dismissing) {
@@ -246,10 +430,10 @@ internal fun NativeZoomModal(
         try {
             events.collect { e -> progress.snapTo(start * (1f - 0.35f * e.progress)) }
             closing = true
-            progress.animateTo(0f, NATIVE_ZOOM_SPRING)
-            onRemoved()
+            progress.animateTo(0f, NATIVE_ZOOM_OUT)
+            land()
         } catch (e: CancellationException) {
-            scope.launch { progress.animateTo(1f, tween(200)) }
+            scope.launch { progress.animateTo(1f, NATIVE_ZOOM_OUT) }
             throw e
         }
     }
@@ -259,7 +443,13 @@ internal fun NativeZoomModal(
         var m: Modifier = Modifier.fillMaxSize()
             .onGloballyPositioned { own = it.boundsInRoot() }
             .graphicsLayer {
-                applyNativeZoom(progress.value, own, sources.frame(origin.session, origin.key), Offset(dragX.value, dragY.value), dismissing = closing || dismissing)
+                applyNativeZoom(progress.value, own, sources.frame(origin.session, origin.key), origin.alignmentRect(), Offset(dragX.value, dragY.value))
+            }
+            .onPlaced { origin.alignment.screen = it }
+            .drawWithContent {
+                drawContent()
+                val key = origin.key
+                drawZoomGhost(progress.value, own, sources.frame(origin.session, key), sources.layer(origin.session, key), origin.alignmentRect(), dismissing = closing || dismissing)
             }
         val gesture = origin.dismissGesture
         if (!dismissing && !closing && gesture != ScreenTransition.DismissGesture.none) {
@@ -271,8 +461,8 @@ internal fun NativeZoomModal(
                     shrinkAway()
                 } else {
                     launchJoin(
-                        { dragX.animateTo(0f, spring(0.8f, 400f)) },
-                        { dragY.animateTo(0f, spring(0.8f, 400f)) },
+                        { dragX.animateTo(0f, NATIVE_ZOOM_OUT) },
+                        { dragY.animateTo(0f, NATIVE_ZOOM_OUT) },
                     )
                 }
             }
@@ -302,7 +492,7 @@ internal fun NativeZoomModal(
                 )
             }
         }
-        Box(m) { content() }
+        Box(m) { CompositionLocalProvider(LocalZoomAlignment provides origin.alignment) { content() } }
     }
 }
 

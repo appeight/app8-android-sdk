@@ -196,6 +196,8 @@ internal class ActionDispatcher(
             initialKey = key,
             rekey = { runCatching { session.root.string(raw, session.root.scope.untracked) }.getOrNull() },
             dismissGesture = t.dismissGesture ?: ScreenTransition.DismissGesture.any,
+            initialAlignmentKey = t.alignmentKey?.let { node.string(it, context) }?.takeIf { it.isNotEmpty() },
+            realign = { t.alignmentKey?.let { raw -> runCatching { session.root.string(raw, session.root.scope.untracked) }.getOrNull() } },
         )
     }
 
