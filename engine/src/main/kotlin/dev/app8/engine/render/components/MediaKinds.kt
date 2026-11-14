@@ -53,20 +53,22 @@ internal fun ContentMode?.toScale(default: ContentMode): Pair<ContentScale, Alig
 }
 
 /** `image` (UIImageView, clipsToBounds, aspect fill by default), loaded with Coil. */
+/** An `image` node's picture (asset or remote URL), or null for other nodes / no model. */
+internal fun imageRef(node: RenderNode): AssetRef? = when (val m = (node.content.properties as? ImageProperties)?.model) {
+    is ImageProperties.Model.LocalAsset -> AssetRef(null, node.string(m.name), null)
+    is ImageProperties.Model.RemoteAsset -> {
+        val url = m.asset.url?.let { node.string(it) }?.takeIf { it.isNotEmpty() }
+        AssetRef(m.asset.id, m.asset.name?.let { node.string(it) }?.takeIf { it.isNotEmpty() }, url)
+    }
+    else -> null
+}?.takeIf { it.id != null || it.name != null || it.url != null }
+
 internal object ImageKind : ComponentKind {
     @Composable
     override fun Render(node: RenderNode, modifier: Modifier) {
         val env = LocalRenderEnv.current
-        val props = node.content.properties as? ImageProperties
         val style = node.content.style as? ImageStyle
-        val ref: AssetRef? = when (val m = props?.model) {
-            is ImageProperties.Model.LocalAsset -> AssetRef(null, node.string(m.name), null)
-            is ImageProperties.Model.RemoteAsset -> {
-                val url = m.asset.url?.let { node.string(it) }?.takeIf { it.isNotEmpty() }
-                AssetRef(m.asset.id, m.asset.name?.let { node.string(it) }?.takeIf { it.isNotEmpty() }, url)
-            }
-            else -> null
-        }
+        val ref: AssetRef? = imageRef(node)
         val (scale, alignment) = style?.contentMode.toScale(ContentMode.scaleAspectFill)
         val tint = env.color(style?.tintColor)
         val template = style?.renderingMode == ImageStyle.RenderingMode.alwaysTemplate

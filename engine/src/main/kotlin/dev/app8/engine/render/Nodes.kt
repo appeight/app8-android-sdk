@@ -117,7 +117,8 @@ internal fun NodeView(node: RenderNode) {
         val corner = (style?.material?.let { env.material(it) }?.layers
             ?.firstNotNullOfOrNull { ((it as? dev.app8.engine.core.model.style.StyleEntity<*>)?.content as? dev.app8.engine.core.model.style.Corner)?.radius as? dev.app8.engine.core.model.style.Corner.Radius.Fixed }?.value
             ?: props?.cornerRadius ?: 0.0).toFloat()
-        m = m.zoomSource(node.runtime.zoomSources, node.session, node.string(element.key), corner * env.density.density)
+        val photo = if (kind == dev.app8.engine.render.components.ImageKind) dev.app8.engine.render.components.imageRef(node) else null
+        m = m.zoomSource(node.runtime.zoomSources, node.session, node.string(element.key), corner * env.density.density, photo)
     }
     if (zIndex != null) m = m.zIndex(zIndex)
     m = m.graphicsLayer {
