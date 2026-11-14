@@ -328,9 +328,17 @@ internal object CollectionKind : ComponentKind {
             }
             is RowSpec.Items -> if (st.kind == SectionKind.GRID) {
                 val g = CollectionPlan.grid(width, st)
+                // Self-sizing grid: the row is as tall as its tallest item and
+                // every item is laid out at that height (UIKit's estimated
+                // horizontal group stretches its items the same way).
+                val rowFill = g.cellHeight ?: row.items.maxOfOrNull { i ->
+                    val item = s.items[i]
+                    val t = model.template(item) ?: return@maxOfOrNull 0.0
+                    model.cell(s.keys[i], item, t)?.layout(env, g.cellWidth, null)?.value?.cellHeight(null) ?: 0.0
+                }?.takeIf { it > 0.0 }
                 Layout(
                     content = {
-                        for (i in row.items) ItemCell(model, env, s.items[i], s.keys[i], g.cellWidth, g.cellHeight, Modifier)
+                        for (i in row.items) ItemCell(model, env, s.items[i], s.keys[i], g.cellWidth, rowFill, Modifier)
                     },
                     modifier = pad.fillMaxWidth(),
                 ) { measurables, constraints ->
