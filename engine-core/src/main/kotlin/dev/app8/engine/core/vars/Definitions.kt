@@ -85,6 +85,8 @@ public class VariableDefinition(
     public val schema: String? = null,
     /** Sample value hint used only during standalone screen rendering. */
     public val preview: VariablePreview? = null,
+    /** App scope only: keep the value across launches (`persist: true`). */
+    public val persist: Boolean? = null,
 ) {
     public val initialValue: AnyCodableValue? = wrap(initialValue)
 
@@ -99,7 +101,7 @@ public class VariableDefinition(
 
     /** Copy with a resolved initial value and no `source` (used after datasource loading). */
     public fun withResolvedValue(value: Any): VariableDefinition =
-        VariableDefinition(type, value, computed, null, streaming, schema, preview)
+        VariableDefinition(type, value, computed, null, streaming, schema, preview, persist)
 }
 
 @Serializable
@@ -111,6 +113,7 @@ private class VariableDefinitionSurrogate(
     val streaming: Boolean? = null,
     val schema: String? = null,
     val preview: VariablePreview? = null,
+    val persist: Boolean? = null,
 )
 
 /** JSON serializer for [VariableDefinition]; absent / `null` optional fields are omitted on encode. */
@@ -119,14 +122,14 @@ public object VariableDefinitionSerializer : KSerializer<VariableDefinition> {
 
     override fun deserialize(decoder: Decoder): VariableDefinition {
         val s = decoder.decodeSerializableValue(VariableDefinitionSurrogate.serializer())
-        return VariableDefinition(s.type, s.initialValue, s.computed, s.source, s.streaming, s.schema, s.preview)
+        return VariableDefinition(s.type, s.initialValue, s.computed, s.source, s.streaming, s.schema, s.preview, s.persist)
     }
 
     override fun serialize(encoder: Encoder, value: VariableDefinition) {
         encoder.encodeSerializableValue(
             VariableDefinitionSurrogate.serializer(),
             VariableDefinitionSurrogate(
-                value.type, value.computed, value.initialValue, value.source, value.streaming, value.schema, value.preview,
+                value.type, value.computed, value.initialValue, value.source, value.streaming, value.schema, value.preview, value.persist,
             ),
         )
     }

@@ -138,7 +138,7 @@ internal class ScreenSession private constructor(
                         .getOrNull()
                         ?.let { data -> (data as? List<*>)?.getOrNull(preview.index ?: 0) ?: data }
                 }
-                if (value != null) out[name] = VariableDefinition(def.type, value, def.computed, null, def.streaming, def.schema, def.preview)
+                if (value != null) out[name] = VariableDefinition(def.type, value, def.computed, null, def.streaming, def.schema, def.preview, def.persist)
             }
             return out
         }

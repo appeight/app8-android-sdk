@@ -15,7 +15,14 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -188,15 +195,61 @@ internal object SliderKind : ComponentKind {
 internal object PickerKind : ComponentKind {
     override val handlesTaps: Boolean get() = true
 
+    /** Literal `options`, or an expression giving `[{value, label, icon?}]` (or plain strings). */
+    private fun options(node: RenderNode, p: PickerProperties): List<PickerProperties.Option> {
+        p.options?.let { return it }
+        val raw = p.optionsExpression?.let { node.resolve(it) } as? List<*> ?: return emptyList()
+        return raw.mapNotNull { o ->
+            when (o) {
+                is Map<*, *> -> {
+                    val value = o["value"]?.let(Coerce::string) ?: return@mapNotNull null
+                    PickerProperties.Option(value, o["label"]?.let(Coerce::string) ?: value, o["icon"] as? String)
+                }
+                is String -> PickerProperties.Option(o, o)
+                else -> null
+            }
+        }
+    }
+
+    /** With `bindKey`, the bound variable is an object map holding one choice per key. */
+    private fun boundSelection(node: RenderNode, p: PickerProperties): String? {
+        val bound = node.bound(p.bindVariable)
+        val key = p.bindKey?.let { node.string(it) } ?: return bound as? String
+        return ((bound as? Map<*, *>)?.get(key))?.let(Coerce::string)
+    }
+
     private fun selection(node: RenderNode, p: PickerProperties): String =
-        (node.bound(p.bindVariable) as? String) ?: (node.ui["value"] as? String) ?: node.string(p.selectedValue) ?: ""
+        boundSelection(node, p) ?: (node.ui["value"] as? String) ?: node.string(p.selectedValue) ?: ""
+
+    private fun write(node: RenderNode, p: PickerProperties, value: String) {
+        val key = p.bindKey?.let { node.string(it, node.scope.untracked) }
+        val name = p.bindVariable
+        if (key == null || name == null) {
+            node.writeBound(name, value)
+            return
+        }
+        val current = runCatching { node.scope.store.getValue(name) }.getOrNull() as? Map<*, *>
+        val next = LinkedHashMap<String, Any?>()
+        current?.forEach { (k, v) -> next[k.toString()] = v }
+        next[key] = value
+        node.writeBound(name, next)
+    }
 
     private fun menuText(node: RenderNode, env: RenderEnv) =
         env.text(env.textModel((node.content.style as? PickerStyle)?.text), 15f, IosSystemColors.of("systemBlue", env.appearance), 1).copy(maxLines = 1)
 
+    /** Pull-down look title: `style.label` (brand font), default 15pt label color. */
+    private fun labelText(style: PickerStyle, env: RenderEnv) =
+        env.text(env.textModel(style.label.takeIf { it.base != null || it.direct != null } ?: style.text), 15f, env.labelColor, 1)
+            .copy(maxLines = 1)
+
+    /** `style.indicator` (SF name; default `chevron.up.chevron.down`, `""` hides it). */
+    private fun indicatorName(style: PickerStyle): String? =
+        (style.indicator ?: "chevron.up.chevron.down").takeIf { it.isNotEmpty() }
+
     private fun title(node: RenderNode, p: PickerProperties): String {
         val sel = selection(node, p)
-        return p.options?.firstOrNull { it.value == sel }?.label ?: p.placeholder ?: "Select"
+        return options(node, p).firstOrNull { it.value == sel }?.label ?: p.placeholder ?: "Select"
     }
 
     override fun traits(node: RenderNode, env: RenderEnv): LayoutTraits {
@@ -211,6 +264,25 @@ internal object PickerKind : ComponentKind {
                     Size(labels.size * (widest + 20.0), 32.0)
                 },
                 signature = "seg:$labels",
+            )
+        }
+        val style = node.content.style as? PickerStyle
+        if (style?.isPullDown == true) {
+            val text = labelText(style, env)
+            val title = title(node, p)
+            val fs = text.style.fontSize.value.toDouble()
+            val hasIndicator = indicatorName(style) != null
+            // A Material Symbol draws its glyph in about 80% of the em box; scale it to match the SF Symbol.
+            val iconSize = (style.indicatorSize ?: (fs * 0.8)) * MATERIAL_GLYPH_SCALE
+            val spacing = style.indicatorSpacing ?: 6.0
+            return LayoutTraits(
+                intrinsic = IntrinsicMeasure {
+                    // Hugs its content: title + spacing + indicator.
+                    val s = env.measure(AnnotatedString(title), text, null)
+                    val extra = if (hasIndicator) spacing + iconSize else 0.0
+                    Size(s.width + extra, maxOf(s.height, if (hasIndicator) iconSize else 0.0))
+                },
+                signature = "pulldown:$title|$text|$hasIndicator|$iconSize|$spacing",
             )
         }
         val text = menuText(node, env)
@@ -231,12 +303,16 @@ internal object PickerKind : ComponentKind {
         val env = LocalRenderEnv.current
         val p = node.content.properties as? PickerProperties ?: PickerProperties()
         val style = node.content.style as? PickerStyle
-        val options = p.options.orEmpty()
+        val options = options(node, p)
         val sel = selection(node, p)
         val enabled = (node.bool(p.isEnabled) ?: true) && LocalInteractionEnabled.current
         val select: (String) -> Unit = { v ->
             node.ui["value"] = v
-            node.writeBound(p.bindVariable, v)
+            write(node, p, v)
+        }
+        if (style?.isPullDown == true) {
+            PullDown(node, p, style, options, sel, enabled, select, modifier)
+            return
         }
         if (p.displayMode == PickerProperties.DisplayMode.segmented) {
             val tint = hexColor(style?.selectedSegmentTintColor)
@@ -290,6 +366,85 @@ internal object PickerKind : ComponentKind {
                             },
                         )
                     }
+                }
+            }
+        }
+    }
+}
+
+/** Material Symbols fill ~80% of the em box where an SF Symbol fills its point size. */
+private const val MATERIAL_GLYPH_SCALE = 1.25
+
+/**
+ * Picker menu look (`style.label` / `style.indicator`): the selected label in the brand font and
+ * a trailing Material icon, anchoring a Material 3 [DropdownMenu] with a leading check on the
+ * selected item. Leading-aligned in its frame.
+ */
+@Composable
+private fun PullDown(
+    node: RenderNode,
+    p: PickerProperties,
+    style: PickerStyle,
+    options: List<PickerProperties.Option>,
+    sel: String,
+    enabled: Boolean,
+    select: (String) -> Unit,
+    modifier: Modifier,
+) {
+    val env = LocalRenderEnv.current
+    val context = LocalContext.current
+    val text = env.text(
+        env.textModel(style.label.takeIf { it.base != null || it.direct != null } ?: style.text), 15f, env.labelColor, 1,
+    ).copy(maxLines = 1)
+    val fs = text.style.fontSize.value
+    val glyph = (style.indicator ?: "chevron.up.chevron.down").takeIf { it.isNotEmpty() }
+        ?.let { MaterialSymbols.resolve(context, it, env.runtime.diagnostics, node.id) }
+    val iconSize = (style.indicatorSize?.toFloat() ?: (fs * 0.8f)) * MATERIAL_GLYPH_SCALE.toFloat()
+    val iconColor = hexColor(style.indicatorColor) ?: text.style.color
+    val title = options.firstOrNull { it.value == sel }?.label ?: p.placeholder ?: "Select"
+    var expanded by remember(node) { mutableStateOf(false) }
+    Box(modifier, contentAlignment = Alignment.CenterStart) {
+        Box {
+            Row(
+                Modifier
+                    .clickable(enabled = enabled, role = Role.DropdownList) { expanded = true }
+                    .graphicsLayer { alpha = if (enabled) 1f else 0.4f },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                BasicText(title, style = text.style, maxLines = 1, softWrap = false)
+                if (glyph != null) {
+                    Spacer(Modifier.width((style.indicatorSpacing ?: 6.0).dp))
+                    BasicText(
+                        glyph.text,
+                        style = TextStyle(
+                            color = iconColor,
+                            fontSize = env.textSize(iconSize),
+                            fontFamily = MaterialSymbols.family(glyph.filled, 400, iconSize),
+                        ),
+                        maxLines = 1,
+                    )
+                }
+            }
+            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                val check = MaterialSymbols.material(context, "check")?.text.orEmpty()
+                for (o in options) {
+                    val selected = o.value == sel
+                    DropdownMenuItem(
+                        text = { Text(o.label) },
+                        leadingIcon = {
+                            Text(
+                                if (selected) check else "",
+                                fontFamily = MaterialSymbols.family(false),
+                                fontSize = env.textSize(20f),
+                                modifier = Modifier.width(24.dp),
+                            )
+                        },
+                        onClick = {
+                            expanded = false
+                            select(o.value)
+                        },
+                        modifier = Modifier.semantics { this.selected = selected },
+                    )
                 }
             }
         }

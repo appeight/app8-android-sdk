@@ -48,6 +48,8 @@ dependencies {
     implementation(libs.browser)
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.ui.compose)
+    implementation(libs.datastore.preferences)
+    implementation(libs.telephoto.zoomable)
     implementation(libs.compose.ui.tooling.preview)
     debugImplementation(libs.compose.ui.tooling)
     testImplementation(libs.junit)

@@ -18,6 +18,10 @@ public data class TabBarScreenContent(
     val initialTab: String? = null,
     val tintColor: String? = null,
     val unselectedColor: String? = null,
+    /** Badge background on every tab (default system red / Material error). */
+    val badgeColor: String? = null,
+    /** Badge text color (default white / Material onError). */
+    val badgeTextColor: String? = null,
 ) : EntityContent {
     override val properties: Any? get() = null
     override val style: Any? get() = null
@@ -34,6 +38,8 @@ internal fun decodeTabBarScreenContent(c: Cursor): TabBarScreenContent {
         initialTab = c.optString("initialTab"),
         tintColor = c.optString("tintColor"),
         unselectedColor = c.optString("unselectedColor"),
+        badgeColor = c.optString("badgeColor"),
+        badgeTextColor = c.optString("badgeTextColor"),
     )
 }
 
@@ -100,6 +106,10 @@ public data class CollectionLayout(
     val showsScrollIndicator: Boolean? = null,
     val scrollEnabled: Boolean? = null,
     val currentPageVariable: String? = null,
+    /** `itemWidth: "fill"`: the collection's width minus horizontal insets ([itemWidth] stays null). */
+    val itemWidthFill: Boolean = false,
+    /** `itemHeight: "fill"`: the collection's frame height minus vertical insets ([itemHeight] stays null). */
+    val itemHeightFill: Boolean = false,
 ) {
     @Suppress("EnumEntryName")
     public enum class LayoutType { vertical, horizontal, grid }
@@ -197,8 +207,10 @@ internal fun decodeCollectionLayout(c: Cursor): CollectionLayout {
         columns = c.optInt("columns"),
         minItemWidth = c.optDouble("minItemWidth"),
         rows = c.optInt("rows"),
-        itemWidth = c.optDouble("itemWidth"),
-        itemHeight = c.optDouble("itemHeight"),
+        itemWidth = c.opt("itemWidth") { it.doubleOrNull() ?: if (it.stringOrNull() == "fill") null else it.double() },
+        itemHeight = c.opt("itemHeight") { it.doubleOrNull() ?: if (it.stringOrNull() == "fill") null else it.double() },
+        itemWidthFill = c.opt("itemWidth") { it.stringOrNull() } == "fill",
+        itemHeightFill = c.opt("itemHeight") { it.stringOrNull() } == "fill",
         aspectRatio = c.optDouble("aspectRatio"),
         estimatedItemHeight = c.optDouble("estimatedItemHeight"),
         estimatedItemWidth = c.optDouble("estimatedItemWidth"),

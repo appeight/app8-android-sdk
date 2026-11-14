@@ -34,6 +34,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
+import dev.app8.engine.render.Coerce
+import dev.app8.engine.render.resolve
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
@@ -326,9 +328,17 @@ internal object CollectionKind : ComponentKind {
             }
             is RowSpec.Items -> if (st.kind == SectionKind.GRID) {
                 val g = CollectionPlan.grid(width, st)
+                // Self-sizing grid: the row is as tall as its tallest item and
+                // every item is laid out at that height (UIKit's estimated
+                // horizontal group stretches its items the same way).
+                val rowFill = g.cellHeight ?: row.items.maxOfOrNull { i ->
+                    val item = s.items[i]
+                    val t = model.template(item) ?: return@maxOfOrNull 0.0
+                    model.cell(s.keys[i], item, t)?.layout(env, g.cellWidth, null)?.value?.cellHeight(null) ?: 0.0
+                }?.takeIf { it > 0.0 }
                 Layout(
                     content = {
-                        for (i in row.items) ItemCell(model, env, s.items[i], s.keys[i], g.cellWidth, g.cellHeight, Modifier)
+                        for (i in row.items) ItemCell(model, env, s.items[i], s.keys[i], g.cellWidth, rowFill, Modifier)
                     },
                     modifier = pad.fillMaxWidth(),
                 ) { measurables, constraints ->
@@ -453,11 +463,15 @@ internal object CollectionKind : ComponentKind {
     @Composable
     private fun TopLevelHorizontal(model: CollectionModel, sections: List<CollectionSection>, p: CollectionProperties, width: Double) {
         val config = p.layout
-        val st = CollectionPlan.topLevelStyle(config, false)
+        val base = CollectionPlan.topLevelStyle(config, false)
         val items = remember(sections) { sections.flatMap { it.items } }
         val keys = remember(sections) { sections.flatMap { it.keys } }
         val top = config?.contentInsets?.top ?: 0.0
-        Box(Modifier.fillMaxSize().padding(top = top.dp)) {
+        androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize().padding(top = top.dp)) {
+            // `itemHeight: "fill"`: each item is as tall as the frame minus the vertical insets.
+            val st = if (config?.itemHeightFill == true && constraints.hasBoundedHeight) {
+                base.copy(itemHeight = (maxHeight.value.toDouble() - (config.contentInsets?.bottom ?: 0.0)).coerceAtLeast(0.0))
+            } else base
             if (CollectionPlan.usesNativePaging(config)) {
                 NativePager(model, items, keys, st, width, config?.currentPageVariable)
             } else {
@@ -470,8 +484,14 @@ internal object CollectionKind : ComponentKind {
     @Composable
     private fun NativePager(model: CollectionModel, items: List<CollectionItem>, keys: List<String>, st: SectionStyle, width: Double, pageVariable: String?) {
         val env = LocalRenderEnv.current
-        val state = rememberPagerState { items.size }
-        PageVariable(model, pageVariable) { CollectionPlan.pageIndex((state.currentPage + state.currentPageOffsetFraction) * width, width) }
+        val state = rememberPagerState(initialPage = initialPage(model, pageVariable, items.size)) { items.size }
+        PageVariable(
+            model, pageVariable,
+            scrollTo = { target, animate ->
+                val t = target.coerceIn(0, (state.pageCount - 1).coerceAtLeast(0))
+                if (animate) state.animateScrollToPage(t) else state.scrollToPage(t)
+            },
+        ) { CollectionPlan.pageIndex((state.currentPage + state.currentPageOffsetFraction) * width, width) }
         val w = (width - st.insets.left - st.insets.right).coerceAtLeast(0.0)
         HorizontalPager(
             state = state,
@@ -524,8 +544,14 @@ internal object CollectionKind : ComponentKind {
         }
         val groupKey: (Int) -> String = { g -> "c:" + keys[groups[g][0]] }
         if (st.paging != Paging.CONTINUOUS && itemW != null) {
-            val state = rememberPagerState { groups.size }
-            PageVariable(model, pageVariable) {
+            val state = rememberPagerState(initialPage = initialPage(model, pageVariable, groups.size)) { groups.size }
+            PageVariable(
+                model, pageVariable,
+                scrollTo = { target, animate ->
+                    val t = target.coerceIn(0, (state.pageCount - 1).coerceAtLeast(0))
+                    if (animate) state.animateScrollToPage(t) else state.scrollToPage(t)
+                },
+            ) {
                 CollectionPlan.pageIndex((state.currentPage + state.currentPageOffsetFraction) * (itemW + st.itemSpacing), width)
             }
             HorizontalPager(
@@ -545,7 +571,13 @@ internal object CollectionKind : ComponentKind {
             else rememberSnapFlingBehavior(state, if (st.paging == Paging.CENTERED) SnapPosition.Center else SnapPosition.Start)
             if (pageVariable != null) {
                 val density = LocalDensity.current.density
-                PageVariable(model, pageVariable) {
+                PageVariable(
+                    model, pageVariable,
+                    scrollTo = { target, animate ->
+                        val t = target.coerceIn(0, (groups.size - 1).coerceAtLeast(0))
+                        if (animate) state.animateScrollToItem(t) else state.scrollToItem(t)
+                    },
+                ) {
                     val step = (itemW ?: 0.0) + st.itemSpacing
                     val offset = if (itemW != null) state.firstVisibleItemIndex * step + state.firstVisibleItemScrollOffset / density
                     else state.firstVisibleItemIndex.toDouble() * width
@@ -564,19 +596,47 @@ internal object CollectionKind : ComponentKind {
         }
     }
 
-    /** `currentPageVariable`: written whenever the page under the offset changes (iOS `handlePageChange`). */
+    /** The page the `currentPageVariable` holds when the collection first composes. */
+    private fun initialPage(model: CollectionModel, name: String?, count: Int): Int {
+        name ?: return 0
+        val v = runCatching { model.node.scope.store.getValue(name) }.getOrNull()
+        return (Coerce.double(v)?.toInt() ?: 0).coerceIn(0, (count - 1).coerceAtLeast(0))
+    }
+
+    /**
+     * `currentPageVariable`, two-way: written whenever the page under the offset changes (iOS
+     * `handlePageChange`), and a write from elsewhere scrolls to that page: without animation
+     * on the first sync (the collection was off screen), animated afterwards.
+     */
     @Composable
-    private fun PageVariable(model: CollectionModel, name: String?, page: () -> Int) {
+    private fun PageVariable(
+        model: CollectionModel,
+        name: String?,
+        scrollTo: (suspend (Int, Boolean) -> Unit)? = null,
+        page: () -> Int,
+    ) {
         if (name == null) return
         val node = model.node
         val current = rememberUpdatedState(page)
+        val synced = remember(node, name) { androidx.compose.runtime.mutableStateOf(scrollTo == null) }
         LaunchedEffect(node, name) {
             var last = -1
-            snapshotFlow { current.value() }.collect { p ->
-                if (p != last) {
+            snapshotFlow { if (synced.value) current.value() else null }.collect { p ->
+                if (p != null && p != last) {
                     last = p
                     runCatching { node.scope.store.setValue(name, p.toLong()) }
                 }
+            }
+        }
+        if (scrollTo == null) return
+        LaunchedEffect(node, name) {
+            var first = true
+            snapshotFlow { Coerce.double(node.resolve("{{$name}}"))?.toInt() }.collect { target ->
+                if (target != null && target != current.value()) {
+                    runCatching { scrollTo(target, !first) }
+                }
+                first = false
+                synced.value = true
             }
         }
     }

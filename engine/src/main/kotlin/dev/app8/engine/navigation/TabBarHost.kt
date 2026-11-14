@@ -65,6 +65,8 @@ internal fun TabBarHost(session: ScreenSession, flow: FlowController, layer: Lay
     val accent = hex(content.tintColor)
     val tint = accent ?: IosSystemColors.of("systemBlue", env.appearance)
     val unselected = hex(content.unselectedColor) ?: IosSystemColors.of("systemGray", env.appearance)
+    val badgeColor = hex(content.badgeColor)
+    val badgeTextColor = hex(content.badgeTextColor)
     // The tab bar tint is the app's accent for chrome outside the tabs too (sheets, dialogs).
     androidx.compose.runtime.SideEffect { env.runtime.chromeAccent = accent }
     App8ChromeTheme(accent, env.appearance.isDark) {
@@ -95,7 +97,20 @@ internal fun TabBarHost(session: ScreenSession, flow: FlowController, layer: Lay
                     selected = index == i,
                     onClick = { state.selected = index },
                     icon = {
-                        BadgedBox(badge = { if (badge != null) Badge { Text(badge) } }) {
+                        BadgedBox(
+                            badge = {
+                                if (badge != null) {
+                                    // Bar `badgeColor` / per-tab override; text `badgeTextColor`, default white on a custom color.
+                                    val custom = hex(tab.badgeColor) ?: badgeColor
+                                    val container = custom ?: androidx.compose.material3.BadgeDefaults.containerColor
+                                    Badge(
+                                        containerColor = container,
+                                        contentColor = badgeTextColor
+                                            ?: if (custom != null) Color.White else androidx.compose.material3.contentColorFor(container),
+                                    ) { Text(badge) }
+                                }
+                            },
+                        ) {
                             Symbol(tab.icon, if (index == i) tint else unselected)
                         }
                     },

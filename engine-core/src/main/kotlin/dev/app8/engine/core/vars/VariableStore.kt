@@ -115,6 +115,14 @@ public class VariableStore : VariableStoreProtocol {
     /** Optional diagnostics sink. */
     public var logger: VariableLogger? = null
 
+    /**
+     * Storage for `persist: true` variables. Set it before defining variables: a stored value
+     * replaces the initial value at definition time, and every later change is saved.
+     */
+    public var persistence: VariablePersistence? = null
+
+    private val persisted = HashSet<String>()
+
     override val anyVariableChanged: ChangePublisher<String> get() = anyVariableChangedSubject
 
     override fun defineVariable(name: String, definition: VariableDefinition) {
@@ -123,6 +131,36 @@ public class VariableStore : VariableStoreProtocol {
         cancellables.add(variable.valueChanged.subscribe { anyVariableChangedSubject.send(name) })
         variable.captureInitialValue()
         variables[name] = variable
+        if (definition.persist == true) setUpPersistence(name, variable)
+    }
+
+    /** Restores a stored value (`initialValue` stays the reset target) and saves later changes. */
+    private fun setUpPersistence(name: String, variable: Variable) {
+        if (variable.isComputed) {
+            logger?.warning("variable.persist.scope", "`persist` on computed variable '$name' is ignored")
+            return
+        }
+        val store = persistence ?: return
+        persisted.add(name)
+        store.stored(name)?.let { raw ->
+            val value = PersistCodec.decode(raw)
+            if (value == null || value === Values.Null || !variable.type.validate(value)) {
+                logger?.warning(
+                    "variable.persist.typeMismatch",
+                    "Stored value of '$name' is not ${variable.type.rawValue}; using initialValue",
+                )
+                store.remove(name)
+            } else {
+                variable.setValueUnchecked(value)
+                // Dependents already defined (ordering puts them later, but be safe).
+                runCatching { support.updateDependentVariables(name) }
+            }
+        }
+        cancellables.add(
+            variable.valueChanged.subscribe { (_, new) ->
+                PersistCodec.encode(new)?.let { store.save(name, it) } ?: store.remove(name)
+            },
+        )
     }
 
     override fun getValue(name: String): Any? = variables[name]?.value
@@ -176,6 +214,7 @@ public class VariableStore : VariableStoreProtocol {
 
     override fun reset() {
         variables.clear()
+        persisted.clear()
         support.graph.reset()
         cancellables.forEach { it.cancel() }
         cancellables.clear()
@@ -186,6 +225,8 @@ public class VariableStore : VariableStoreProtocol {
         isUpdating = true
         for (name in names) variables[name]?.restoreInitialValue()
         isUpdating = false
+        // `resetVariables` also clears the stored value of a persisted variable.
+        persistence?.let { store -> for (name in names) if (name in persisted) store.remove(name) }
         try {
             support.updateDependentVariablesForMultiple(names.toSet())
         } catch (e: Exception) {

@@ -1,0 +1,30 @@
+[
+ {
+  "id": "title",
+  "type": "text",
+  "content": {
+   "fontSize": 20,
+   "fontWeight": "bold",
+   "color": "#000000",
+   "numberOfLines": 1
+  }
+ },
+ {
+  "id": "body",
+  "type": "text",
+  "content": {
+   "fontSize": 15,
+   "color": "#000000",
+   "numberOfLines": 1
+  }
+ },
+ {
+  "id": "muted",
+  "type": "text",
+  "content": {
+   "fontSize": 13,
+   "color": "#8A8A8A",
+   "numberOfLines": 1
+  }
+ }
+]

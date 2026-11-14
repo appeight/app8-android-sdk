@@ -1,0 +1,99 @@
+{
+ "type": "screen",
+ "id": "bag",
+ "content": {
+  "navigationBar": {
+   "title": "Bag"
+  },
+  "children": [
+   {
+    "id": "bagText",
+    "type": "label",
+    "content": {
+     "properties": {
+      "text": "Bag: {{cart}}"
+     },
+     "style": {
+      "text": {
+       "id": "body"
+      }
+     },
+     "layout": {
+      "constraints": [
+       {
+        "type": "top",
+        "target": "safeArea",
+        "constant": 16
+       },
+       {
+        "type": "leading",
+        "target": "superview",
+        "constant": 16
+       }
+      ]
+     }
+    }
+   },
+   {
+    "id": "wishText",
+    "type": "label",
+    "content": {
+     "properties": {
+      "text": "Wishlist: {{wishlist}}"
+     },
+     "style": {
+      "text": {
+       "id": "body"
+      }
+     },
+     "layout": {
+      "constraints": [
+       {
+        "type": "top",
+        "target": "bagText",
+        "attribute": "bottom",
+        "constant": 8
+       },
+       {
+        "type": "leading",
+        "target": "superview",
+        "constant": 16
+       }
+      ]
+     }
+    }
+   },
+   {
+    "id": "reset",
+    "type": "button",
+    "content": {
+     "properties": {
+      "text": "Reset app variables"
+     },
+     "layout": {
+      "height": 44,
+      "constraints": [
+       {
+        "type": "top",
+        "target": "wishText",
+        "attribute": "bottom",
+        "constant": 16
+       },
+       {
+        "type": "leading",
+        "target": "superview",
+        "constant": 16
+       }
+      ]
+     },
+     "actions": {
+      "tap": {
+       "type": "resetVariables",
+       "scope": "app"
+      }
+     }
+    }
+   }
+  ]
+ }
+}

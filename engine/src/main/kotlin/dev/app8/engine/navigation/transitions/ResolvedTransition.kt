@@ -50,6 +50,8 @@ internal data class ResolvedTransition(
     val dimming: Dimming?,
     val interactive: ScreenTransition.InteractiveConfig?,
     val presentation: SizedPresentation?,
+    /** `zoom` with a `sourceKey`: the native zoom from a source element ([NativeZoomModal], [TransitionFrame]). */
+    val nativeZoom: Boolean = false,
 ) {
     enum class Kind {
         /** UIKit's native transition: on Android the platform default (NavDisplay / sheets). */
@@ -105,6 +107,16 @@ internal data class ResolvedTransition(
                     IDENTITY_PAIR, IDENTITY_PAIR, null, null, null, null, null,
                 )
             }
+            if (inline.isNativeZoom) {
+                // The geometry comes from the source element; keyframes stay identity.
+                val animation = inline.animation?.inline { id -> app?.animations?.firstNotNullOfOrNull { (it as? Animation.Inline)?.takeIf { a -> a.id == id } } }
+                    ?: NATIVE_ZOOM_ANIMATION
+                return ResolvedTransition(
+                    // Without a source the screen cross-fades (these keyframes).
+                    Kind.Custom, mode, edge, raise, animation, IDENTITY_PAIR, Participant(state(opacity = 0.0), TransitionState.IDENTITY), null, null,
+                    null, null, null, nativeZoom = true,
+                )
+            }
             val seed = preset?.let { keyframes(it, edge) }
             val from = inline.from ?: seed?.first ?: IDENTITY_PAIR
             val to = inline.to ?: seed?.second ?: IDENTITY_PAIR
@@ -125,6 +137,8 @@ internal data class ResolvedTransition(
         }
 
         private val IDENTITY_PAIR = Participant()
+        /** Native zoom default: cubic ease-out, 0.36 s in (0.32 s back, [NATIVE_ZOOM_OUT_MS]). */
+        val NATIVE_ZOOM_ANIMATION = Animation.Inline(duration = NATIVE_ZOOM_IN_MS / 1000.0, timing = Animation.Timing.CubicBezier(0.33, 1.0, 0.68, 1.0))
         val INSTANT = Animation.Inline(duration = 0.0, timing = Animation.Timing.Curve(Animation.NamedCurve.linear))
         private val TRANSITION_DEFAULT = Animation.Inline(duration = 0.35, timing = Animation.Timing.Curve(Animation.NamedCurve.easeInOut))
 

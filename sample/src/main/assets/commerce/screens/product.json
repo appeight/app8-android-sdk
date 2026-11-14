@@ -1,0 +1,196 @@
+{
+ "type": "screen",
+ "id": "product",
+ "content": {
+  "properties": {
+   "backgroundColor": "#FFFFFF"
+  },
+  "children": [
+   {
+    "id": "gallery",
+    "type": "collection",
+    "content": {
+     "properties": {
+      "data": "{{product.images}}",
+      "layout": {
+       "type": "horizontal",
+       "itemHeight": 420,
+       "pagingStyle": "paging",
+       "currentPageVariable": "galleryPage"
+      }
+     },
+     "template": {
+      "id": "galleryImage",
+      "type": "image",
+      "content": {
+       "properties": {
+        "type": "remoteAsset",
+        "name": "{{item.image}}"
+       },
+       "style": {
+        "contentMode": "scaleAspectFill"
+       },
+       "transition": {
+        "key": "{{'gallery-' + item.$index}}"
+       }
+      }
+     },
+     "actions": {
+      "onItemTap": {
+       "type": "navigation",
+       "nextScreen": "gallery",
+       "presentation": "fullScreen",
+       "params": {
+        "product": "{{product}}"
+       },
+       "transition": {
+        "preset": "zoom",
+        "sourceKey": "{{'gallery-' + galleryPage}}"
+       }
+      }
+     },
+     "layout": {
+      "height": 420,
+      "constraints": [
+       {
+        "type": "top",
+        "target": "superview"
+       },
+       {
+        "type": "leading",
+        "target": "superview"
+       },
+       {
+        "type": "trailing",
+        "target": "superview"
+       }
+      ]
+     }
+    }
+   },
+   {
+    "id": "pName",
+    "type": "label",
+    "content": {
+     "properties": {
+      "text": "{{product.title}}"
+     },
+     "style": {
+      "text": {
+       "id": "title"
+      }
+     },
+     "layout": {
+      "constraints": [
+       {
+        "type": "top",
+        "target": "gallery",
+        "attribute": "bottom",
+        "constant": 16
+       },
+       {
+        "type": "leading",
+        "target": "superview",
+        "constant": 16
+       }
+      ]
+     }
+    }
+   },
+   {
+    "id": "pPage",
+    "type": "label",
+    "content": {
+     "properties": {
+      "text": "Image {{galleryPage + 1}} of {{length(product.images)}}"
+     },
+     "style": {
+      "text": {
+       "id": "muted"
+      }
+     },
+     "layout": {
+      "constraints": [
+       {
+        "type": "top",
+        "target": "pName",
+        "attribute": "bottom",
+        "constant": 8
+       },
+       {
+        "type": "leading",
+        "target": "superview",
+        "constant": 16
+       }
+      ]
+     }
+    }
+   },
+   {
+    "id": "next",
+    "type": "button",
+    "content": {
+     "properties": {
+      "text": "Next image"
+     },
+     "layout": {
+      "height": 44,
+      "constraints": [
+       {
+        "type": "top",
+        "target": "pPage",
+        "attribute": "bottom",
+        "constant": 12
+       },
+       {
+        "type": "leading",
+        "target": "superview",
+        "constant": 16
+       }
+      ]
+     },
+     "actions": {
+      "tap": {
+       "type": "updateVariable",
+       "variableName": "galleryPage",
+       "value": "{{(galleryPage + 1) % length(product.images)}}"
+      }
+     }
+    }
+   },
+   {
+    "id": "pick30",
+    "type": "button",
+    "content": {
+     "properties": {
+      "text": "Choose 30ml ({{selectedVariants[product.handle] != null ? selectedVariants[product.handle] : product.variant}})"
+     },
+     "layout": {
+      "height": 44,
+      "constraints": [
+       {
+        "type": "top",
+        "target": "next",
+        "attribute": "bottom",
+        "constant": 8
+       },
+       {
+        "type": "leading",
+        "target": "superview",
+        "constant": 16
+       }
+      ]
+     },
+     "actions": {
+      "tap": {
+       "type": "updateVariable",
+       "variableName": "selectedVariants",
+       "key": "{{product.handle}}",
+       "value": "30ml"
+      }
+     }
+    }
+   }
+  ]
+ }
+}

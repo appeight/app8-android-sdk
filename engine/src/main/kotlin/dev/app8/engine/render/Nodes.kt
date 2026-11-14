@@ -27,6 +27,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import dev.app8.engine.navigation.transitions.elementTransition
+import dev.app8.engine.navigation.transitions.zoomSource
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -109,7 +110,16 @@ internal fun NodeView(node: RenderNode) {
 
     var m: Modifier = Modifier.layoutId(node.key).testTag(node.id)
     // `content.transition.key`: morphs with its counterpart during a `shared` transition.
-    m = m.elementTransition((content as? dev.app8.engine.core.model.ComponentContent<*, *>)?.elementTransition)
+    val element = (content as? dev.app8.engine.core.model.ComponentContent<*, *>)?.elementTransition
+    m = m.elementTransition(element)
+    // A keyed element is a possible source of a native zoom (`zoom` + `sourceKey`).
+    if (element != null) {
+        val corner = (style?.material?.let { env.material(it) }?.layers
+            ?.firstNotNullOfOrNull { ((it as? dev.app8.engine.core.model.style.StyleEntity<*>)?.content as? dev.app8.engine.core.model.style.Corner)?.radius as? dev.app8.engine.core.model.style.Corner.Radius.Fixed }?.value
+            ?: props?.cornerRadius ?: 0.0).toFloat()
+        val photo = if (kind == dev.app8.engine.render.components.ImageKind) dev.app8.engine.render.components.imageRef(node) else null
+        m = m.zoomSource(node.runtime.zoomSources, node.session, node.string(element.key), corner * env.density.density, photo)
+    }
     if (zIndex != null) m = m.zIndex(zIndex)
     m = m.graphicsLayer {
         this.alpha = alpha
@@ -152,12 +162,26 @@ internal fun tapModifier(node: RenderNode, content: EntityContent, indication: I
     val actions = content.actions
     val analytics = content.analytics
     val hasTap = always || actions?.containsKey(ActionTrigger.tap) == true || analytics?.containsKey(ActionTrigger.tap) == true
-    val hasLong = actions?.containsKey(ActionTrigger.longPress) == true || analytics?.containsKey(ActionTrigger.longPress) == true
+    var hasLong = actions?.containsKey(ActionTrigger.longPress) == true || analytics?.containsKey(ActionTrigger.longPress) == true
     val triggers = (content as? StatefulContent)?.triggers
-    if (!hasTap && !hasLong && triggers.isNullOrEmpty()) return Modifier
+    // `contextMenu` replaces a `longPress` action on the same component.
+    val menu = node.activeContextMenu(content)
+    if (menu != null && hasLong) {
+        node.runtime.diagnostics.warn("contextMenu.longPressIgnored", "'${node.id}' has both contextMenu and longPress; contextMenu wins")
+        hasLong = false
+    }
+    if (!hasTap && !hasLong && menu == null && triggers.isNullOrEmpty()) return Modifier
     val dispatcher = LocalDispatcher.current
     val source = remember { MutableInteractionSource() }
     var m: Modifier = Modifier
+    val menuState = remember(node) { ContextMenuState() }
+    val openMenu = rememberOpenMenu(menuState)
+    if (menu != null) {
+        ContextMenuSheet(node, menu, menuState)
+        m = m.contextMenuSemantics(node, menu, openMenu) { item -> runMenuActions(dispatcher, node, item.actions) }
+        // Without a tap of its own, leave taps to the parent (a collection cell's onItemTap).
+        if (!hasTap) m = m.longPressOnly(node, openMenu)
+    }
     if (!triggers.isNullOrEmpty()) {
         m = m.pointerInput(node) {
             awaitEachGesture {
@@ -172,7 +196,12 @@ internal fun tapModifier(node: RenderNode, content: EntityContent, indication: I
         m = m.combinedClickable(
             interactionSource = source,
             indication = indication,
-            onLongClick = if (hasLong) ({ dispatcher.dispatchTrigger(node, ActionTrigger.longPress) }) else null,
+            onLongClick = when {
+                menu != null -> openMenu
+                hasLong -> ({ dispatcher.dispatchTrigger(node, ActionTrigger.longPress) })
+                else -> null
+            },
+            onLongClickLabel = if (menu != null) "Show actions" else null,
             onClick = { if (hasTap) dispatcher.dispatchTrigger(node, ActionTrigger.tap) },
         )
     }
