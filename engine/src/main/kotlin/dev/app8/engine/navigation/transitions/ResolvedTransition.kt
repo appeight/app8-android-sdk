@@ -137,7 +137,8 @@ internal data class ResolvedTransition(
         }
 
         private val IDENTITY_PAIR = Participant()
-        private val NATIVE_ZOOM_ANIMATION = Animation.Inline(duration = 0.45, timing = Animation.Timing.SpringTiming(Animation.Spring(1.0, 0.0)))
+        /** Native zoom default: cubic ease-out, 0.36 s in (0.32 s back, [NATIVE_ZOOM_OUT_MS]). */
+        val NATIVE_ZOOM_ANIMATION = Animation.Inline(duration = NATIVE_ZOOM_IN_MS / 1000.0, timing = Animation.Timing.CubicBezier(0.33, 1.0, 0.68, 1.0))
         val INSTANT = Animation.Inline(duration = 0.0, timing = Animation.Timing.Curve(Animation.NamedCurve.linear))
         private val TRANSITION_DEFAULT = Animation.Inline(duration = 0.35, timing = Animation.Timing.Curve(Animation.NamedCurve.easeInOut))
 
