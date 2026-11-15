@@ -67,6 +67,11 @@ internal object ScrollKind : ComponentKind {
         val solved = LocalSolved.current
         val density = LocalDensity.current.density
         ScrollEvents(node, p, state, vertical, density)
+        if (vertical) {
+            dev.app8.engine.navigation.RegisterScrollToTop(node.key, node.session.treeOrder[node.key] ?: Int.MAX_VALUE) {
+                state.animateScrollTo(0)
+            }
+        }
         val auto = p.autoScroll
         val infinite = auto != null && (auto.infinite ?: true)
         val loopGapPx = ((auto?.loopGap ?: 0.0) * density).toFloat()
@@ -130,7 +135,12 @@ internal object ScrollKind : ComponentKind {
                     m.measure(Constraints.fixed(((f?.width ?: 0.0) * d).roundToInt().coerceAtLeast(0), ((f?.height ?: 0.0) * d).roundToInt().coerceAtLeast(0))) to f
                 }
                 val w = contentW.coerceAtLeast(if (vertical) 0 else viewportW)
-                val h = contentH.coerceAtLeast(if (vertical) viewportH else 0)
+                // Every vertical scroll view stretches past its edges, also when its content
+                // fits (scroll-view.md, "Bounce"; iOS alwaysBounceVertical). Compose only
+                // dispatches overscroll while the content can scroll, so a fitting content is
+                // one pixel taller than the viewport.
+                val alwaysBounce = vertical && p.bounces != false
+                val h = contentH.coerceAtLeast(if (vertical) viewportH + (if (alwaysBounce) 1 else 0) else 0)
                 // One copy's length: the content extent (children may reach past the solved
                 // content size), so the marquee seam sits right after the last child.
                 val extent = placeables.maxOfOrNull { (_, f) -> if (f == null) 0.0 else if (vertical) f.y + f.height else f.x + f.width } ?: 0.0

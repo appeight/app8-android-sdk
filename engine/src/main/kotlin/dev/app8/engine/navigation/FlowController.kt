@@ -44,6 +44,20 @@ internal class StackState(root: Route) {
     /** The route the last pop removed (its transition drives the pop animation). */
     var lastPopped: Route? by androidx.compose.runtime.mutableStateOf(null)
 
+    /** Per entry: its screen's vertical scrollers, for scroll-to-top on tab reselect. */
+    private val scrollSignals = HashMap<Long, ScrollToTopSignal>()
+
+    fun scrollSignal(route: Route): ScrollToTopSignal = scrollSignals.getOrPut(route.id) { ScrollToTopSignal() }
+
+    /**
+     * The selected tab tapped again: pop to the root screen, or at the root scroll its main
+     * vertical scroller to the top (Material: reselecting a navigation item scrolls to top).
+     */
+    suspend fun reselect() {
+        if (pop(toRoot = true)) return
+        entries.firstOrNull()?.let { scrollSignal(it).scrollToTop() }
+    }
+
     fun push(route: Route) {
         popping = false
         entries += route
@@ -53,7 +67,9 @@ internal class StackState(root: Route) {
         if (entries.size <= 1) return false
         popping = true
         lastPopped = entries.last()
+        val removed = if (toRoot) entries.subList(1, entries.size).toList() else listOf(entries.last())
         if (toRoot) entries.removeRange(1, entries.size) else entries.removeAt(entries.lastIndex)
+        for (route in removed) scrollSignals.remove(route.id)
         return true
     }
 

@@ -88,7 +88,9 @@ internal fun StackHost(flow: FlowController, layer: Layer, stack: StackState, ta
             entryProvider = { route ->
                 NavEntry(route, contentKey = route.id) {
                     TransitionFrame(route, stack, shared) {
-                        ScreenHost(route, navigator, flow, layer, stack, chrome)
+                        androidx.compose.runtime.CompositionLocalProvider(LocalScrollToTop provides stack.scrollSignal(route)) {
+                            ScreenHost(route, navigator, flow, layer, stack, chrome)
+                        }
                     }
                 }
             },

@@ -22,6 +22,7 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import kotlinx.coroutines.launch
 import dev.app8.engine.core.model.style.ColorHex
 import dev.app8.engine.render.LocalRenderEnv
 import dev.app8.engine.render.ScreenSession
@@ -61,6 +62,7 @@ internal fun TabBarHost(session: ScreenSession, flow: FlowController, layer: Lay
         onDispose { flow.unregisterTabs(state) }
     }
     val holder = rememberSaveableStateHolder()
+    val reselectScope = androidx.compose.runtime.rememberCoroutineScope()
     val navInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding().value.toDouble()
     fun hex(s: String?) = session.root.hexColor(s)
     val accent = hex(content.tintColor)
@@ -96,7 +98,14 @@ internal fun TabBarHost(session: ScreenSession, flow: FlowController, layer: Lay
                 val badge = tab.badge?.let { session.root.string(it) }?.takeIf { it.isNotEmpty() && it != "0" }
                 ShortNavigationBarItem(
                     selected = index == i,
-                    onClick = { state.selected = index },
+                    onClick = {
+                        if (index == i) {
+                            // Reselect: pop to root, else scroll the root screen to the top.
+                            reselectScope.launch { stacks[index].reselect() }
+                        } else {
+                            state.selected = index
+                        }
+                    },
                     icon = {
                         BadgedBox(
                             badge = {

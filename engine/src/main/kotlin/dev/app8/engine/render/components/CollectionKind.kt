@@ -292,6 +292,11 @@ internal object CollectionKind : ComponentKind {
         val swipe = p.swipeActions?.takeIf { !isMixed(c) && config?.type != CollectionLayout.LayoutType.grid }
 
         ScrollEffects(model, p, state, rows, if (inverted) autoBottom else autoTop)
+        if (config?.scrollEnabled != false) {
+            dev.app8.engine.navigation.RegisterScrollToTop(node.key, node.session.treeOrder[node.key] ?: Int.MAX_VALUE) {
+                state.animateScrollToItem(0)
+            }
+        }
 
         val list: @Composable () -> Unit = {
             LazyColumn(
