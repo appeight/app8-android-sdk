@@ -269,6 +269,15 @@ internal object CollectionPlan {
         }
     }
 
+    /**
+     * The height every item of a grid row is laid out at: the fixed cell height, else the
+     * tallest item's natural (smallest) height, so neighbours line up and a footer pinned
+     * below a `>=` gap sits on the row's bottom edge (collections.md, "Self-sizing grid rows").
+     * Null when nothing in the row has measured yet.
+     */
+    fun gridRowFill(g: GridGeometry, naturalHeights: List<Double>): Double? =
+        g.cellHeight ?: naturalHeights.maxOrNull()?.takeIf { it > 0.0 }
+
     /** Top-level horizontal item width: fixed, self-sizing (null) or the section's full width. */
     fun horizontalItemWidth(width: Double, st: SectionStyle): Double? = when {
         st.itemWidth != null -> st.itemWidth
