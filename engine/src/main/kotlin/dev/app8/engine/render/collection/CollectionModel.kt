@@ -238,10 +238,12 @@ internal class Cell private constructor(
      * state: it re-solves only when a variable the layout reads changes, and the solve cache
      * makes a repeat solve free.
      */
-    fun layout(env: RenderEnv, width: Double, height: Double?, selfSizingWidth: Boolean = false, edges: Boolean = true): State<Solved> {
-        val key = listOf(env, width, height, selfSizingWidth, edges)
+    fun layout(env: RenderEnv, width: Double, height: Double?, selfSizingWidth: Boolean = false, edges: Boolean = true, stretch: Boolean = false): State<Solved> {
+        val key = listOf(env, width, height, selfSizingWidth, edges, stretch)
         layoutState?.let { if (key == layoutKey) return it }
-        val state = derivedStateOf(structuralEqualityPolicy()) { solve(env, width, height, selfSizingWidth, edges) }
+        val state = derivedStateOf(structuralEqualityPolicy()) {
+            solve(env, width, height, selfSizingWidth, edges).let { if (stretch && height != null) it.stretchedRoot(root.key, height) else it }
+        }
         layoutKey = key
         layoutState = state
         return state
@@ -329,4 +331,20 @@ internal class Cell private constructor(
             return LayoutNode(key = ROOT, children = listOf(child))
         }
     }
+}
+
+/**
+ * A self-sizing grid item stretched to its row ([height]): the template root ([key]) reaches the
+ * cell's bottom even when its own constraints make it shorter (collections.md, "Self-sizing grid
+ * rows"), so its background spans the row like its neighbours'. Children keep their frames.
+ */
+internal fun Solved.stretchedRoot(key: String, height: Double): Solved {
+    val f = local[key] ?: return this
+    val target = height - f.y
+    if (f.height >= target) return this
+    val abs = absolute[key]
+    return copy(
+        local = local + (key to f.copy(height = target)),
+        absolute = if (abs == null) absolute else absolute + (key to abs.copy(height = target)),
+    )
 }

@@ -364,7 +364,7 @@ internal object CollectionKind : ComponentKind {
                 )
                 Layout(
                     content = {
-                        for (i in row.items) ItemCell(model, env, s.items[i], s.keys[i], g.cellWidth, rowFill, Modifier)
+                        for (i in row.items) ItemCell(model, env, s.items[i], s.keys[i], g.cellWidth, rowFill, Modifier, stretch = g.cellHeight == null)
                     },
                     modifier = pad.fillMaxWidth(),
                 ) { measurables, constraints ->
@@ -403,7 +403,7 @@ internal object CollectionKind : ComponentKind {
     }
 
     @Composable
-    private fun ItemCell(model: CollectionModel, env: RenderEnv, item: CollectionItem, key: String, width: Double, fixedHeight: Double?, modifier: Modifier, selfSizingWidth: Boolean = false) {
+    private fun ItemCell(model: CollectionModel, env: RenderEnv, item: CollectionItem, key: String, width: Double, fixedHeight: Double?, modifier: Modifier, selfSizingWidth: Boolean = false, stretch: Boolean = false) {
         Recompositions.Count("${model.node.key}#cell")
         val template = model.template(item)
         if (template == null) {
@@ -412,7 +412,7 @@ internal object CollectionKind : ComponentKind {
             return
         }
         val cell = model.cell(key, item, template) ?: return
-        val solved = cell.layout(env, width, fixedHeight, selfSizingWidth)
+        val solved = cell.layout(env, width, fixedHeight, selfSizingWidth, stretch = stretch)
         CellView(cell, solved, modifier.then(tapModifier(model, cell, item)), fixedHeight)
     }
 

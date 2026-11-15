@@ -185,4 +185,14 @@ class CollectionPlanTest {
         assertEquals(60.0, r.frames.getValue("t").height)
         assertEquals(60.0, r.contentHeight)
     }
+
+    @Test
+    fun `a self-sizing grid item stretches to its row height`() {
+        val f = dev.app8.engine.core.layout.Frame(0.0, 0.0, 100.0, 80.0)
+        val solved = dev.app8.engine.render.Solved(mapOf("card" to f), mapOf("card" to f), emptyMap(), dev.app8.engine.core.layout.EdgeInsets.ZERO)
+        val tall = solved.stretchedRoot("card", 120.0)
+        assertEquals(120.0, tall.local["card"]!!.height)
+        assertEquals(120.0, tall.absolute["card"]!!.height)
+        assertEquals(solved, solved.stretchedRoot("card", 60.0), "never shrinks")
+    }
 }

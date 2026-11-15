@@ -112,6 +112,13 @@ internal class Cursor(
         return p.content
     }
 
+    /** A string, or a literal boolean / number as its JSON text (`true`, `0.6`): fields typed "boolean/number or expression". */
+    fun scalarString(): String {
+        val p = element as? JsonPrimitive
+        if (p == null || p is JsonNull) fail("expected a string, boolean or number, found ${describe(element)}")
+        return p.content
+    }
+
     fun stringOrNull(): String? {
         val p = element as? JsonPrimitive ?: return null
         return if (p !is JsonNull && p.isString) p.content else null
@@ -166,6 +173,7 @@ internal class Cursor(
 
     fun reqString(key: String): String = req(key) { it.string() }
     fun optString(key: String): String? = opt(key) { it.string() }
+    fun optScalar(key: String): String? = opt(key) { it.scalarString() }
     fun optBool(key: String): Boolean? = opt(key) { it.bool() }
     fun optDouble(key: String): Double? = opt(key) { it.double() }
     fun optFloat(key: String): Float? = opt(key) { it.float() }

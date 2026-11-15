@@ -52,6 +52,8 @@ public data class VariableAction(
     val index: AnyCodableValue? = null,
     /** upsertArrayItem: where a new element goes, `start` or `end` (default). */
     val position: String? = null,
+    /** `by` as an expression, resolved when the action runs (`by` wins when both are set). */
+    val byExpression: String? = null,
 ) {
     public val actionType: VariableActionType? get() = VariableActionType.fromRawValue(type)
 

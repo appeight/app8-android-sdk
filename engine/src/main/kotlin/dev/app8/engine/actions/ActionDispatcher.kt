@@ -465,6 +465,7 @@ internal fun Action.toVariableAction(): VariableAction = VariableAction(
     variableName = variableName,
     value = value?.let { AnyCodableValue.fromJson(it) },
     by = by,
+    byExpression = byExpression,
     matchBy = matchBy,
     field = field,
     updates = updates?.mapValues { (_, v) -> AnyCodableValue.fromJson(v) },

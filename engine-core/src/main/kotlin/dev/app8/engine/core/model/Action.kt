@@ -80,6 +80,8 @@ public data class Action(
     val onError: List<Action>? = null,
     /** reloadDatasource: the datasource to refetch (e.g. `datasources/items`). */
     val source: String? = null,
+    /** incrementVariable / incrementArrayItem: `by` given as an expression (evaluated when the action runs). */
+    val byExpression: String? = null,
 ) {
     @Suppress("EnumEntryName")
     public enum class Type {
@@ -139,7 +141,8 @@ internal fun decodeAction(c: Cursor): Action {
         // `variable` is accepted as a short form of `variableName`.
         variableName = c.optString("variableName") ?: c.optString("variable"),
         value = c.opt("value") { it.element },
-        by = c.optDouble("by"),
+        by = c.opt("by") { it.doubleOrNull() },
+        byExpression = c.opt("by") { it.stringOrNull() },
         matchBy = c.optString("matchBy"),
         field = c.optString("field"),
         key = c.attempt { it.optString("key") },
@@ -202,9 +205,9 @@ internal fun decodeSheetDetent(c: Cursor): Action.SheetDetent {
 
 /** A single action or an array of actions under one trigger key. Every action must decode. */
 internal fun decodeActionList(c: Cursor): List<Action> {
-    if (c.element is kotlinx.serialization.json.JsonArray) {
-        c.attempt { a -> a.list(::decodeAction) }?.let { return it }
-    }
+    // An array is a list; decoding it as a single action only reported "expected an object,
+    // found array" at the list's path instead of the element that failed.
+    if (c.element is kotlinx.serialization.json.JsonArray) return c.list(::decodeAction)
     return listOf(decodeAction(c))
 }
 
@@ -288,8 +291,8 @@ internal fun decodeAccessibility(c: Cursor): Accessibility {
         hint = c.optString("hint"),
         value = c.optString("value"),
         traits = c.opt("traits") { a -> a.list { it.strictEnum<Accessibility.Trait> { t -> t.raw } } },
-        isElement = c.optString("isElement"),
-        hidden = c.optString("hidden"),
+        isElement = c.optScalar("isElement"),
+        hidden = c.optScalar("hidden"),
     )
 }
 

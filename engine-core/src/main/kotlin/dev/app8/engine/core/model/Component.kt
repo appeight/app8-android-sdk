@@ -272,7 +272,9 @@ internal fun decodeComponent(input: Cursor): Component {
         return ComponentPointer(templateId = c.optString("templateId"), id = c.reqString("id"), type = type)
     }
     val templateId = c.optString("templateId")
-    val id = c.reqString("id")
+    // `id` is optional (components.md): a component without one gets a stable id from its
+    // position in the document, so it renders and keys like any other (nothing can target it).
+    val id = c.optString("id") ?: "_${type.raw}@${c.path}"
     val content: EntityContent = c.req("content") { raw ->
         val cc = Cursor(raw.element, raw.path, raw.options, input.componentDepth + 1)
         when ((type as? ComponentType.Known)?.key) {

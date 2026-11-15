@@ -24,7 +24,7 @@ public class VariableActionHandler {
     public fun execute(action: VariableAction, store: VariableStoreProtocol, context: VariableContext) {
         when (action.actionType) {
             VariableActionType.UPDATE_VARIABLE -> handleUpdateVariable(action, store, context)
-            VariableActionType.INCREMENT_VARIABLE -> handleIncrementVariable(action, store)
+            VariableActionType.INCREMENT_VARIABLE -> handleIncrementVariable(action, store, context)
             VariableActionType.TOGGLE_ARRAY_VALUE -> handleToggleArrayValue(action, store, context)
             VariableActionType.APPEND_TO_ARRAY -> handleAppendToArray(action, store, context)
             VariableActionType.INCREMENT_ARRAY_ITEM -> handleIncrementArrayItem(action, store, context)
@@ -54,10 +54,10 @@ public class VariableActionHandler {
         store.setValue(variableName, LinkedHashMap(current).apply { put(key, resolved) })
     }
 
-    private fun handleIncrementVariable(action: VariableAction, store: VariableStoreProtocol) {
+    private fun handleIncrementVariable(action: VariableAction, store: VariableStoreProtocol, context: VariableContext) {
         val variableName = action.variableName
             ?: throw VariableException.UndefinedVariable("No variable name specified in incrementVariable action")
-        val incrementBy = action.by ?: 1.0
+        val incrementBy = by(action, context)
         logger?.debug("handleIncrementVariable: '$variableName' by $incrementBy")
 
         val currentValue = store.getValue(variableName) ?: run {
@@ -150,7 +150,7 @@ public class VariableActionHandler {
         val value = action.value
             ?: throw VariableException.UndefinedVariable("No value specified in incrementArrayItem action for '$variableName'")
         val field = action.field ?: "quantity"
-        val by = action.by ?: 1.0
+        val by = by(action, context)
         val resolved = resolveValue(value.value, context)
         val obj = Values.asMap(resolved)
         // A null or missing match key is a no-op (never matches, never appends).
@@ -303,6 +303,14 @@ public class VariableActionHandler {
     private fun wholeOrDouble(d: Double): Any = if (d % 1.0 == 0.0) d.toLong() else d
 
     /** Resolves `{{…}}` in a value — also inside object / array values. */
+    /** `by`: a number, or an expression giving one; absent or not a number → 1. */
+    private fun by(action: VariableAction, context: VariableContext): Double {
+        action.by?.let { return it }
+        val raw = action.byExpression ?: return 1.0
+        val v = resolveValue(raw, context)
+        return (v as? Number)?.toDouble() ?: (v as? String)?.trim()?.toDoubleOrNull() ?: 1.0
+    }
+
     private fun resolveValue(value: Any?, context: VariableContext): Any? {
         if (value is String && value.contains("{{") && value.contains("}}")) return propertyResolver.resolve(value, context)
         Values.asMap(value)?.let { map -> return map.mapValuesTo(LinkedHashMap()) { (_, v) -> resolveValue(v, context) } }
