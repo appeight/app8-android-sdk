@@ -51,7 +51,8 @@ internal val LocalFlow = staticCompositionLocalOf<FlowController> { error("No Fl
 /** The whole app: the base stack, and modal layers over it. */
 @Composable
 internal fun FlowHost(flow: FlowController, modifier: Modifier = Modifier) {
-    androidx.compose.runtime.CompositionLocalProvider(LocalFlow provides flow) {
+    // Native visibility: nothing is visible while the host is in the background.
+    androidx.compose.runtime.CompositionLocalProvider(LocalFlow provides flow, LocalScreenVisible provides rememberHostForeground()) {
         Box(modifier.fillMaxSize()) {
             val layers = flow.layers.toList()
             layers.firstOrNull()?.let { base -> key(base) { StackHost(flow, base, base.stack, null, Chrome()) } }
@@ -115,6 +116,7 @@ private fun ModalLayer(flow: FlowController, layer: Layer) {
             onDismissRequest = { flow.dismiss(layer) },
             onRemoved = { flow.remove(layer) },
             backEnabled = layer.stack.entries.size <= 1,
+            onPresented = { layer.presented = true },
         ) {
             Box(Modifier.fillMaxSize().background(IosSystemColors.of("systemBackground", LocalRenderEnv.current.appearance))) {
                 StackHost(flow, layer, layer.stack, null, Chrome())
@@ -129,6 +131,7 @@ private fun ModalLayer(flow: FlowController, layer: Layer) {
             onDismissRequest = { flow.dismiss(layer) },
             onRemoved = { flow.remove(layer) },
             backEnabled = layer.stack.entries.size <= 1,
+            onPresented = { layer.presented = true },
         ) { sized ->
             // A sized card owns no system bars: its screen's safe area is its own bounds.
             StackHost(flow, layer, layer.stack, null, if (sized) Chrome(top = 0.0, bottom = 0.0) else Chrome())
@@ -140,6 +143,13 @@ private fun ModalLayer(flow: FlowController, layer: Layer) {
             val detents = layer.detents.orEmpty()
             val hasMedium = detents.any { it is Action.SheetDetent.Medium }
             val state = rememberModalBottomSheetState(skipPartiallyExpanded = !hasMedium)
+            // At rest once it has settled at a detent; no longer once it heads for hidden
+            // (dragging between detents keeps it presented).
+            androidx.compose.runtime.LaunchedEffect(state, layer) {
+                androidx.compose.runtime.snapshotFlow {
+                    state.currentValue != androidx.compose.material3.SheetValue.Hidden && state.targetValue != androidx.compose.material3.SheetValue.Hidden
+                }.collect { layer.presented = it }
+            }
             // A large detent leaves the status bar and a 10pt gap above the sheet, like iOS.
             val density = androidx.compose.ui.platform.LocalDensity.current
             val windowHeight = with(density) { androidx.compose.ui.platform.LocalWindowInfo.current.containerSize.height.toDp().value }
@@ -166,6 +176,9 @@ private fun ModalLayer(flow: FlowController, layer: Layer) {
         }
         else -> {
             val visible = remember { MutableTransitionState(false).apply { targetState = true } }
+            androidx.compose.runtime.LaunchedEffect(visible, layer) {
+                androidx.compose.runtime.snapshotFlow { visible.isIdle && visible.currentState }.collect { layer.presented = it }
+            }
             BackHandler(enabled = layer.stack.entries.size <= 1) { flow.dismiss(layer) }
             AnimatedVisibility(
                 visibleState = visible,

@@ -92,6 +92,12 @@ internal class Layer(
 ) {
     /** A custom modal plays its exit animation first; the host removes the layer when done. */
     var dismissing: Boolean by androidx.compose.runtime.mutableStateOf(false)
+
+    /**
+     * The layer is on screen at rest: its present animation has finished and no dismissal has
+     * started. The base layer always is; modal hosts set it (see [ScreenVisibility]).
+     */
+    var presented: Boolean by androidx.compose.runtime.mutableStateOf(presentation == null)
 }
 
 /** Selected tab of a `tabBarScreen`. */

@@ -5,6 +5,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.Constraints
 import dev.app8.engine.render.LocalSolved
 import dev.app8.engine.render.NodeView
@@ -22,8 +24,15 @@ import kotlin.math.roundToInt
  */
 @Composable
 internal fun CellView(cell: Cell, solved: State<Solved>, modifier: Modifier = Modifier, fixedHeight: Double? = null) {
-    CompositionLocalProvider(LocalSolved provides solved) {
-        Layout(content = { NodeView(cell.root) }, modifier = modifier) { measurables, constraints ->
+    // Native visibility: a cell counts as on screen once placed with some part inside the
+    // window (a prefetched, recycled or scrolled-out cell is not).
+    val onScreen = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    val parentOnScreen = LocalCellOnScreen.current
+    CompositionLocalProvider(LocalSolved provides solved, LocalCellOnScreen provides (parentOnScreen && onScreen.value)) {
+        Layout(
+            content = { NodeView(cell.root) },
+            modifier = modifier.onGloballyPositioned { onScreen.value = it.isAttached && it.boundsInWindow().let { b -> b.width > 0f && b.height > 0f } },
+        ) { measurables, constraints ->
             val s = solved.value
             val d = density
             val root = s.absolute[Cell.ROOT]
@@ -46,6 +55,13 @@ internal fun CellView(cell: Cell, solved: State<Solved>, modifier: Modifier = Mo
         }
     }
 }
+
+/**
+ * Whether the enclosing collection cells are on screen (DSL 0.6.1 native visibility); `true`
+ * outside any cell. Only cells track their own on-screen state: a `scrollView` scrolled away
+ * does not change visibility.
+ */
+internal val LocalCellOnScreen = androidx.compose.runtime.compositionLocalOf { true }
 
 /** The height in points a solved cell occupies (fixed or self-sized). */
 internal fun Solved.cellHeight(fixed: Double?): Double = fixed ?: contentHeight

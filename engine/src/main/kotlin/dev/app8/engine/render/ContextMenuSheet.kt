@@ -176,7 +176,8 @@ internal fun ContextMenuSheet(node: RenderNode, menu: ContextMenu, state: Contex
                             indication = null,
                         ) { close { runMenuActions(dispatcher, node, menu.onPreviewTap) } },
                     ) {
-                        CompositionLocalProvider(LocalInteractionEnabled provides false) {
+                        // A preview copy: its native components are not "on screen" (DSL 0.6.1).
+                        CompositionLocalProvider(LocalInteractionEnabled provides false, dev.app8.engine.navigation.LocalScreenVisible provides false) {
                             CellView(cell, solved, Modifier, height)
                         }
                     }

@@ -7,7 +7,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onPlaced
 import dev.app8.engine.core.model.NativeContent
 import dev.app8.engine.core.vars.Values
 import dev.app8.engine.core.vars.VariableContext
@@ -38,7 +41,9 @@ internal object NativeKind : ComponentKind {
         val content = node.content as? NativeContent ?: return Box(modifier)
         val module = content.properties.module
         val component = node.runtime.nativeComponents[module]
-        Box(modifier) {
+        val placement = remember(node) { Placement() }
+        val visible = rememberNativeVisible(node, placement)
+        Box(modifier.then(Modifier.onPlaced { placement.placed = true })) {
             when {
                 component != null -> {
                     val dispatcher = LocalDispatcher.current
@@ -55,6 +60,7 @@ internal object NativeKind : ComponentKind {
                         appId = app?.id ?: app?.bundleId ?: "",
                         screenId = node.session.screenId,
                         module = module,
+                        isVisible = visible,
                     )
                     component.Content(context, Modifier.fillMaxSize())
                 }
@@ -64,6 +70,40 @@ internal object NativeKind : ComponentKind {
                 }
             }
         }
+    }
+
+    /** Whether the component has been placed in its composition (false on first composition). */
+    @androidx.compose.runtime.Stable
+    class Placement {
+        var placed: Boolean by androidx.compose.runtime.mutableStateOf(false)
+    }
+
+    /**
+     * The component's visibility (app8-dsl `components/native.md#visibility`): navigation's and
+     * the lifecycle's part ([dev.app8.engine.navigation.LocalScreenVisible]), the enclosing
+     * collection cells on screen ([LocalCellOnScreen]), and placed at least once (so the first
+     * composition reports `false`). A `scrollView` scrolled away does not change it. Runs its `appear` / `disappear` actions once per change
+     * (`disappear` also when the component leaves the composition while visible).
+     */
+    @Composable
+    private fun rememberNativeVisible(node: RenderNode, placement: Placement): Boolean {
+        val value = dev.app8.engine.navigation.LocalScreenVisible.current && dev.app8.engine.render.collection.LocalCellOnScreen.current && placement.placed
+        val dispatcher = LocalDispatcher.current
+        val reported = remember(node) { booleanArrayOf(false) }
+        LaunchedEffect(node, value) {
+            if (reported[0] == value) return@LaunchedEffect
+            reported[0] = value
+            dispatcher.dispatchNativeVisibility(node, value)
+        }
+        androidx.compose.runtime.DisposableEffect(node) {
+            onDispose {
+                if (reported[0]) {
+                    reported[0] = false
+                    dispatcher.dispatchNativeVisibility(node, false)
+                }
+            }
+        }
+        return value
     }
 
     /** `props` with `{{…}}` strings resolved (nested arrays and objects too). */

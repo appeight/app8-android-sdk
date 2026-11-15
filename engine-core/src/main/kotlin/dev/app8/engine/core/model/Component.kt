@@ -133,6 +133,8 @@ public data class ComponentContent<P : Any, S : Any>(
     val dismissKeyboardOnTap: Boolean? = null,
     val streaming: Boolean? = null,
     val additionalSafeAreaInsets: EdgeInsets? = null,
+    /** Screens only (DSL 0.6.1): content pinned to the bottom edge. */
+    val bottomBar: BottomBar? = null,
     override val onEvent: List<EventTrigger>? = null,
     override val children: List<Component> = emptyList(),
     /** Long-press preview and actions (view, stackView, image, button). */
@@ -209,6 +211,8 @@ internal fun <P : Any, S : Any> decodeContent(c: Cursor, spec: ContentSpec<P, S>
         dismissKeyboardOnTap = c.optBool("dismissKeyboardOnTap"),
         streaming = c.optBool("streaming"),
         additionalSafeAreaInsets = c.opt("additionalSafeAreaInsets", ::decodeEdgeInsets),
+        // New in DSL 0.6.1: decoded leniently so a malformed bar never rejects the screen.
+        bottomBar = c.attempt { it.opt("bottomBar", ::decodeBottomBar) },
         onEvent = c.opt("onEvent") { a -> a.list(::decodeEventTrigger) },
         children = c.decodeChildren(),
         // New in DSL 0.5: decoded leniently so a malformed menu never rejects the component.

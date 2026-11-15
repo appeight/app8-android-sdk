@@ -125,4 +125,64 @@ class NativeComponentTest {
         assertEquals(listOf("native.signaturePad.failed", "native.signaturePad.cancelled"), events)
         assertEquals(listOf("dismiss"), nav.calls)
     }
+
+    // DSL 0.6.1 visibility (app8-dsl `components/native.md#visibility`).
+
+    private val visibilityScreen = """{"type":"screen","id":"v","content":{
+      "variables":{"appearCount":{"type":"number","initialValue":0},"lastState":{"type":"string","initialValue":""}},
+      "children":[
+        {"type":"native","id":"player","content":{
+          "properties":{"module":"videoPlayer"},
+          "actions":{
+            "appear":[{"type":"incrementVariable","variableName":"appearCount","by":1},{"type":"updateVariable","variableName":"lastState","value":"shown"}],
+            "disappear":{"type":"updateVariable","variableName":"lastState","value":"hidden"}
+          },
+          "analytics":{"appear":"playerShown"}
+        }}
+      ]}}"""
+
+    @Test
+    fun `appear and disappear run their actions and analytics with an empty event, not on the bus`() {
+        val rt = runtime(MemoryDataSource(APP_JSON, mapOf("v" to visibilityScreen)), App8Config(nativeComponents = mapOf("videoPlayer" to registered)))
+        val s = session(rt, "v")
+        val dispatcher = ActionDispatcher(rt, RecordingNavigator(), RecordingHost())
+        val events = mutableListOf<String>()
+        val analytics = mutableListOf<String>()
+        rt.eventBus.subscribe { events += it.name }
+        rt.analyticsBus.observe { analytics += it.name }
+        val node = s.root.find("player")!!
+
+        dispatcher.dispatchNativeVisibility(node, true)
+        assertEquals(1L, (s.scope.store.getValue("appearCount") as Number).toLong())
+        assertEquals("shown", s.scope.store.getValue("lastState"))
+        dispatcher.dispatchNativeVisibility(node, false)
+        assertEquals("hidden", s.scope.store.getValue("lastState"))
+
+        assertTrue(events.isEmpty(), "visibility is not posted on the event bus: $events")
+        assertEquals(listOf("app8.playerShown"), analytics)
+    }
+
+    @Test
+    fun `a module cannot emit the reserved appear and disappear names`() {
+        val rt = runtime(MemoryDataSource(APP_JSON, mapOf("v" to visibilityScreen)), App8Config(nativeComponents = mapOf("videoPlayer" to registered)))
+        val s = session(rt, "v")
+        val dispatcher = ActionDispatcher(rt, RecordingNavigator(), RecordingHost())
+        val events = mutableListOf<String>()
+        rt.eventBus.subscribe { events += it.name }
+        val node = s.root.find("player")!!
+
+        dispatcher.dispatchNativeEvent(node, "appear", emptyMap())
+        dispatcher.dispatchNativeEvent(node, "disappear", emptyMap())
+
+        assertTrue(events.isEmpty())
+        assertEquals(0L, (s.scope.store.getValue("appearCount") as Number).toLong())
+        assertTrue(rt.diagnostics.snapshot().any { it.startsWith("native.event.reserved") })
+    }
+
+    @Test
+    fun `a context starts not visible unless built otherwise`() {
+        val context = dev.app8.engine.nativecomponent.App8NativeContext(emptyMap(), { _, _ -> }, "app", "s", "m")
+        assertEquals(false, context.isVisible)
+        assertEquals(true, context.copy(isVisible = true).isVisible)
+    }
 }

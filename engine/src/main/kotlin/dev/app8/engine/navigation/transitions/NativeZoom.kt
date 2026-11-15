@@ -471,6 +471,8 @@ internal fun NativeZoomModal(
     onDismissRequest: () -> Unit,
     onRemoved: () -> Unit,
     backEnabled: Boolean,
+    /** The zoom-in has finished (native visibility). */
+    onPresented: () -> Unit = {},
     content: @Composable () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -491,6 +493,7 @@ internal fun NativeZoomModal(
     LaunchedEffect(Unit) {
         awaitZoomReady(origin, sources, loader, context, window)
         progress.animateTo(1f, NATIVE_ZOOM_IN)
+        onPresented()
     }
     DisposableEffect(origin) {
         origin.alignment.ghost = { origin.photoGhost(progress.value, own, sources.frame(origin.session, origin.key)) }

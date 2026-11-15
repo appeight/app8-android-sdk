@@ -1,5 +1,7 @@
 package dev.app8.engine.core.model
 
+import dev.app8.engine.core.model.style.decodeStyleAny
+
 /** Edge insets for padding / margins. */
 public data class EdgeInsets(
     val top: Double? = null,
@@ -176,4 +178,62 @@ internal fun decodeSearchBar(c: Cursor): SearchBar {
         autoFocus = c.optBool("autoFocus"),
         onCancel = actions("onCancel"),
     )
+}
+
+/**
+ * `screen.content.bottomBar` (DSL 0.6.1, app8-dsl `docs/navigation.md#bottom-bar`): [component]
+ * pinned at full width above the bottom safe area (above the tab bar when one is shown). The
+ * bar's height is added to the screen's bottom safe area, so scroll content gets the matching
+ * bottom inset and nothing rests under it. Not a property of `tabBarScreen`.
+ *
+ * @property component the bar's content (usually a `stackView` of buttons), pinned to [insets];
+ *   its height is its fitting height.
+ * @property insets space around [component]; a missing edge keeps its default (12 top, 16 left
+ *   and right, 8 bottom, measured from the bottom safe area).
+ * @property style the bar's background, see [Style].
+ * @property edgeEffect iOS 26 scroll-edge effect under a `system` background; Android ignores it.
+ * @property hidden bool or `{{expression}}`: hides the bar (slide down and fade, 0.33 s).
+ */
+public data class BottomBar(
+    val component: Component,
+    val insets: EdgeInsets? = null,
+    val style: Style? = null,
+    val edgeEffect: EdgeEffect? = null,
+    val hidden: String? = null,
+) {
+    /**
+     * @property background null for `"system"` (the default: on Android the Material 3 bottom
+     *   app bar surface, transparent at rest and `surfaceContainer` once content scrolls under
+     *   the bar); otherwise a `material` or `fill` style entity (inline or pointer) drawn behind
+     *   the bar down to the screen's bottom edge (or the tab bar).
+     */
+    public data class Style(val background: dev.app8.engine.core.model.style.StyleAny? = null)
+
+    @Suppress("EnumEntryName")
+    public enum class EdgeEffect { soft, hard }
+
+    public companion object {
+        public const val DEFAULT_INSET_TOP: Double = 12.0
+        public const val DEFAULT_INSET_SIDE: Double = 16.0
+        public const val DEFAULT_INSET_BOTTOM: Double = 8.0
+    }
+}
+
+internal fun decodeBottomBar(c: Cursor): BottomBar {
+    c.obj()
+    return BottomBar(
+        component = c.req("component", ::decodeComponent),
+        insets = c.opt("insets", ::decodeEdgeInsets),
+        style = c.opt("style", ::decodeBottomBarStyle),
+        edgeEffect = c.optSafeEnum("edgeEffect", BottomBar.EdgeEffect.soft),
+        hidden = c.optScalar("hidden"),
+    )
+}
+
+/** `background`: `"system"` (or any other string, leniently) is the system treatment; an object is a style entity. */
+private fun decodeBottomBarStyle(c: Cursor): BottomBar.Style {
+    c.obj()
+    val raw = (c.element as kotlinx.serialization.json.JsonObject)["background"]
+    val background = if (raw is kotlinx.serialization.json.JsonObject) c.req("background", ::decodeStyleAny) else null
+    return BottomBar.Style(background)
 }
