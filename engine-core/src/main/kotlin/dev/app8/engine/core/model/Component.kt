@@ -79,6 +79,11 @@ public data class ComponentEntity<C : EntityContent>(
     override val templateId: String?,
     override val type: ComponentType,
     val content: C,
+    /**
+     * `content.properties.isHidden` (bool or expression) whatever the component type, so every
+     * component can be hidden, not only the types whose properties model it.
+     */
+    val isHidden: String? = null,
 ) : Component
 
 /** Shared surface of every component content. */
@@ -298,5 +303,14 @@ internal fun decodeComponent(input: Cursor): Component {
             null -> c.fail("unsupported custom component type with content: ${type.raw}")
         }
     }
-    return ComponentEntity(id = id, templateId = templateId, type = type, content = content)
+    return ComponentEntity(id = id, templateId = templateId, type = type, content = content, isHidden = rawIsHidden(c))
+}
+
+/** `content.properties.isHidden` read leniently: a bool or a string, anything else ignored. */
+private fun rawIsHidden(c: Cursor): String? {
+    val content = c.element as? JsonObject ?: return null
+    val properties = content["content"]?.let { it as? JsonObject }?.get("properties") as? JsonObject ?: return null
+    val raw = properties["isHidden"] as? kotlinx.serialization.json.JsonPrimitive ?: return null
+    if (raw is kotlinx.serialization.json.JsonNull) return null
+    return raw.content
 }

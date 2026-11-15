@@ -16,6 +16,8 @@ import dev.app8.engine.core.model.style.Material
 import dev.app8.engine.core.model.style.TextModel
 import dev.app8.engine.core.model.style.ThemedColor
 import dev.app8.engine.core.model.style.Wrapped
+import dev.app8.engine.core.model.style.ColorHex
+import dev.app8.engine.render.style.ColorBinder
 import dev.app8.engine.render.style.StyleResolver
 import dev.app8.engine.runtime.App8Runtime
 import dev.app8.engine.style.App8Appearance
@@ -47,13 +49,18 @@ internal class RenderEnv(
     /** UIColor.label. */
     val labelColor: Color get() = IosSystemColors.of("label", appearance)
 
-    fun material(w: Wrapped<Material>?): Material? =
-        (w?.value ?: w?.pointerId?.let { runtime.styles.content(it) as? Material })?.let { styles.material(it) }
+    // [node]: the component the style draws, whose scope `{{…}}` colors resolve in (read
+    // tracked, so a change of a variable they read redraws it). Null leaves them unset.
 
-    fun color(w: Wrapped<ThemedColor>?): Color? = styles.color(w)?.let { Wrapped.of(it).colorOrNull(appearance) }
+    fun material(w: Wrapped<Material>?, node: RenderNode? = null): Material? =
+        (w?.value ?: w?.pointerId?.let { runtime.styles.content(it) as? Material })?.let { styles.material(it, binder(node)) }
 
-    fun textModel(w: Wrapped<TextModel>?): TextModel? =
-        (w?.value ?: w?.pointerId?.let { runtime.styles.content(it) as? TextModel })?.let { styles.text(it) }
+    fun color(w: Wrapped<ThemedColor>?, node: RenderNode? = null): Color? = styles.color(w, binder(node))?.let { Wrapped.of(it).colorOrNull(appearance) }
+
+    fun textModel(w: Wrapped<TextModel>?, node: RenderNode? = null): TextModel? =
+        (w?.value ?: w?.pointerId?.let { runtime.styles.content(it) as? TextModel })?.let { styles.text(it, binder(node)) }
+
+    private fun binder(node: RenderNode?): ColorBinder? = node?.colorBinder()
 
     /**
      * The text style of a label/button: the DSL's, or UIKit's default ([defaultSize] pt system
@@ -93,6 +100,22 @@ internal class RenderEnv(
             ceil(max).toInt()
         }
         return Size(ceil(w.toDouble()) / d, ceil(r.size.height.toDouble()) / d)
+    }
+}
+
+/**
+ * Binds `{{…}}` style colors in this node's scope (tracked reads): a hex result is the color;
+ * anything else leaves the field unset and logs `style.color.invalid` (once per value).
+ */
+internal fun RenderNode.colorBinder(): ColorBinder = ColorBinder { expression ->
+    val text = string(expression)?.trim().orEmpty()
+    if (ColorHex.isValidHexString(text)) {
+        ThemedColor(ThemedColor.Source.SINGLE_HEX, light = ColorHex.parse(text))
+    } else {
+        if (runtime.warnedNames.add("color:$key:$expression=$text")) {
+            runtime.diagnostics.warn("style.color.invalid", "'$expression' in $key gave '$text', not a hex color; left unset")
+        }
+        null
     }
 }
 

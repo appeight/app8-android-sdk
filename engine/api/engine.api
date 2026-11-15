@@ -46,6 +46,7 @@ public abstract interface class dev/app8/engine/App8DataSource {
 	public abstract fun getScreen (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun getStyles (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun getTranslations (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun prepareRequest (Ldev/app8/engine/App8HttpRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun streamDatasource (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lkotlinx/coroutines/flow/Flow;
 	public fun streamScreen (Ljava/lang/String;)Lkotlinx/coroutines/flow/Flow;
 	public fun streamStyles ()Lkotlinx/coroutines/flow/Flow;
@@ -55,6 +56,7 @@ public final class dev/app8/engine/App8DataSource$DefaultImpls {
 	public static fun getAllScreenIds (Ldev/app8/engine/App8DataSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun getDatasource (Ldev/app8/engine/App8DataSource;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun getTranslations (Ldev/app8/engine/App8DataSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static fun prepareRequest (Ldev/app8/engine/App8DataSource;Ldev/app8/engine/App8HttpRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun streamDatasource (Ldev/app8/engine/App8DataSource;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lkotlinx/coroutines/flow/Flow;
 	public static fun streamScreen (Ldev/app8/engine/App8DataSource;Ljava/lang/String;)Lkotlinx/coroutines/flow/Flow;
 	public static fun streamStyles (Ldev/app8/engine/App8DataSource;)Lkotlinx/coroutines/flow/Flow;
@@ -122,6 +124,25 @@ public final class dev/app8/engine/App8Error$UnsupportedPlatform : dev/app8/engi
 	public fun <init> (II)V
 	public final fun getDeviceSdk ()I
 	public final fun getRequiredSdk ()I
+}
+
+public final class dev/app8/engine/App8HttpRequest {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/util/Map;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;)Ldev/app8/engine/App8HttpRequest;
+	public static synthetic fun copy$default (Ldev/app8/engine/App8HttpRequest;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;ILjava/lang/Object;)Ldev/app8/engine/App8HttpRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBody ()Ljava/lang/String;
+	public final fun getHeaders ()Ljava/util/Map;
+	public final fun getMethod ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class dev/app8/engine/App8Instance {

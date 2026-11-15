@@ -79,6 +79,11 @@ public data class ThemedColor(
     val dark: ColorHex? = null,
     val lightRef: String? = null,
     val darkRef: String? = null,
+    /**
+     * A `{{…}}` color string, evaluated in the scope of the component that uses the style and
+     * expected to give a hex color. Unbound it resolves to clear.
+     */
+    val expression: String? = null,
 ) {
     public enum class Source { SINGLE_HEX, THEMED }
 
@@ -91,7 +96,10 @@ public data class ThemedColor(
 }
 
 internal fun decodeThemedColor(c: Cursor): ThemedColor {
-    c.stringOrNull()?.let { return ThemedColor(ThemedColor.Source.SINGLE_HEX, light = ColorHex.parseOrFallback(it)) }
+    c.stringOrNull()?.let {
+        if (it.contains("{{") && it.contains("}}")) return ThemedColor(ThemedColor.Source.SINGLE_HEX, expression = it)
+        return ThemedColor(ThemedColor.Source.SINGLE_HEX, light = ColorHex.parseOrFallback(it))
+    }
     c.obj()
     fun ref(key: String): String? = c.attempt { it.req(key) { r -> r.obj(); r.reqString("id") } }
     val lightRef = ref("light")

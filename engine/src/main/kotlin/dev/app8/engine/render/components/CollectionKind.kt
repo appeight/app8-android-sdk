@@ -99,12 +99,30 @@ internal object CollectionKind : ComponentKind {
 
     private fun content(node: RenderNode) = node.content as CollectionContent
 
+    /**
+     * A vertical or grid collection that does not scroll itself is as tall as its content (iOS
+     * self-sizing height constraint): `scrollEnabled: false`, or inside a vertical scroll view
+     * with no height of its own (the outer scroll view scrolls instead).
+     */
+    internal fun sizesToContent(node: RenderNode): Boolean {
+        val config = content(node).properties.layout
+        val vertical = config?.type == null || config.type == CollectionLayout.LayoutType.vertical || config.type == CollectionLayout.LayoutType.grid
+        if (!vertical) return false
+        if (config?.scrollEnabled == false) return true
+        return node.inVerticalScroll && !hasOwnHeight(node.content.layout)
+    }
+
+    private fun hasOwnHeight(layout: dev.app8.engine.core.model.Layout?): Boolean {
+        layout ?: return false
+        if (layout.height != null || (layout.top != null && layout.bottom != null)) return true
+        val types = layout.constraints.orEmpty().map { it.type }
+        return dev.app8.engine.core.model.Layout.Attribute.height in types ||
+            (dev.app8.engine.core.model.Layout.Attribute.top in types && dev.app8.engine.core.model.Layout.Attribute.bottom in types)
+    }
+
     override fun traits(node: RenderNode, env: RenderEnv): LayoutTraits {
         val p = content(node).properties
-        val config = p.layout
-        val vertical = config?.type == null || config.type == CollectionLayout.LayoutType.vertical || config.type == CollectionLayout.LayoutType.grid
-        // `scrollEnabled: false` on a vertical collection: it is as tall as its content (iOS self-sizing height constraint).
-        if (!vertical || config?.scrollEnabled != false) return LayoutTraits(opaque = true)
+        if (!sizesToContent(node)) return LayoutTraits(opaque = true)
         val model = model(node)
         return LayoutTraits(
             opaque = true,
@@ -280,7 +298,7 @@ internal object CollectionKind : ComponentKind {
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = padding,
                 reverseLayout = inverted,
-                userScrollEnabled = config?.scrollEnabled ?: true,
+                userScrollEnabled = config?.scrollEnabled != false && !sizesToContent(node),
             ) {
                 for (row in rows) {
                     val content: @Composable () -> Unit = {

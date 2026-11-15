@@ -35,6 +35,7 @@ internal object PageControlKind : ComponentKind {
     }
 
     override fun isHidden(node: RenderNode): Boolean {
+        if (super.isHidden(node)) return true
         val p = node.content.properties as? PageControlProperties ?: return false
         return p.hidesForSinglePage == true && pages(node) <= 1
     }

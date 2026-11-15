@@ -103,7 +103,7 @@ internal fun NodeView(node: RenderNode) {
     val rotation = (style?.transform?.rotation ?: 0.0).toFloat()
     val blend = style?.blendMode?.toCompose()
 
-    val material = env.material(style?.material)
+    val material = env.material(style?.material, node)
     val bgHex = props?.backgroundColor?.let { node.string(it.value) }?.takeIf { it.isNotEmpty() }
     val bgTarget = bgHex?.let { ColorHex.parseOrFallback(it).let { c -> Color(c.argb) } } ?: Color.Transparent
     val bg by animateColorAsState(bgTarget, props?.backgroundColor?.animation.toSpecOf(node), label = "bg")
@@ -114,7 +114,7 @@ internal fun NodeView(node: RenderNode) {
     m = m.elementTransition(element)
     // A keyed element is a possible source of a native zoom (`zoom` + `sourceKey`).
     if (element != null) {
-        val corner = (style?.material?.let { env.material(it) }?.layers
+        val corner = (style?.material?.let { env.material(it, node) }?.layers
             ?.firstNotNullOfOrNull { ((it as? dev.app8.engine.core.model.style.StyleEntity<*>)?.content as? dev.app8.engine.core.model.style.Corner)?.radius as? dev.app8.engine.core.model.style.Corner.Radius.Fixed }?.value
             ?: props?.cornerRadius ?: 0.0).toFloat()
         val photo = if (kind == dev.app8.engine.render.components.ImageKind) dev.app8.engine.render.components.imageRef(node) else null
@@ -245,6 +245,7 @@ private fun OnEvents(node: RenderNode, events: List<EventTrigger>?) {
             runtime.beginWork()
             try {
                 delay(((e.delay ?: 0.0) * 1000).toLong())
+                runtime.tickClock()
                 dispatcher.execute(node, e.action)
             } finally {
                 runtime.endWork()
@@ -253,6 +254,7 @@ private fun OnEvents(node: RenderNode, events: List<EventTrigger>?) {
                 val interval = ((e.interval ?: e.delay ?: 1.0) * 1000).toLong().coerceAtLeast(16)
                 while (true) {
                     delay(interval)
+                    runtime.tickClock()
                     dispatcher.execute(node, e.action)
                 }
             }

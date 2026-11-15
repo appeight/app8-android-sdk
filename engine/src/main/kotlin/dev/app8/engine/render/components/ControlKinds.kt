@@ -236,7 +236,7 @@ internal object PickerKind : ComponentKind {
     }
 
     private fun menuText(node: RenderNode, env: RenderEnv) =
-        env.text(env.textModel((node.content.style as? PickerStyle)?.text), 15f, IosSystemColors.of("systemBlue", env.appearance), 1).copy(maxLines = 1)
+        env.text(env.textModel((node.content.style as? PickerStyle)?.text, node), 15f, IosSystemColors.of("systemBlue", env.appearance), 1).copy(maxLines = 1)
 
     /** Pull-down look title: `style.label` (brand font), default 15pt label color. */
     private fun labelText(style: PickerStyle, env: RenderEnv) =

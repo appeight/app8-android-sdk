@@ -23,12 +23,15 @@ internal interface ComponentKind {
     /** Layout participation: intrinsic size, stack/scroll specs, hugging. Called inside the layout derived state. */
     fun traits(node: RenderNode, env: RenderEnv): LayoutTraits = LayoutTraits.NONE
 
-    /** `isHidden` (expression), for the kinds that have it. */
+    /**
+     * `properties.isHidden` (bool or expression) on any component. Where the properties model
+     * has the field (view, label, icon) it is read from the current state's properties.
+     */
     fun isHidden(node: RenderNode): Boolean = when (val p = node.content.properties) {
         is ViewProperties -> node.bool(p.isHidden) == true
         is LabelProperties -> node.bool(p.isHidden) == true
         is IconProperties -> node.bool(p.isHidden) == true
-        else -> false
+        else -> node.bool(node.hiddenBinding) == true
     }
 
     /** Clip content and children to the material's corner (UIView `masksToBounds` with a corner). */
