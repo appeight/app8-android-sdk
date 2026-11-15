@@ -122,7 +122,7 @@ class CommerceBlocksDecodingTest {
 
     @Test
     fun appIdDecodes() {
-        val app = DslDecoder().decodeApp("""{"id":"demostore","title":"T"}""")
-        assertEquals("demostore", app.id)
+        val app = DslDecoder().decodeApp("""{"id":"my-app","title":"T"}""")
+        assertEquals("my-app", app.id)
     }
 }

@@ -31,7 +31,7 @@ Frame percentiles come from `frameDurationCpuMs`. Jank % is the share of frames 
 
 ## Journeys
 
-- **startup**: cold start of DemoStore. TTID is the first frame, which is a blank box while
+- **startup**: cold start of the commerce sample. TTID is the first frame, which is a blank box while
   the bundle loads. TTFD is the first DSL screen, reported with `reportFullyDrawn` on
   `app8.screen.appeared`. 10 iterations.
 - **scrollShop**: launch, then *Continue as guest*, then three flings down and three up on
@@ -85,7 +85,7 @@ measured on the JVM:
 |---|---:|---:|---:|---:|---:|
 | stackList750 (scroll → stack of 150 rows) | 753 | 1 | 162.3 ms | 36.3 ms | 4.5× |
 | constraintCards750 (sibling chains, wrapping text) | 752 | 2 | 43.5 ms | 7.3 ms | 5.9× |
-| productCardCell (DemoStore `ProductCard`) | 7 | 2 | 0.133 ms | 0.056 ms | 2.4× |
+| productCardCell (sample `ProductCard`) | 7 | 2 | 0.133 ms | 0.056 ms | 2.4× |
 | wrappingTextCell (self-sizing, 2 passes) | 4 | 2 | 0.057 ms | 0.026 ms | 2.2× |
 
 The cell fixtures match the per-cell work in `App8.solve` on the long list. Expect that

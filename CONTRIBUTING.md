@@ -81,7 +81,7 @@ A DSL feature is one change across the platforms, released together (see
 1. Spec: edit `app8-dsl/docs/` and the feature matrix row in `docs/platforms.md`.
 2. iOS: implement in `app8-ios-sdk`.
 3. Android: implement here.
-4. Studio: implement in the web renderer.
+4. Web: implement in the web renderer.
 5. Fixture: add a conformance fixture so the screenshot report covers it.
 6. Release: tag app8-dsl, bump `dsl.lock` and `EngineVersion.CURRENT` here and
    `EngineVersion.current` on iOS, tag both SDKs with the same version.

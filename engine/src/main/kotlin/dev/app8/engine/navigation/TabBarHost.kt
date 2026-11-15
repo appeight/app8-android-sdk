@@ -37,7 +37,7 @@ internal const val TAB_BAR_HEIGHT = 64.0
 /** Window width (dp) from which tab items lay out icon-beside-label, centered (M3 medium width). */
 internal const val TAB_BAR_HORIZONTAL_ITEMS_WIDTH = 600
 
-/** The selected item's indicator pill: the tab tint at this alpha (Studio uses the same). */
+/** The selected item's indicator pill: the tab tint at this alpha (the web renderer uses the same). */
 internal const val TAB_INDICATOR_ALPHA = 0.14f
 
 /**

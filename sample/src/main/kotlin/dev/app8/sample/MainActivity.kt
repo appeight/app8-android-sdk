@@ -13,7 +13,7 @@ import dev.app8.engine.App8Instance
 import dev.app8.engine.events.App8AnalyticsEvent
 
 /**
- * Runs the DemoStore demo app (shoppu-web `packages/app-dsl/demo/demostore`) from the sample's
+ * Runs the commerce sample app from the sample's
  * assets, or another bundle under `assets/` named by the `app` extra (`longlist`: the
  * benchmark's long list fixture).
  */
@@ -21,7 +21,7 @@ class MainActivity : ComponentActivity() {
     private var reportedDrawn = false
 
     private val instance: App8Instance by lazy {
-        val app = intent.getStringExtra(EXTRA_APP) ?: "demostore"
+        val app = intent.getStringExtra(EXTRA_APP) ?: "commerce"
         App8.instance(this, AssetAppDataSource(assets, app)).also { i ->
             i.eventBus.subscribe { Log.i("App8Sample", "event ${it.name} ${it.payload}") }
             i.analyticsBus.observe {

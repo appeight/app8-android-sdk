@@ -87,7 +87,7 @@ internal object LayoutTree {
 
 /**
  * Solver results cached by what they depend on: the tree signature, the bounds and the safe
- * area (shoppu-web `render/solve.ts`). Re-rendering a screen whose layout inputs did not
+ * area (the web renderer's `solve.ts`). Re-rendering a screen whose layout inputs did not
  * change, or switching back to a tab, skips the solver.
  */
 internal class SolveCache(

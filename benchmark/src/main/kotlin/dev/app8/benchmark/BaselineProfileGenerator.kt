@@ -6,7 +6,7 @@ import dev.app8.benchmark.Journeys.openProductAndBack
 import dev.app8.benchmark.Journeys.openShop
 import dev.app8.benchmark.Journeys.scrollLongList
 import dev.app8.benchmark.Journeys.scrollShop
-import dev.app8.benchmark.Journeys.startDemoStore
+import dev.app8.benchmark.Journeys.startSampleApp
 import dev.app8.benchmark.Journeys.startLongList
 import org.junit.Rule
 import org.junit.Test
@@ -26,7 +26,7 @@ class BaselineProfileGenerator {
     @Test
     fun generate() = rule.collect(packageName = PACKAGE, includeInStartupProfile = true) {
         pressHome()
-        startDemoStore()
+        startSampleApp()
         openShop()
         scrollShop(flings = 2)
         openProductAndBack()

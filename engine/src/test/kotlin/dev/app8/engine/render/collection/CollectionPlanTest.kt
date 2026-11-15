@@ -87,7 +87,7 @@ class CollectionPlanTest {
 
     @Test
     fun `self-sizing grid rows take the tallest natural item, fixed rows the cell height`() {
-        // DemoStore collection grid: 2 columns, estimatedItemHeight 470, no itemHeight.
+        // A collection grid: 2 columns, estimatedItemHeight 470, no itemHeight.
         val st = CollectionPlan.mixedStyle(
             CollectionLayout(type = CollectionLayout.LayoutType.grid, columns = 2, itemSpacing = 10.0, estimatedItemHeight = 470.0, contentInsets = EdgeInsets(0.0, 10.0, 0.0, 10.0)),
             null, false, null to null,

@@ -112,7 +112,7 @@ class LayoutSolverBenchmark {
             LayoutNode("$k.button", id = "button", intrinsicSize = fixedSize(90.0, 36.0), layout = Layout(constraints = listOf(c(BOTTOM, "superview", constant = -8), c(TRAILING, "superview", constant = -8)))),
         )
 
-        /** The DemoStore `ProductCard` cell (image, title, price, variant, add button). */
+        /** A `ProductCard` cell (image, title, price, variant, add button). */
         fun productCard(): LayoutNode = LayoutNode(
             "#cell",
             children = listOf(

@@ -5,7 +5,7 @@ import androidx.compose.ui.graphics.toArgb
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/** Same expectations as Studio's `packages/app-dsl/src/android/colors.test.ts`. */
+/** Same expectations as the web renderer's `colors.test.ts`. */
 class SystemColorSchemeTest {
 
     private fun hex(c: Color) = "#%06X".format(c.toArgb() and 0xFFFFFF)

@@ -478,7 +478,7 @@ class LayoutSemanticsTest {
 
     /**
      * A grid card whose footer hangs off a `>=` gap (collections.md, "Self-sizing grid rows";
-     * the DemoStore product card): measured content-sized it takes its smallest height, not an
+     * a product card): measured content-sized it takes its smallest height, not an
      * estimate; laid out at its row's taller height the footer sits on the bottom edge.
      */
     @Test

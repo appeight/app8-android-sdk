@@ -7,7 +7,7 @@ import androidx.test.uiautomator.Direction
 import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
 
-/** The sample app; its `MainActivity` runs DemoStore, or the bundle named by the `app` extra. */
+/** The sample app; its `MainActivity` runs the commerce sample, or the bundle named by the `app` extra. */
 const val PACKAGE: String = "dev.app8.sample"
 private const val ACTIVITY = "dev.app8.sample.MainActivity"
 private const val TIMEOUT_MS = 10_000L
@@ -17,8 +17,8 @@ private const val TIMEOUT_MS = 10_000L
  * are resource ids (`testTagsAsResourceId` in the sample).
  */
 object Journeys {
-    /** Cold start of DemoStore to its first frame (the launch screen). */
-    fun MacrobenchmarkScope.startDemoStore() {
+    /** Cold start of the commerce sample to its first frame (the launch screen). */
+    fun MacrobenchmarkScope.startSampleApp() {
         startActivityAndWait()
         device.wait(Until.hasObject(By.res("continueAsGuest")), TIMEOUT_MS)
     }

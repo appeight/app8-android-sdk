@@ -8,7 +8,7 @@ import kotlin.math.hypot
 import kotlin.math.sin
 
 /**
- * The continuous-corner geometry against shoppu-web `corner.ts` (`continuousPath`) and
+ * The continuous-corner geometry against the web renderer's `corner.ts` (`continuousPath`) and
  * its `corner.test.ts`. The reference strings below are `continuousPath(...)` output.
  */
 class CornerGeometryTest {

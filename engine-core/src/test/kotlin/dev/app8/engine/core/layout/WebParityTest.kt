@@ -8,7 +8,7 @@ import kotlin.math.ceil
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-/** Port of shoppu-web packages/app-dsl/src/layout/solver.test.ts. */
+/** Port of the web renderer's layout solver tests (solver.test.ts). */
 class WebParityTest {
     private fun textLabel(key: String, width: Double, id: String? = null, layout: Layout? = null) =
         LayoutNode(key = key, id = id, layout = layout, intrinsicSize = text(width), hugging = LABEL_HUGGING)

@@ -1,7 +1,7 @@
 # Android system chrome spec
 
 The contract for every piece of system chrome the Android SDK draws around DSL
-content. The Studio web renderer (`shoppu-web` `packages/app-dsl/src/android/`)
+content. The web renderer
 copies these numbers. Brand content (views, labels, images, DSL fonts and colors)
 is out of scope: it renders identically to iOS. Colors come from the app, never
 Material's purple baseline (`app8-dsl/docs/platforms.md`, "Android system colors").
@@ -10,7 +10,7 @@ Units are dp (sp for text). Measured on `a8_pixel_9_api37` (1080×2424, 420 dpi:
 1dp = 2.625px) against Google's own apps on the same image (Clock, Phone,
 Contacts, Files, Settings) in November 2026. Compose Material3 is 1.4.0 (BOM
 2026.09); 1.5 (full Expressive) was still a release candidate.
-`ChromeSpecTest` pins the constants below. Change the test, this file and Studio
+`ChromeSpecTest` pins the constants below. Change the test, this file and the web renderer
 together.
 
 Sources (cited by letter in the tables):

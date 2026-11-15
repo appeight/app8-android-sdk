@@ -6,7 +6,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * Pagers bound to one `currentPageVariable`, as in the DemoStore demo: the product gallery
+ * Pagers bound to one `currentPageVariable`, as in a demo app: the product gallery
  * and a product screen further back with fewer images both bind `galleryPage`.
  */
 class PageVariableSyncTest {

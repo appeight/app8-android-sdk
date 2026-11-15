@@ -13,7 +13,7 @@ import dev.app8.engine.core.vars.VariableStoreProtocol
 /**
  * Snapshot-state mirror of a variable store's change stream: one counter per variable name.
  *
- * This is the Compose version of shoppu-web `render/store.ts` read tracking. Resolving a
+ * This is the Compose version of the web renderer's read tracking. Resolving a
  * property through [Scope.tracked] reads the counter of every variable the expression
  * touches, so the snapshot system records exactly those dependencies; a change bumps only
  * that variable's counter and recomposes (or re-lays-out) only the readers. Writes always go

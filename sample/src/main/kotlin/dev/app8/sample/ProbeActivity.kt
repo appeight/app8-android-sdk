@@ -11,7 +11,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Measures the device for the Studio device catalogue (the Android
+ * Measures the device for the web renderer's device catalogue (the Android
  * counterpart of safearea.info): screen size, density, system bar and
  * cutout insets, display corner radii and the camera cutout shape.
  * Logs one JSON line tagged "A8Probe".
