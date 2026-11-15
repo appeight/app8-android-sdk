@@ -277,7 +277,7 @@ internal class Cell private constructor(
         fun create(parent: RenderNode, template: Component, store: ScopedVariableStore, variable: String?, value: Any?): Cell? = traced("App8.cell") {
             val scope = Scope(store, parent.scope)
             val scopes = ArrayList<Scope>()
-            val root = RenderNode.build(parent.session, template, template.id, scope, parent.type, scopes)
+            val root = RenderNode.build(parent.session, template, template.id, scope, parent.type, scopes, inVerticalScroll = rowsInVerticalScroll(parent))
             if (root == null) {
                 scope.dispose()
                 store.detach()
@@ -286,10 +286,24 @@ internal class Cell private constructor(
             Cell(template, scope, root, scopes, variable, value)
         }
 
+        /**
+         * Whether the rows of [parent] (a collection or table) sit in a vertical scroller: the
+         * rows of a vertical or grid collection or of a table do, a horizontal collection's
+         * only when the collection itself does. A collection nested in such a row without a
+         * height of its own then sizes to its content and the row grows with it.
+         */
+        fun rowsInVerticalScroll(parent: RenderNode): Boolean {
+            if (parent.inVerticalScroll) return true
+            if (parent.typeKey == dev.app8.engine.core.model.ComponentType.Key.tableView) return true
+            val content = parent.content as? CollectionContent ?: return false
+            val type = content.properties.layout?.type
+            return type == null || type == dev.app8.engine.core.model.CollectionLayout.LayoutType.vertical || type == dev.app8.engine.core.model.CollectionLayout.LayoutType.grid
+        }
+
         /** A cell rendered in [parent]'s own scope (table rows): the scope is not the cell's to dispose. */
-        fun inParentScope(parent: RenderNode, template: Component): Cell? {
+        fun inParentScope(parent: RenderNode, template: Component, inVerticalScroll: Boolean = false): Cell? {
             val scopes = ArrayList<Scope>()
-            val root = RenderNode.build(parent.session, template, template.id, parent.scope, parent.type, scopes) ?: return null
+            val root = RenderNode.build(parent.session, template, template.id, parent.scope, parent.type, scopes, inVerticalScroll = inVerticalScroll) ?: return null
             return Cell(template, parent.scope, root, scopes, null, null, ownsScope = false)
         }
 

@@ -1,5 +1,6 @@
 package dev.app8.engine.navigation
 
+import dev.app8.engine.render.hexColor
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -99,8 +100,7 @@ internal fun NavSearchField(
     // Colors from the app's scheme (app8-dsl platforms.md, "Android system colors"):
     // a neutral step off the background, never Material's lavender baseline.
     val scheme = MaterialTheme.colorScheme
-    val tint = search.tintColor?.let { root.string(it) }?.takeIf { it.isNotEmpty() }
-        ?.let { Color(ColorHex.parseOrFallback(it).argb) } ?: scheme.primary
+    val tint = root.hexColor(search.tintColor) ?: scheme.primary
     val label = scheme.onSurface
     val secondary = scheme.onSurfaceVariant
     val fill = container ?: scheme.surfaceContainerHigh

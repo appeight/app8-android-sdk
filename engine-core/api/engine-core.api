@@ -1943,15 +1943,16 @@ public final class dev/app8/engine/core/model/ComponentSerializer : dev/app8/eng
 
 public final class dev/app8/engine/core/model/ComponentState {
 	public fun <init> ()V
-	public fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ldev/app8/engine/core/model/Animation;)V
-	public synthetic fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ldev/app8/engine/core/model/Animation;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ldev/app8/engine/core/model/Animation;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ldev/app8/engine/core/model/Animation;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/Object;
 	public final fun component2 ()Ljava/lang/Object;
 	public final fun component3 ()Ldev/app8/engine/core/model/Layout;
 	public final fun component4 ()Ljava/util/Map;
 	public final fun component5 ()Ldev/app8/engine/core/model/Animation;
-	public final fun copy (Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ldev/app8/engine/core/model/Animation;)Ldev/app8/engine/core/model/ComponentState;
-	public static synthetic fun copy$default (Ldev/app8/engine/core/model/ComponentState;Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ldev/app8/engine/core/model/Animation;ILjava/lang/Object;)Ldev/app8/engine/core/model/ComponentState;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ldev/app8/engine/core/model/Animation;Ljava/lang/String;)Ldev/app8/engine/core/model/ComponentState;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/ComponentState;Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ldev/app8/engine/core/model/Animation;Ljava/lang/String;ILjava/lang/Object;)Ldev/app8/engine/core/model/ComponentState;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAnimation ()Ldev/app8/engine/core/model/Animation;
 	public final fun getChildStates ()Ljava/util/Map;
@@ -1959,6 +1960,7 @@ public final class dev/app8/engine/core/model/ComponentState {
 	public final fun getProperties ()Ljava/lang/Object;
 	public final fun getStyle ()Ljava/lang/Object;
 	public fun hashCode ()I
+	public final fun isHidden ()Ljava/lang/String;
 	public fun toString ()Ljava/lang/String;
 }
 

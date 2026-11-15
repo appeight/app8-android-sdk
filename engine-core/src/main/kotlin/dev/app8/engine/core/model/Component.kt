@@ -309,7 +309,12 @@ internal fun decodeComponent(input: Cursor): Component {
 /** `content.properties.isHidden` read leniently: a bool or a string, anything else ignored. */
 private fun rawIsHidden(c: Cursor): String? {
     val content = c.element as? JsonObject ?: return null
-    val properties = content["content"]?.let { it as? JsonObject }?.get("properties") as? JsonObject ?: return null
+    return rawPropertiesIsHidden(content["content"])
+}
+
+/** `properties.isHidden` of a content or state object, read leniently (bool or string). */
+internal fun rawPropertiesIsHidden(element: kotlinx.serialization.json.JsonElement?): String? {
+    val properties = (element as? JsonObject)?.get("properties") as? JsonObject ?: return null
     val raw = properties["isHidden"] as? kotlinx.serialization.json.JsonPrimitive ?: return null
     if (raw is kotlinx.serialization.json.JsonNull) return null
     return raw.content

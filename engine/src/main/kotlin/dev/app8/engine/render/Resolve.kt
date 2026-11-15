@@ -28,6 +28,27 @@ internal fun RenderNode.string(raw: String?, ctx: VariableContext = scope.tracke
     }
 }
 
+/**
+ * A color-valued string field (component style tints, chrome colors, …): a hex literal, or a
+ * `{{…}}` expression evaluated in this node's scope that must give a hex color. A result that
+ * is not one (null, empty, other text) leaves the field unset and logs `style.color.invalid`,
+ * as for style colors. Empty or absent → null.
+ */
+internal fun RenderNode.hexColor(raw: String?, ctx: VariableContext = scope.tracked): androidx.compose.ui.graphics.Color? {
+    if (raw.isNullOrEmpty()) return null
+    if (!runtime.propertyResolver.containsExpression(raw)) {
+        return androidx.compose.ui.graphics.Color(dev.app8.engine.core.model.style.ColorHex.parseOrFallback(raw).argb)
+    }
+    val text = string(raw, ctx)?.trim().orEmpty()
+    if (dev.app8.engine.core.model.style.ColorHex.isValidHexString(text)) {
+        return androidx.compose.ui.graphics.Color(dev.app8.engine.core.model.style.ColorHex.parse(text).argb)
+    }
+    if (runtime.warnedNames.add("color:$key:$raw=$text")) {
+        runtime.diagnostics.warn("style.color.invalid", "'$raw' in $key gave '$text', not a hex color; left unset")
+    }
+    return null
+}
+
 internal fun RenderNode.localized(text: LocalizedString, ctx: VariableContext = scope.tracked): String = try {
     runtime.propertyResolver.resolveLocalizedToString(
         when (text) {

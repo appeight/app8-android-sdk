@@ -1,5 +1,6 @@
 package dev.app8.engine.render.components
 
+import dev.app8.engine.render.hexColor
 import android.text.format.DateFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -153,7 +154,7 @@ internal object DatePickerKind : ComponentKind {
         val display = p.displayStyle ?: DisplayStyle.compact
         val ms = current(node, p)
         val enabled = (node.bool(p.isEnabled) ?: true) && LocalInteractionEnabled.current
-        val tint = hexColor((node.content.style as? DatePickerStyle)?.tintColor) ?: MaterialTheme.colorScheme.primary
+        val tint = node.hexColor((node.content.style as? DatePickerStyle)?.tintColor) ?: MaterialTheme.colorScheme.primary
         val min = DateValues.parse(node.string(p.minimumDate))
         val max = DateValues.parse(node.string(p.maximumDate))
         val set: (Long) -> Unit = { raw ->

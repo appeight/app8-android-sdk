@@ -71,7 +71,7 @@ internal object TableViewKind : ComponentKind {
         val metrics = TablePlan.metrics(style)
         // Rows render once in the table's scope (iOS pre-renders every row's children).
         val rows = remember(node) {
-            c.sections.map { s -> s.rows.map { row -> Cell.inParentScope(node, rowComponent(row)) } }
+            c.sections.map { s -> s.rows.map { row -> Cell.inParentScope(node, rowComponent(row), inVerticalScroll = true) } }
         }
         DisposableEffect(rows) { onDispose { rows.forEach { s -> s.forEach { it?.dispose() } } } }
 

@@ -1,5 +1,6 @@
 package dev.app8.engine.render.components
 
+import dev.app8.engine.render.hexColor
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.text.BasicText
@@ -115,7 +116,7 @@ internal object IconKind : ComponentKind {
         val env = LocalRenderEnv.current
         val props = node.content.properties as? IconProperties
         val style = node.content.style as? IconStyle
-        val tint = props?.tintColor?.let { node.string(it.value) }?.takeIf { it.isNotEmpty() }?.let { Color(ColorHex.parseOrFallback(it).argb) }
+        val tint = node.hexColor(props?.tintColor?.value)
             ?: env.color(style?.color, node) ?: env.color(style?.tint, node)
             ?: IosSystemColors.of("systemBlue", env.appearance)
         Box(modifier, contentAlignment = Alignment.Center) {

@@ -1,5 +1,6 @@
 package dev.app8.engine.render.components
 
+import dev.app8.engine.render.hexColor
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -69,7 +70,7 @@ internal object MapKind : ComponentKind {
                 a.rawFields.mapValues { (_, v) -> Values.fromJson(v).takeUnless { it === Values.Null } },
             )
         }
-        val list = raws.map { r -> App8MapAnnotation(r.id, r.coordinate, r.title, r.subtitle, r.image, hexColor(r.color) ?: tint) }
+        val list = raws.map { r -> App8MapAnnotation(r.id, r.coordinate, r.title, r.subtitle, r.image, node.hexColor(r.color) ?: tint) }
         return list to raws.associate { it.id to it.fields }
     }
 
@@ -79,7 +80,7 @@ internal object MapKind : ComponentKind {
         val dispatcher = LocalDispatcher.current
         val p = node.content.properties as? MapProperties ?: MapProperties()
         val style = node.content.style as? MapStyle
-        val tint = hexColor(style?.annotationTintColor)
+        val tint = node.hexColor(style?.annotationTintColor)
         val (pins, fields) = annotations(node, p, tint)
         val polyline = when (val pl = p.polyline) {
             is MapProperties.PolylineValue.Coordinates -> pl.coordinates.map { App8Coordinate(it.latitude, it.longitude) }
@@ -114,7 +115,7 @@ internal object MapKind : ComponentKind {
             selectedAnnotationId = selected,
             polyline = polyline,
             route = route,
-            routeColor = hexColor(style?.routeColor),
+            routeColor = node.hexColor(style?.routeColor),
             routeWidth = style?.routeWidth ?: 5.0,
             annotationTint = tint,
             showUserLocation = p.showUserLocation == true,

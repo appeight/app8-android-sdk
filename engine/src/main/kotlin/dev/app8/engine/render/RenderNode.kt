@@ -33,8 +33,8 @@ internal class RenderNode(
     val scope: Scope,
     val session: ScreenSession,
     val parentType: ComponentType?,
-    /** `properties.isHidden` of any component type (see [ComponentEntity.isHidden]). */
-    val hiddenBinding: String? = null,
+    /** Base `properties.isHidden` of any component type (see [ComponentEntity.isHidden]). */
+    private val baseHiddenBinding: String? = null,
     /** Inside a vertical `scrollView` (directly or through other components). */
     val inVerticalScroll: Boolean = false,
 ) {
@@ -65,6 +65,24 @@ internal class RenderNode(
     val content: EntityContent get() = applyState(base, stateName)
 
     val baseContent: EntityContent get() = base
+
+    /**
+     * `properties.isHidden` of any component type, state-aware (reads [stateName]): a state with
+     * `properties` replaces the base properties, its `isHidden` included, as [applyState] does.
+     */
+    val hiddenBinding: String?
+        get() {
+            val name = stateName ?: return baseHiddenBinding
+            val states = when (base) {
+                is ComponentContent<*, *> -> base.states
+                is dev.app8.engine.core.model.CollectionContent -> base.states
+                is dev.app8.engine.core.model.MapContent -> base.states
+                is dev.app8.engine.core.model.TableViewContent -> base.states
+                else -> null
+            }
+            val state = states?.get(name) ?: return baseHiddenBinding
+            return if (state.properties != null) state.isHidden else baseHiddenBinding
+        }
 
     /** Control state that outlives recomposition and feeds layout (a text input's text, …). */
     val ui = androidx.compose.runtime.mutableStateMapOf<String, Any?>()

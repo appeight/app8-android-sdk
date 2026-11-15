@@ -1,5 +1,6 @@
 package dev.app8.engine.render.components
 
+import dev.app8.engine.render.hexColor
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -40,7 +41,7 @@ internal object StackKind : ComponentKind {
         val p = node.content.properties as? StackViewProperties
         var m = modifier
         val radius = p?.cornerRadius ?: 0.0
-        val bg = p?.backgroundColor?.let { node.string(it) }?.takeIf { it.isNotEmpty() }?.let { Color(ColorHex.parseOrFallback(it).argb) }
+        val bg = node.hexColor(p?.backgroundColor)
         // `cornerRadius` clips the arranged children, with or without a background (docs: "clips
         // children to rounded bounds"). The clip follows any material shadow in [modifier], so the
         // shadow still draws outside the bounds, as iOS clips its inner contentView.

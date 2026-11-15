@@ -1,5 +1,6 @@
 package dev.app8.engine.render.components
 
+import dev.app8.engine.render.hexColor
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -217,7 +218,7 @@ internal object CollectionKind : ComponentKind {
 
         var m = modifier
         if (p.clipsToBounds ?: true) m = m.clipToBounds()
-        c.style?.backgroundColor?.let { node.string(it) }?.takeIf { it.isNotEmpty() }?.let { m = m.background(Color(ColorHex.parseOrFallback(it).argb)) }
+        node.hexColor(c.style?.backgroundColor)?.let { m = m.background(it) }
 
         BoxWithConstraints(m) {
             val width = maxWidth.value.toDouble()
@@ -379,7 +380,11 @@ internal object CollectionKind : ComponentKind {
                 val cellModifier = Modifier.padding(start = st.insets.left.dp)
                 if (swipe != null) {
                     val item = s.items[i]
-                    SwipeActionsBox(swipe, pad.fillMaxWidth(), onAction = { action -> runSwipe(model, s.keys[i], item, action, dispatcher) }) {
+                    SwipeActionsBox(
+                        swipe, pad.fillMaxWidth(),
+                        onAction = { action -> runSwipe(model, s.keys[i], item, action, dispatcher) },
+                        colorOf = { raw -> (model.template(item)?.let { t -> model.cell(s.keys[i], item, t)?.root } ?: model.node).hexColor(raw) },
+                    ) {
                         ItemCell(model, env, item, s.keys[i], w, fixed, cellModifier)
                     }
                 } else {

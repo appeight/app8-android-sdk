@@ -37,6 +37,7 @@ import dev.app8.engine.render.LocalRenderEnv
 import dev.app8.engine.render.RenderEnv
 import dev.app8.engine.render.RenderNode
 import dev.app8.engine.render.bool
+import dev.app8.engine.render.hexColor
 import dev.app8.engine.render.localized
 import dev.app8.engine.render.string
 import dev.app8.engine.render.tapModifier
@@ -63,7 +64,7 @@ internal object LabelKind : ComponentKind {
                 val from = s.from.coerceIn(0, raw.length)
                 val to = s.to.coerceIn(from, raw.length)
                 if (to <= from) continue
-                val color = s.color?.let { ColorHex.parseOrFallback(it) }?.let { Color(it.argb) }
+                val color = node.hexColor(s.color)
                 addStyle(SpanStyle(color = color ?: Color.Unspecified), from, to)
             }
         }
@@ -84,7 +85,7 @@ internal object LabelKind : ComponentKind {
         val env = LocalRenderEnv.current
         val r = resolve(node, env)
         val props = node.content.properties as? LabelProperties
-        val bg = props?.backgroundColor?.let { node.string(it.value) }?.takeIf { it.isNotEmpty() }?.let { Color(ColorHex.parseOrFallback(it).argb) }
+        val bg = node.hexColor(props?.backgroundColor?.value)
         Box(if (bg != null) modifier.background(bg) else modifier, contentAlignment = Alignment.CenterStart) {
             DslText(r.text, r.style, Modifier.fillMaxWidth())
             ChildrenLayout(node, Modifier.fillMaxSize())

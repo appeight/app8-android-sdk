@@ -53,6 +53,8 @@ internal fun SwipeActionsBox(
     swipe: CollectionProperties.SwipeActions,
     modifier: Modifier,
     onAction: (CollectionProperties.SwipeAction) -> Unit,
+    /** A button's `backgroundColor` (hex or `{{…}}` in the row's scope); null keeps the default. */
+    colorOf: (String?) -> Color?,
     content: @Composable () -> Unit,
 ) {
     val leading = swipe.leading.orEmpty()
@@ -99,7 +101,7 @@ internal fun SwipeActionsBox(
             Row(Modifier.matchParentSize(), horizontalArrangement = if (offset.value > 0) Arrangement.Start else Arrangement.End) {
                 val actions = if (offset.value > 0) leading else trailing.reversed()
                 val each = (abs(offset.value) / actions.size.coerceAtLeast(1) / density).dp
-                for (a in actions) ActionButton(a, Modifier.width(each).fillMaxHeight()) { run(a) }
+                for (a in actions) ActionButton(a, colorOf(a.backgroundColor), Modifier.width(each).fillMaxHeight()) { run(a) }
             }
         }
         Box(Modifier.offset { IntOffset(offset.value.roundToInt(), 0) }) { content() }
@@ -107,9 +109,9 @@ internal fun SwipeActionsBox(
 }
 
 @Composable
-private fun ActionButton(action: CollectionProperties.SwipeAction, modifier: Modifier, onClick: () -> Unit) {
+private fun ActionButton(action: CollectionProperties.SwipeAction, color: Color?, modifier: Modifier, onClick: () -> Unit) {
     val env = LocalRenderEnv.current
-    val bg = action.backgroundColor?.let { Color(ColorHex.parseOrFallback(it).argb) }
+    val bg = color
         ?: if (action.style == CollectionProperties.SwipeAction.Style.destructive) IosSystemColors.of("systemRed", env.appearance)
         else IosSystemColors.of("systemGray", env.appearance)
     Box(modifier.background(bg).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
