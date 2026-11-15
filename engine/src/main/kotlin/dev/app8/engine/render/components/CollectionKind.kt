@@ -67,6 +67,7 @@ import dev.app8.engine.render.collection.CollectionItem
 import dev.app8.engine.render.collection.CollectionModel
 import dev.app8.engine.render.collection.CollectionPlan
 import dev.app8.engine.render.collection.CollectionSection
+import dev.app8.engine.render.collection.PageVariableSync
 import dev.app8.engine.render.collection.Paging
 import dev.app8.engine.render.collection.RowSpec
 import dev.app8.engine.render.collection.SectionKind
@@ -76,6 +77,9 @@ import dev.app8.engine.render.collection.cellHeight
 import dev.app8.engine.render.string
 import java.util.WeakHashMap
 import kotlin.math.roundToInt
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
 
 /**
  * `collection` (iOS `CCollectionView`, a compositional-layout `UICollectionView`).
@@ -487,6 +491,7 @@ internal object CollectionKind : ComponentKind {
         val state = rememberPagerState(initialPage = initialPage(model, pageVariable, items.size)) { items.size }
         PageVariable(
             model, pageVariable,
+            pageCount = { state.pageCount },
             scrollTo = { target, animate ->
                 val t = target.coerceIn(0, (state.pageCount - 1).coerceAtLeast(0))
                 if (animate) state.animateScrollToPage(t) else state.scrollToPage(t)
@@ -547,6 +552,7 @@ internal object CollectionKind : ComponentKind {
             val state = rememberPagerState(initialPage = initialPage(model, pageVariable, groups.size)) { groups.size }
             PageVariable(
                 model, pageVariable,
+                pageCount = { state.pageCount },
                 scrollTo = { target, animate ->
                     val t = target.coerceIn(0, (state.pageCount - 1).coerceAtLeast(0))
                     if (animate) state.animateScrollToPage(t) else state.scrollToPage(t)
@@ -573,6 +579,7 @@ internal object CollectionKind : ComponentKind {
                 val density = LocalDensity.current.density
                 PageVariable(
                     model, pageVariable,
+                    pageCount = { groups.size },
                     scrollTo = { target, animate ->
                         val t = target.coerceIn(0, (groups.size - 1).coerceAtLeast(0))
                         if (animate) state.animateScrollToItem(t) else state.scrollToItem(t)
@@ -604,39 +611,52 @@ internal object CollectionKind : ComponentKind {
     }
 
     /**
-     * `currentPageVariable`, two-way: written whenever the page under the offset changes (iOS
+     * `currentPageVariable`, two-way: written when the page under the offset changes (iOS
      * `handlePageChange`), and a write from elsewhere scrolls to that page: without animation
-     * on the first sync (the collection was off screen), animated afterwards.
+     * on the first sync (the collection was off screen), animated afterwards. Pagers that share
+     * the variable must not fight over it; [PageVariableSync] holds the rules.
      */
     @Composable
     private fun PageVariable(
         model: CollectionModel,
         name: String?,
+        pageCount: () -> Int,
         scrollTo: (suspend (Int, Boolean) -> Unit)? = null,
         page: () -> Int,
     ) {
         if (name == null) return
         val node = model.node
         val current = rememberUpdatedState(page)
-        val synced = remember(node, name) { androidx.compose.runtime.mutableStateOf(scrollTo == null) }
-        LaunchedEffect(node, name) {
-            var last = -1
-            snapshotFlow { if (synced.value) current.value() else null }.collect { p ->
-                if (p != null && p != last) {
-                    last = p
-                    runCatching { node.scope.store.setValue(name, p.toLong()) }
-                }
-            }
+        val count = rememberUpdatedState(pageCount)
+        val sync = remember(node, name) {
+            PageVariableSync(
+                read = { Coerce.double(runCatching { node.scope.store.getValue(name) }.getOrNull())?.toInt() },
+                write = { p -> runCatching { node.scope.store.setValue(name, p.toLong()) } },
+            )
+        }
+        // snapshotFlow emits only when the page really changes, never for a mere layout pass.
+        LaunchedEffect(sync) {
+            snapshotFlow { current.value() }.collect { p -> sync.report(p) }
         }
         if (scrollTo == null) return
-        LaunchedEffect(node, name) {
+        LaunchedEffect(sync) {
             var first = true
             snapshotFlow { Coerce.double(node.resolve("{{$name}}"))?.toInt() }.collect { target ->
-                if (target != null && target != current.value()) {
-                    runCatching { scrollTo(target, !first) }
+                val t = target?.let { sync.follow(it, count.value()) }
+                if (t != null) {
+                    val token = sync.beginScroll()
+                    try {
+                        scrollTo(t, !first)
+                    } catch (e: CancellationException) {
+                        // A user drag cancels the animation and takes over at once; only a
+                        // cancelled effect rethrows.
+                        if (!currentCoroutineContext().isActive) throw e
+                    } catch (_: Exception) {
+                    } finally {
+                        sync.endScroll(token)
+                    }
                 }
                 first = false
-                synced.value = true
             }
         }
     }
