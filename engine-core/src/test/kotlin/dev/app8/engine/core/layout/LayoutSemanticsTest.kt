@@ -476,6 +476,41 @@ class LayoutSemanticsTest {
         assertEquals(frame(0, 0, 375, 68), r["cell"])
     }
 
+    /**
+     * A grid card whose footer hangs off a `>=` gap (collections.md, "Self-sizing grid rows";
+     * the Facetheory product card): measured content-sized it takes its smallest height, not an
+     * estimate; laid out at its row's taller height the footer sits on the bottom edge.
+     */
+    @Test
+    fun gridCardWithMinimumGapFitsItsContentAndStretchesToTheRow() {
+        fun card(header: Int) = LayoutNode(
+            "card",
+            children = listOf(
+                LayoutNode("header", id = "header", layout = Layout(height = fixed(header), constraints = listOf(c(TOP, "superview"), c(LEADING, "superview"), c(TRAILING, "superview")))),
+                LayoutNode(
+                    "footer",
+                    layout = Layout(
+                        height = fixed(40),
+                        constraints = listOf(
+                            c(TOP, "header", attribute = BOTTOM, constant = 10, op = GREATER_OR_EQUAL),
+                            c(LEADING, "superview"), c(TRAILING, "superview"), c(BOTTOM, "superview"),
+                        ),
+                    ),
+                ),
+            ),
+        )
+        val short = solveLayout(card(100), LayoutBounds(width = 180.0, height = null))
+        val tall = solveLayout(card(160), LayoutBounds(width = 180.0, height = null))
+        assertEquals(150.0, short.contentHeight, "natural height, not the 470pt estimate")
+        assertEquals(210.0, tall.contentHeight)
+        // The row takes the tallest; the shorter card is laid out again at that height.
+        val row = maxOf(short.contentHeight, tall.contentHeight)
+        assertEquals(210.0, row)
+        val stretched = solveLayout(card(100), LayoutBounds(width = 180.0, height = row))
+        assertEquals(frame(0, 170, 180, 40), stretched["footer"])
+        assertEquals(frame(0, 0, 180, 100), stretched["header"])
+    }
+
     @Test
     fun localFramesAreRelativeToTheParent() {
         val card = LayoutNode(
