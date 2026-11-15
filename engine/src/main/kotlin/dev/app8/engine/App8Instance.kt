@@ -32,6 +32,7 @@ import dev.app8.engine.navigation.FlowController
 import dev.app8.engine.navigation.FlowHost
 import dev.app8.engine.navigation.LocalAppScope
 import dev.app8.engine.navigation.LocalHostEffects
+import dev.app8.engine.navigation.NotificationPermissionHost
 import dev.app8.engine.render.LocalRenderEnv
 import dev.app8.engine.render.RenderEnv
 import dev.app8.engine.render.Scope
@@ -226,6 +227,7 @@ public class App8Instance internal constructor(
             ) {
                 FlowHost(flow, modifier)
                 AlertHost(effects)
+                NotificationPermissionHost(effects)
                 // Readable system bar icons over DSL content.
                 AdaptiveSystemBars(flow, dark, runtime.pending)
             }

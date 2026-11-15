@@ -82,6 +82,10 @@ public data class Action(
     val source: String? = null,
     /** incrementVariable / incrementArrayItem: `by` given as an expression (evaluated when the action runs). */
     val byExpression: String? = null,
+    /** requestNotificationPermission: runs once notifications are allowed (now or earlier). */
+    val onGranted: List<Action>? = null,
+    /** requestNotificationPermission: runs once the user declines (now or earlier). */
+    val onDenied: List<Action>? = null,
 ) {
     @Suppress("EnumEntryName")
     public enum class Type {
@@ -92,6 +96,7 @@ public data class Action(
         forEach, with, request, reloadDatasource,
         focus, focusNext, focusPrevious, dismissKeyboard,
         showAlert, haptic, openURL, emit,
+        requestNotificationPermission,
     }
 
     @Suppress("EnumEntryName")
@@ -171,6 +176,8 @@ internal fun decodeAction(c: Cursor): Action {
         onSuccess = c.opt("onSuccess", ::decodeActionList),
         onError = c.opt("onError", ::decodeActionList),
         source = c.optString("source"),
+        onGranted = c.opt("onGranted", ::decodeActionList),
+        onDenied = c.opt("onDenied", ::decodeActionList),
     )
 }
 
