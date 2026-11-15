@@ -41,8 +41,11 @@ internal class App8Runtime(
     val appContext: Context,
     val dataSource: App8DataSource,
     config: App8Config,
-    /** Where action lists run; tests pass an immediate dispatcher. */
-    mainDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.Main.immediate,
+    /**
+     * Where action lists run; tests pass an immediate dispatcher. Null: the main thread
+     * ([mainDispatcherOrInline]), looked up on the first action.
+     */
+    private val mainDispatcher: kotlinx.coroutines.CoroutineDispatcher? = null,
     /** Data-source and request calls; tests pass an immediate dispatcher. */
     private val ioDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO,
 ) {
@@ -68,10 +71,13 @@ internal class App8Runtime(
 
     /**
      * Where action lists run (main thread). Outlives screens, so a `request` answered after its
-     * screen closed still runs its handlers. Lives as long as the instance.
+     * screen closed still runs its handlers. Lives as long as the instance. Created on the first
+     * action, so building an instance never touches `Dispatchers.Main` (a host JVM test that
+     * calls `Dispatchers.setMain` before running actions gets its dispatcher).
      */
-    val actionScope: kotlinx.coroutines.CoroutineScope =
-        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + mainDispatcher)
+    val actionScope: kotlinx.coroutines.CoroutineScope by lazy {
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + (mainDispatcher ?: mainDispatcherOrInline()))
+    }
 
     /** The `request` action's HTTP client. */
     var http: HttpTransport = OkHttpTransport()
@@ -370,4 +376,17 @@ internal class App8Runtime(
             return out
         }
     }
+}
+
+/**
+ * `Dispatchers.Main.immediate`, or [Dispatchers.Unconfined] where there is no main dispatcher
+ * (a host JVM without a main looper or `Dispatchers.setMain`): action lists then run on the
+ * calling thread, as on the main thread of an app, instead of every action failing with
+ * "Dispatchers.Main was accessed …". On a device the main dispatcher always exists.
+ */
+internal fun mainDispatcherOrInline(): kotlinx.coroutines.CoroutineDispatcher = try {
+    // A missing main dispatcher throws on `immediate` or on first use; probe both here.
+    Dispatchers.Main.immediate.also { it.isDispatchNeeded(kotlin.coroutines.EmptyCoroutineContext) }
+} catch (e: IllegalStateException) {
+    Dispatchers.Unconfined
 }
