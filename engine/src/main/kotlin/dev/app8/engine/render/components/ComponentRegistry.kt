@@ -90,6 +90,7 @@ internal object ComponentRegistry {
         ComponentType.Key.map to MapKind,
         ComponentType.Key.collection to CollectionKind,
         ComponentType.Key.tableView to TableViewKind,
+        ComponentType.Key.native to NativeKind,
     )
 
     fun kind(node: RenderNode): ComponentKind = node.typeKey?.let { kinds[it] } ?: PlaceholderKind

@@ -2017,6 +2017,7 @@ public final class dev/app8/engine/core/model/ComponentType$Key : java/lang/Enum
 	public static final field label Ldev/app8/engine/core/model/ComponentType$Key;
 	public static final field list Ldev/app8/engine/core/model/ComponentType$Key;
 	public static final field map Ldev/app8/engine/core/model/ComponentType$Key;
+	public static final field native Ldev/app8/engine/core/model/ComponentType$Key;
 	public static final field pageControl Ldev/app8/engine/core/model/ComponentType$Key;
 	public static final field picker Ldev/app8/engine/core/model/ComponentType$Key;
 	public static final field screen Ldev/app8/engine/core/model/ComponentType$Key;
@@ -3032,6 +3033,51 @@ public final class dev/app8/engine/core/model/ModelLimits {
 	public static final field MAX_DEEP_MERGE_DEPTH I
 	public static final field MAX_DSL_PAYLOAD_BYTES I
 	public static final field MAX_JSON_DEPTH I
+}
+
+public final class dev/app8/engine/core/model/NativeContent : dev/app8/engine/core/model/EntityContent {
+	public fun <init> (Ldev/app8/engine/core/model/NativeProperties;Ldev/app8/engine/core/model/style/ViewStyle;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ldev/app8/engine/core/model/Component;Ldev/app8/engine/core/model/Accessibility;)V
+	public synthetic fun <init> (Ldev/app8/engine/core/model/NativeProperties;Ldev/app8/engine/core/model/style/ViewStyle;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ldev/app8/engine/core/model/Component;Ldev/app8/engine/core/model/Accessibility;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ldev/app8/engine/core/model/NativeProperties;
+	public final fun component2 ()Ldev/app8/engine/core/model/style/ViewStyle;
+	public final fun component3 ()Ldev/app8/engine/core/model/Layout;
+	public final fun component4 ()Ljava/util/Map;
+	public final fun component5 ()Ldev/app8/engine/core/model/Component;
+	public final fun component6 ()Ldev/app8/engine/core/model/Accessibility;
+	public final fun copy (Ldev/app8/engine/core/model/NativeProperties;Ldev/app8/engine/core/model/style/ViewStyle;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ldev/app8/engine/core/model/Component;Ldev/app8/engine/core/model/Accessibility;)Ldev/app8/engine/core/model/NativeContent;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/NativeContent;Ldev/app8/engine/core/model/NativeProperties;Ldev/app8/engine/core/model/style/ViewStyle;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ldev/app8/engine/core/model/Component;Ldev/app8/engine/core/model/Accessibility;ILjava/lang/Object;)Ldev/app8/engine/core/model/NativeContent;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAccessibility ()Ldev/app8/engine/core/model/Accessibility;
+	public fun getActions ()Ljava/util/Map;
+	public fun getAnalytics ()Ljava/util/Map;
+	public fun getChildren ()Ljava/util/List;
+	public final fun getEvents ()Ljava/util/Map;
+	public final fun getFallback ()Ldev/app8/engine/core/model/Component;
+	public fun getGestures ()Ldev/app8/engine/core/model/Gestures;
+	public fun getInteraction ()Ldev/app8/engine/core/model/Interaction;
+	public fun getLayout ()Ldev/app8/engine/core/model/Layout;
+	public fun getProperties ()Ldev/app8/engine/core/model/NativeProperties;
+	public synthetic fun getProperties ()Ljava/lang/Object;
+	public fun getStyle ()Ldev/app8/engine/core/model/style/ViewStyle;
+	public synthetic fun getStyle ()Ljava/lang/Object;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/app8/engine/core/model/NativeProperties {
+	public fun <init> (Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/Map;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;)Ldev/app8/engine/core/model/NativeProperties;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/NativeProperties;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;ILjava/lang/Object;)Ldev/app8/engine/core/model/NativeProperties;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getModule ()Ljava/lang/String;
+	public final fun getProps ()Ljava/util/Map;
+	public fun hashCode ()I
+	public final fun isHidden ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class dev/app8/engine/core/model/NavigationBar {

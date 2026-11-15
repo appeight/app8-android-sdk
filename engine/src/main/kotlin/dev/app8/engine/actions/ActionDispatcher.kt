@@ -4,6 +4,7 @@ import dev.app8.engine.core.model.Action
 import dev.app8.engine.core.model.ActionTrigger
 import dev.app8.engine.core.model.AnalyticsBinding
 import dev.app8.engine.core.model.ComponentContent
+import dev.app8.engine.core.model.NativeContent
 import dev.app8.engine.core.model.ScreenTransition
 import dev.app8.engine.core.vars.AnyCodableValue
 import dev.app8.engine.core.vars.Values
@@ -75,6 +76,34 @@ internal class ActionDispatcher(
             analytics(node, normalizeAuthorAnalyticsName(binding.name, ::warnOnce), props, rowId, "tableViewRow")
         }
         for (action in actions) execute(node, action, context)
+    }
+
+    /**
+     * A `native` component's module event (contract: app8-dsl `docs/components/native.md`).
+     * Forwards it to the event bus as `native.<module>.<event>`, then runs `actions[event]` with [payload] in scope as `event` (the way
+     * `onAnnotationTap` exposes `item`). [payload] is normalized to DSL values first.
+     */
+    fun dispatchNativeEvent(node: RenderNode, event: String, payload: Map<String, Any?>) {
+        val content = node.content as? NativeContent ?: return
+        val value: Map<String, Any?> = try {
+            @Suppress("UNCHECKED_CAST")
+            Values.fromJson(Values.toJson(payload)) as Map<String, Any?>
+        } catch (e: IllegalArgumentException) {
+            runtime.diagnostics.warn("native.payload", "'$event' payload from '${content.properties.module}' is not JSON-like (${e.message}); passed as is")
+            payload
+        }
+        runtime.eventBus.dispatch(
+            App8Event(
+                name = "native.${content.properties.module}.$event",
+                screenId = node.session.screenId,
+                componentId = node.id,
+                componentType = node.type.raw,
+                locale = runtime.translations.activeLocaleTag,
+                payload = value,
+            ),
+        )
+        val context = node.scope.untracked.overlaying("event", value)
+        for (action in content.events[event].orEmpty()) execute(node, action, context)
     }
 
     fun execute(

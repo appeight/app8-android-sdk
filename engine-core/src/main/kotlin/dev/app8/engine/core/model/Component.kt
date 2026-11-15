@@ -49,6 +49,8 @@ public sealed interface ComponentType {
         screen, view, button, image, icon, striplet, label, textField, textView, list, scrollView, tabBarScreen,
         collection, map, stackView, shape, tableView, activityIndicator, toggle, slider, pageControl, picker,
         shimmer, datePicker, video,
+        /** DSL 0.6: a host-registered view (`App8Config.nativeComponents` on Android). */
+        native,
     }
 
     public companion object {
@@ -291,6 +293,7 @@ internal fun decodeComponent(input: Cursor): Component {
             ComponentType.Key.picker -> decodeContent(cc, PICKER_SPEC)
             ComponentType.Key.shimmer -> decodeContent(cc, SHIMMER_SPEC)
             ComponentType.Key.datePicker -> decodeContent(cc, DATE_SPEC)
+            ComponentType.Key.native -> decodeNativeContent(cc)
             ComponentType.Key.striplet, ComponentType.Key.list -> c.fail("unsupported component type: ${type.raw}")
             null -> c.fail("unsupported custom component type with content: ${type.raw}")
         }

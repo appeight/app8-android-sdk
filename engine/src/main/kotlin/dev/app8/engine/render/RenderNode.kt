@@ -9,6 +9,7 @@ import dev.app8.engine.core.model.ComponentContent
 import dev.app8.engine.core.model.ComponentEntity
 import dev.app8.engine.core.model.ComponentType
 import dev.app8.engine.core.model.EntityContent
+import dev.app8.engine.core.model.NativeContent
 import dev.app8.engine.core.model.StatefulContent
 import dev.app8.engine.core.model.style.TextInputStyle
 import dev.app8.engine.core.vars.ScopedVariableStore
@@ -134,7 +135,9 @@ internal class RenderNode(
             } ?: parentScope
             val node = RenderNode(key, entity.id, entity.type, content, scope, session, parentType)
             val seen = HashSet<String>()
-            node.children = content.children.mapIndexedNotNull { i, child ->
+            // A registered `native` module replaces its fallback, so the fallback is not laid out.
+            val children = if (content is NativeContent && content.properties.module in session.runtime.nativeComponents) emptyList() else content.children
+            node.children = children.mapIndexedNotNull { i, child ->
                 // Keys must be unique among siblings even when ids repeat.
                 val childKey = "$key.${child.id}".let { if (seen.add(it)) it else "$it#$i" }
                 build(session, child, childKey, scope, entity.type, scopes)

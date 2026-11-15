@@ -48,6 +48,7 @@ internal class App8Runtime(
     var analyticsConfig: App8AnalyticsConfig = config.analytics
     val mapProvider: dev.app8.engine.maps.App8MapProvider? = config.mapProvider
     val dynamicColor: Boolean = config.dynamicColor
+    val nativeComponents: Map<String, dev.app8.engine.nativecomponent.App8NativeComponent> = config.nativeComponents
 
     /**
      * The app's brand accent for system chrome outside any tab bar (sheets, dialogs): the
