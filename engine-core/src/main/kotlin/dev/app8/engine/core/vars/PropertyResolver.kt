@@ -32,6 +32,20 @@ public class PropertyResolver(private val translationProvider: TranslationProvid
     private val parser = ExpressionParser()
     private val evaluator = ExpressionEvaluator()
 
+    /** Called when an expression reads the clock (`now()`, `today()`, …); see [ExpressionEvaluator.clockObserver]. */
+    public var clockObserver: (() -> Unit)?
+        get() = evaluator.clockObserver
+        set(value) {
+            evaluator.clockObserver = value
+        }
+
+    /** The evaluator's clock (tests pin it). */
+    public var clock: java.time.Clock
+        get() = evaluator.clock
+        set(value) {
+            evaluator.clock = value
+        }
+
     /** True if [string] contains both `{{` and `}}`. */
     public fun containsExpression(string: String): Boolean = string.contains("{{") && string.contains("}}")
 
