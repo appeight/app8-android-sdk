@@ -28,6 +28,13 @@ public interface App8DataSource {
     public suspend fun getDatasource(screenId: String, datasourceId: String): ByteArray =
         throw DatasourceException.NotFound(screenId, datasourceId)
 
+    /**
+     * Fetches a datasource again for the DSL `reloadDatasource` action; a caching source must
+     * bypass its cache. [screenId] is empty for app variables. Default: [getDatasource].
+     */
+    public suspend fun reloadDatasource(screenId: String, datasourceId: String): ByteArray =
+        getDatasource(screenId, datasourceId)
+
     /** Every screen id, when the source can enumerate them (diagnostics); null otherwise. */
     public suspend fun getAllScreenIds(): List<String>? = null
 
@@ -39,6 +46,13 @@ public interface App8DataSource {
 
     /** Style primitive updates (JSON array of style entities); null opts out. */
     public fun streamStyles(): Flow<ByteArray>? = null
+
+    /**
+     * Called before every DSL `request` action is sent: add authorization, rewrite the URL to
+     * route through your backend, or throw to reject it (the action's `onError` then runs with
+     * status 0). The default sends the request unchanged.
+     */
+    public suspend fun prepareRequest(request: App8HttpRequest): App8HttpRequest = request
 
     /** JSON `{ defaultLocale, locales: { <locale>: { key: value } } }`. */
     public suspend fun getTranslations(): ByteArray = """{"defaultLocale":"en","locales":{}}""".encodeToByteArray()

@@ -12,6 +12,9 @@ public enum class VariableActionType(public val rawValue: String) {
     TOGGLE_ARRAY_VALUE("toggleArrayValue"),
     APPEND_TO_ARRAY("appendToArray"),
     INCREMENT_ARRAY_ITEM("incrementArrayItem"),
+    INSERT_ARRAY_ITEM("insertArrayItem"),
+    UPSERT_ARRAY_ITEM("upsertArrayItem"),
+    REMOVE_ARRAY_ITEM("removeArrayItem"),
     UPDATE_MULTIPLE_VARIABLES("updateMultipleVariables"),
     RESET_VARIABLES("resetVariables"),
     ;
@@ -45,6 +48,12 @@ public data class VariableAction(
     val scope: String? = null,
     /** updateVariable: with an `object` variable, set only this key (may be an expression). */
     val key: String? = null,
+    /** insertArrayItem / removeArrayItem: position (number or expression); negative counts from the end. */
+    val index: AnyCodableValue? = null,
+    /** upsertArrayItem: where a new element goes, `start` or `end` (default). */
+    val position: String? = null,
+    /** `by` as an expression, resolved when the action runs (`by` wins when both are set). */
+    val byExpression: String? = null,
 ) {
     public val actionType: VariableActionType? get() = VariableActionType.fromRawValue(type)
 

@@ -73,17 +73,25 @@ public object DatasourceResolver {
                 val source = definition.source!!
                 async {
                     val bytes = dataSource.getDatasource(screenId, source)
-                    val datasource = DatasourceDefinition.decode(bytes)
-                    val actualType = VariableType.inferType(datasource.rawData)
-                    if (!definition.type.validate(datasource.rawData)) {
-                        throw DatasourceException.TypeMismatch(source, definition.type, actualType.rawValue)
-                    }
-                    datasource.schema?.let { SchemaValidator.validate(datasource.rawData, it) }
-                    name to definition.withResolvedValue(datasource.rawData)
+                    name to definition.withResolvedValue(decodeValue(source, definition, bytes))
                 }
             }.awaitAll().forEach { (name, def) -> resolved[name] = def }
         }
         return resolved
+    }
+
+    /**
+     * The data of datasource [source] ([bytes]) for a variable declared as [definition]: its
+     * type is checked, and its schema when the file has one.
+     * @throws DatasourceException.TypeMismatch, [SchemaValidator] errors, decoding errors.
+     */
+    public fun decodeValue(source: String, definition: VariableDefinition, bytes: ByteArray): Any {
+        val datasource = DatasourceDefinition.decode(bytes)
+        if (!definition.type.validate(datasource.rawData)) {
+            throw DatasourceException.TypeMismatch(source, definition.type, VariableType.inferType(datasource.rawData).rawValue)
+        }
+        datasource.schema?.let { SchemaValidator.validate(datasource.rawData, it) }
+        return datasource.rawData
     }
 
     /** True if any variable references an external datasource. */

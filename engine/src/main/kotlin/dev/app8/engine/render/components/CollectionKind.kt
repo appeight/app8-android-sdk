@@ -1,5 +1,6 @@
 package dev.app8.engine.render.components
 
+import dev.app8.engine.render.hexColor
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -99,12 +100,30 @@ internal object CollectionKind : ComponentKind {
 
     private fun content(node: RenderNode) = node.content as CollectionContent
 
+    /**
+     * A vertical or grid collection that does not scroll itself is as tall as its content (iOS
+     * self-sizing height constraint): `scrollEnabled: false`, or inside a vertical scroll view
+     * with no height of its own (the outer scroll view scrolls instead).
+     */
+    internal fun sizesToContent(node: RenderNode): Boolean {
+        val config = content(node).properties.layout
+        val vertical = config?.type == null || config.type == CollectionLayout.LayoutType.vertical || config.type == CollectionLayout.LayoutType.grid
+        if (!vertical) return false
+        if (config?.scrollEnabled == false) return true
+        return node.inVerticalScroll && !hasOwnHeight(node.content.layout)
+    }
+
+    private fun hasOwnHeight(layout: dev.app8.engine.core.model.Layout?): Boolean {
+        layout ?: return false
+        if (layout.height != null || (layout.top != null && layout.bottom != null)) return true
+        val types = layout.constraints.orEmpty().map { it.type }
+        return dev.app8.engine.core.model.Layout.Attribute.height in types ||
+            (dev.app8.engine.core.model.Layout.Attribute.top in types && dev.app8.engine.core.model.Layout.Attribute.bottom in types)
+    }
+
     override fun traits(node: RenderNode, env: RenderEnv): LayoutTraits {
         val p = content(node).properties
-        val config = p.layout
-        val vertical = config?.type == null || config.type == CollectionLayout.LayoutType.vertical || config.type == CollectionLayout.LayoutType.grid
-        // `scrollEnabled: false` on a vertical collection: it is as tall as its content (iOS self-sizing height constraint).
-        if (!vertical || config?.scrollEnabled != false) return LayoutTraits(opaque = true)
+        if (!sizesToContent(node)) return LayoutTraits(opaque = true)
         val model = model(node)
         return LayoutTraits(
             opaque = true,
@@ -199,7 +218,7 @@ internal object CollectionKind : ComponentKind {
 
         var m = modifier
         if (p.clipsToBounds ?: true) m = m.clipToBounds()
-        c.style?.backgroundColor?.let { node.string(it) }?.takeIf { it.isNotEmpty() }?.let { m = m.background(Color(ColorHex.parseOrFallback(it).argb)) }
+        node.hexColor(c.style?.backgroundColor)?.let { m = m.background(it) }
 
         BoxWithConstraints(m) {
             val width = maxWidth.value.toDouble()
@@ -280,7 +299,7 @@ internal object CollectionKind : ComponentKind {
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = padding,
                 reverseLayout = inverted,
-                userScrollEnabled = config?.scrollEnabled ?: true,
+                userScrollEnabled = config?.scrollEnabled != false && !sizesToContent(node),
             ) {
                 for (row in rows) {
                     val content: @Composable () -> Unit = {
@@ -345,7 +364,7 @@ internal object CollectionKind : ComponentKind {
                 )
                 Layout(
                     content = {
-                        for (i in row.items) ItemCell(model, env, s.items[i], s.keys[i], g.cellWidth, rowFill, Modifier)
+                        for (i in row.items) ItemCell(model, env, s.items[i], s.keys[i], g.cellWidth, rowFill, Modifier, stretch = g.cellHeight == null)
                     },
                     modifier = pad.fillMaxWidth(),
                 ) { measurables, constraints ->
@@ -361,7 +380,11 @@ internal object CollectionKind : ComponentKind {
                 val cellModifier = Modifier.padding(start = st.insets.left.dp)
                 if (swipe != null) {
                     val item = s.items[i]
-                    SwipeActionsBox(swipe, pad.fillMaxWidth(), onAction = { action -> runSwipe(model, s.keys[i], item, action, dispatcher) }) {
+                    SwipeActionsBox(
+                        swipe, pad.fillMaxWidth(),
+                        onAction = { action -> runSwipe(model, s.keys[i], item, action, dispatcher) },
+                        colorOf = { raw -> (model.template(item)?.let { t -> model.cell(s.keys[i], item, t)?.root } ?: model.node).hexColor(raw) },
+                    ) {
                         ItemCell(model, env, item, s.keys[i], w, fixed, cellModifier)
                     }
                 } else {
@@ -380,7 +403,7 @@ internal object CollectionKind : ComponentKind {
     }
 
     @Composable
-    private fun ItemCell(model: CollectionModel, env: RenderEnv, item: CollectionItem, key: String, width: Double, fixedHeight: Double?, modifier: Modifier, selfSizingWidth: Boolean = false) {
+    private fun ItemCell(model: CollectionModel, env: RenderEnv, item: CollectionItem, key: String, width: Double, fixedHeight: Double?, modifier: Modifier, selfSizingWidth: Boolean = false, stretch: Boolean = false) {
         Recompositions.Count("${model.node.key}#cell")
         val template = model.template(item)
         if (template == null) {
@@ -389,7 +412,7 @@ internal object CollectionKind : ComponentKind {
             return
         }
         val cell = model.cell(key, item, template) ?: return
-        val solved = cell.layout(env, width, fixedHeight, selfSizingWidth)
+        val solved = cell.layout(env, width, fixedHeight, selfSizingWidth, stretch = stretch)
         CellView(cell, solved, modifier.then(tapModifier(model, cell, item)), fixedHeight)
     }
 

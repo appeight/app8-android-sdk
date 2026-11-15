@@ -18,7 +18,7 @@ class ActionDispatchTest {
           "analytics":{"tap":{"name":"buyClicked","properties":{"who":"{{name}}","screen_id":"spoof"}}},
           "actions":{"tap":[
             {"type":"incrementVariable","variableName":"count","by":2},
-            {"type":"incrementVariable","variableName":"cartCount"},
+            {"type":"incrementVariable","variableName":"taskCount"},
             {"type":"navigation","nextScreen":"detail","params":{"n":"{{count}}","fixed":7}},
             {"type":"emit","name":"bought","payload":{"who":"{{name}}","qty":"{{count}}"}},
             {"type":"openURL","url":"https://x.dev/{{name}}","urlPresentation":"sheet"},
@@ -61,7 +61,7 @@ class ActionDispatchTest {
         assertEquals(mapOf("from_screen_alias" to "s", "to_screen_alias" to "detail"), analytics[2].properties.filterKeys { it.endsWith("alias") })
 
         assertEquals(2L, session.scope.store.getValue("count"))
-        assertEquals(3L, rt.appStore.getValue("cartCount"), "writes reach the scope that defines the variable")
+        assertEquals(3L, rt.appStore.getValue("taskCount"), "writes reach the scope that defines the variable")
         assertEquals(listOf("push:detail"), nav.calls)
         assertEquals(mapOf("n" to 2L, "fixed" to 7L), nav.params.single())
         assertEquals("bought", events.single().name)
@@ -145,7 +145,7 @@ class ActionDispatchTest {
         val store = s2.scope.store
         store.setValue("email", "changed")
         store.setValue("fromParam", "edited")
-        rt2.appStore.setValue("cartCount", 9)
+        rt2.appStore.setValue("taskCount", 9)
 
         d.dispatchTrigger(s2.root.find("plain")!!, ActionTrigger.tap)
         assertEquals("changed", store.getValue("email"), "a component without variables has an empty own store")
@@ -159,6 +159,6 @@ class ActionDispatchTest {
         d.dispatchTrigger(s2.root.find("screenReset")!!, ActionTrigger.tap)
         assertEquals("a@b.c", store.getValue("email"))
         assertEquals("injected", store.getValue("fromParam"), "an injected param is the initial value")
-        assertEquals(9L, rt2.appStore.getValue("cartCount"), "screen scope leaves app variables alone")
+        assertEquals(9L, rt2.appStore.getValue("taskCount"), "screen scope leaves app variables alone")
     }
 }

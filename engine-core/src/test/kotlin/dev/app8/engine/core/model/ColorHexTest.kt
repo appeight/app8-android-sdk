@@ -83,8 +83,12 @@ class ColorHexTest {
         assertEquals(ThemedColor.Source.SINGLE_HEX, single.source)
         assertEquals("112233", single.light?.value)
         assertNull(single.dark)
-        // Invalid single hex (e.g. an expression) falls back to clear instead of failing.
-        assertEquals(ColorHex.CLEAR, themed("\"{{item.color}}\"").light)
+        // Invalid single hex falls back to clear instead of failing.
+        assertEquals(ColorHex.CLEAR, themed("\"not-a-color\"").light)
+        // DSL 0.6: an expression is kept for the renderer to bind; unbound it is clear.
+        val expression = themed("\"{{item.color}}\"")
+        assertEquals("{{item.color}}", expression.expression)
+        assertEquals(ColorHex.CLEAR, expression.resolve(isDark = false))
     }
 
     @Test

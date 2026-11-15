@@ -1,5 +1,6 @@
 package dev.app8.engine.navigation
 
+import dev.app8.engine.render.hexColor
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
@@ -178,9 +179,7 @@ private fun Screen(session: ScreenSession, chrome: Chrome, canGoBack: Boolean, b
     ScreenAnalytics(session, bar)
     val backdrop = rememberApp8Backdrop()
     // A navigation bar or search tint re-themes this screen's chrome (pickers, dialogs).
-    val accent = (bar?.tintColor ?: bar?.search?.tintColor)
-        ?.let { session.root.string(it, session.scope.untracked) }?.takeIf { it.isNotEmpty() }
-        ?.let { Color(ColorHex.parseOrFallback(it).argb) }
+    val accent = session.root.hexColor(bar?.tintColor ?: bar?.search?.tintColor, session.scope.untracked)
     dev.app8.engine.style.App8ChromeTheme(accent, env.appearance.isDark) {
         var m = Modifier.fillMaxSize().background(background)
         if (bar != null) m = m.nestedScroll(behavior.nestedScrollConnection)
@@ -208,8 +207,7 @@ internal fun heroScrollDistance(solved: dev.app8.engine.render.Solved, barBottom
 /** The color under the top app bar at rest: the screen root's opaque background, else the system background. */
 private fun screenBackground(session: ScreenSession, fallback: Color): Color {
     val props = session.root.content.properties as? dev.app8.engine.core.model.ViewProperties
-    val hex = props?.backgroundColor?.let { session.root.string(it.value, session.scope.untracked) }?.takeIf { it.isNotEmpty() }
-    val c = hex?.let { Color(ColorHex.parseOrFallback(it).argb) }
+    val c = session.root.hexColor(props?.backgroundColor?.value, session.scope.untracked)
     return if (c != null && c.alpha >= 0.99f) c else fallback
 }
 
@@ -230,6 +228,8 @@ private fun ScreenAnalytics(session: ScreenSession, bar: NavigationBar?) {
     val runtime = session.runtime
     DisposableEffect(session) {
         val start = System.currentTimeMillis()
+        // `now()` / `today()` re-evaluate when a screen appears.
+        runtime.tickClock()
         if (runtime.analyticsConfig.autoScreenEvents) {
             val title = bar?.title?.let { session.root.string(it, session.scope.untracked) }
             runtime.analyticsBus.dispatch(
@@ -282,7 +282,7 @@ private fun TopBar(
     val env = LocalRenderEnv.current
     val dispatcher = LocalDispatcher.current
     val root = session.root
-    fun hex(s: String?) = s?.let { root.string(it) }?.takeIf { it.isNotEmpty() }?.let { Color(ColorHex.parseOrFallback(it).argb) }
+    fun hex(s: String?) = root.hexColor(s)
     val titleColor = hex(bar.titleColor) ?: IosSystemColors.of("label", env.appearance)
     val tint = hex(bar.tintColor) ?: titleColor
     val title = bar.title?.let { root.string(it) }.orEmpty()
@@ -324,13 +324,13 @@ private fun TopBar(
         // A left-aligned titleView replaces the left item (iOS); the back arrow stays: it is chrome.
         val left = bar.leftAction?.takeIf { bar.titleAlignment != "left" || bar.titleView == null }
         when {
-            left != null -> BarItem(left, tint, iconContainer) { dispatcher.execute(root, left.action) }
+            left != null -> BarItem(left, root.hexColor(left.color) ?: tint, iconContainer) { dispatcher.execute(root, left.action) }
             canGoBack -> IconButton(onClick = { dispatcher.execute(root, BACK) }, colors = iconColors(iconContainer)) { Symbol("arrow_back", tint) }
         }
     }
     val actions: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit = {
         val items = bar.rightActions ?: listOfNotNull(bar.rightAction)
-        for (item in items) BarItem(item, tint, iconContainer) { dispatcher.execute(root, item.action) }
+        for (item in items) BarItem(item, root.hexColor(item.color) ?: tint, iconContainer) { dispatcher.execute(root, item.action) }
         if (slot == SearchSlot.Button && !searchOpen) IconButton(onClick = { searchOpen = true }) { Symbol("magnifyingglass", tint) }
     }
     val insets = if (statusBarInset) WindowInsets.statusBars else WindowInsets(0, 0, 0, 0)
@@ -452,8 +452,7 @@ private fun iconColors(container: Color) =
     else androidx.compose.material3.IconButtonDefaults.iconButtonColors()
 
 @Composable
-private fun BarItem(item: BarAction, defaultTint: Color, iconContainer: Color = Color.Transparent, onClick: () -> Unit) {
-    val color = item.color?.let { Color(ColorHex.parseOrFallback(it).argb) } ?: defaultTint
+private fun BarItem(item: BarAction, color: Color, iconContainer: Color = Color.Transparent, onClick: () -> Unit) {
     val icon = item.icon
     if (icon != null) {
         IconButton(onClick = onClick, colors = iconColors(iconContainer)) { Symbol(icon, color) }

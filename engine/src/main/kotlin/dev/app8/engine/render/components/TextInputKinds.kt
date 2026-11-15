@@ -123,9 +123,9 @@ private fun EdgeInsets?.resolve(top: Double, left: Double, bottom: Double, right
 private fun look(node: RenderNode, env: RenderEnv, multiline: Boolean): InputLook {
     val style = node.content.style as? TextInputStyle
     val lines = if (multiline) 0 else 1
-    val text = env.text(env.textModel(style?.text), 17f, Color.Black, lines)
-    val placeholder = env.text(env.textModel(style?.placeholder), 17f, IosSystemColors.of("placeholderText", env.appearance), lines)
-    val cursor = env.color(style?.tintColor) ?: IosSystemColors.of("systemBlue", env.appearance)
+    val text = env.text(env.textModel(style?.text, node), 17f, Color.Black, lines)
+    val placeholder = env.text(env.textModel(style?.placeholder, node), 17f, IosSystemColors.of("placeholderText", env.appearance), lines)
+    val cursor = env.color(style?.tintColor, node) ?: IosSystemColors.of("systemBlue", env.appearance)
     val padding = if (multiline) style?.padding.resolve(12.0, 12.0, 12.0, 12.0) else style?.padding.resolve(0.0, 12.0, 0.0, 12.0)
     return InputLook(text, placeholder, cursor, padding)
 }

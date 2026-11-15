@@ -1,5 +1,6 @@
 package dev.app8.engine.render.components
 
+import dev.app8.engine.render.hexColor
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.text.BasicText
@@ -70,7 +71,7 @@ internal object ImageKind : ComponentKind {
         val style = node.content.style as? ImageStyle
         val ref: AssetRef? = imageRef(node)
         val (scale, alignment) = style?.contentMode.toScale(ContentMode.scaleAspectFill)
-        val tint = env.color(style?.tintColor)
+        val tint = env.color(style?.tintColor, node)
         val template = style?.renderingMode == ImageStyle.RenderingMode.alwaysTemplate
         var m = modifier.clipToBounds()
         style?.corner?.let { m = m.clip(DslCornerShape(it)) }
@@ -115,8 +116,8 @@ internal object IconKind : ComponentKind {
         val env = LocalRenderEnv.current
         val props = node.content.properties as? IconProperties
         val style = node.content.style as? IconStyle
-        val tint = props?.tintColor?.let { node.string(it.value) }?.takeIf { it.isNotEmpty() }?.let { Color(ColorHex.parseOrFallback(it).argb) }
-            ?: env.color(style?.color) ?: env.color(style?.tint)
+        val tint = node.hexColor(props?.tintColor?.value)
+            ?: env.color(style?.color, node) ?: env.color(style?.tint, node)
             ?: IosSystemColors.of("systemBlue", env.appearance)
         Box(modifier, contentAlignment = Alignment.Center) {
             when (val model = props?.model) {

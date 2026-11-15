@@ -38,6 +38,18 @@ public class ExpressionEvaluator {
      */
     public var clock: Clock = Clock.systemDefaultZone()
 
+    /**
+     * Called whenever an expression reads the clock (`now()`, `today()`, `timeAgo`, `daysUntil`,
+     * `ageInYears`). The renderer uses it to re-evaluate such expressions on screen appear and on
+     * timer ticks (there is no continuous clock).
+     */
+    public var clockObserver: (() -> Unit)? = null
+
+    private fun nowInstant(): java.time.Instant {
+        clockObserver?.invoke()
+        return clock.instant()
+    }
+
     private var evalDepth = 0
 
     public fun evaluate(node: ExpressionNode, context: VariableContext): Any? {
@@ -332,6 +344,41 @@ public class ExpressionEvaluator {
                 for (a in args) Values.asList(evaluate(a, context))?.let { result.addAll(it) }
                 return result
             }
+            "prepend", "append" -> {
+                exactly(2, "$name() expects 2 arguments (array, value)")
+                val arr = Values.asList(arg(0)) ?: emptyList()
+                val value = arg(1) ?: Values.Null
+                return if (name == "prepend") listOf(value) + arr else arr + listOf(value)
+            }
+            "uniqueBy" -> {
+                exactly(2, "uniqueBy() expects 2 arguments (array, key)")
+                val arr = Values.asList(arg(0)) ?: emptyList()
+                val key = toString(arg(1))
+                val seen = ArrayList<Any?>()
+                val out = ArrayList<Any?>()
+                for (element in arr) {
+                    // An element without the key (or a non-object) has the key value null.
+                    val k = Values.asMap(element)?.get(key)?.takeUnless { it === Values.Null }
+                    if (seen.none { isStrictlyEqual(it, k) }) {
+                        seen.add(k)
+                        out.add(element)
+                    }
+                }
+                return out
+            }
+            "remove" -> {
+                exactly(2, "remove() expects 2 arguments (array, value)")
+                val arr = Values.asList(arg(0)) ?: emptyList()
+                val value = arg(1)
+                // `==` for scalars, by value for objects and arrays.
+                return arr.filterNot { e ->
+                    if (Values.asList(e) != null || Values.asMap(e) != null || Values.asList(value) != null || Values.asMap(value) != null) {
+                        isStrictlyEqual(e, value)
+                    } else {
+                        isLooselyEqual(e, value)
+                    }
+                }
+            }
             "slice" -> {
                 between(2..3, "slice() expects 2 or 3 arguments (array, start, end?)")
                 val arr = Values.asList(arg(0)) ?: emptyList()
@@ -384,10 +431,10 @@ public class ExpressionEvaluator {
                 return result?.let { Values.wholeOrDouble(it) } ?: 0L
             }
 
-            // Formatting — date & time
+            // Formatting — date & time. An input that does not parse as a date gives null.
             "formatDate" -> {
                 between(1..2, "formatDate() expects 1 or 2 arguments")
-                val date = Formatting.parseDate(arg(0), clock.zone) ?: return ""
+                val date = Formatting.parseDate(arg(0), clock.zone) ?: return null
                 val style = if (args.size == 2) toString(arg(1)) else "medium"
                 val pattern = when (style) {
                     "short" -> "MMM d"
@@ -401,7 +448,7 @@ public class ExpressionEvaluator {
             }
             "formatTime" -> {
                 between(1..2, "formatTime() expects 1 or 2 arguments")
-                val date = Formatting.parseDate(arg(0), clock.zone) ?: return ""
+                val date = Formatting.parseDate(arg(0), clock.zone) ?: return null
                 val timeFormat = if (args.size == 2) toString(arg(1)) else "12h"
                 return Formatting.formatDate(date, if (timeFormat == "24h") "HH:mm" else "h:mm a", locale, clock.zone)
             }
@@ -424,22 +471,22 @@ public class ExpressionEvaluator {
             }
             "ageInYears" -> {
                 exactly(1, "ageInYears() expects 1 argument")
-                val birth = Formatting.parseDate(arg(0), clock.zone) ?: return 0L
-                val years = ChronoUnit.YEARS.between(birth.atZone(clock.zone), clock.instant().atZone(clock.zone))
+                val birth = Formatting.parseDate(arg(0), clock.zone) ?: return null
+                val years = ChronoUnit.YEARS.between(birth.atZone(clock.zone), nowInstant().atZone(clock.zone))
                 return maxOf(0L, years)
             }
             "daysBetween" -> {
                 exactly(2, "daysBetween() expects 2 arguments")
                 val startVal = arg(0)
                 val endVal = arg(1)
-                val start = Formatting.parseDate(startVal, clock.zone) ?: return 0L
-                val end = Formatting.parseDate(endVal, clock.zone) ?: return 0L
+                val start = Formatting.parseDate(startVal, clock.zone) ?: return null
+                val end = Formatting.parseDate(endVal, clock.zone) ?: return null
                 return abs(ChronoUnit.DAYS.between(start.atZone(clock.zone), end.atZone(clock.zone)))
             }
             "timeAgo" -> {
                 exactly(1, "timeAgo() expects 1 argument")
-                val date = Formatting.parseDate(arg(0), clock.zone) ?: return ""
-                val seconds = Duration.between(date, clock.instant()).toMillis() / 1000
+                val date = Formatting.parseDate(arg(0), clock.zone) ?: return null
+                val seconds = Duration.between(date, nowInstant()).toMillis() / 1000
                 if (seconds < 60) return "just now"
                 val minutes = seconds / 60
                 if (minutes < 60) return "$minutes minute${if (minutes == 1L) "" else "s"} ago"
@@ -451,10 +498,39 @@ public class ExpressionEvaluator {
             }
             "daysUntil" -> {
                 exactly(1, "daysUntil() expects 1 argument")
-                val future = Formatting.parseDate(arg(0), clock.zone) ?: return 0L
-                val today = clock.instant().atZone(clock.zone).toLocalDate()
+                val future = Formatting.parseDate(arg(0), clock.zone) ?: return null
+                val today = nowInstant().atZone(clock.zone).toLocalDate()
                 val target = future.atZone(clock.zone).toLocalDate()
                 return ChronoUnit.DAYS.between(today, target)
+            }
+            "now" -> {
+                exactly(0, "now() expects no arguments")
+                return Formatting.isoUtc(nowInstant())
+            }
+            "today" -> {
+                exactly(0, "today() expects no arguments")
+                return nowInstant().atZone(clock.zone).toLocalDate().toString()
+            }
+            "addDays" -> {
+                exactly(2, "addDays() expects 2 arguments (date, days)")
+                val raw = arg(0)
+                val days = toNumber(arg(1)) ?: return null
+                val whole = SwiftCompat.toIntTruncating(days)
+                // A date-only input stays a date (`addDays(today(), 7)` → "YYYY-MM-DD").
+                Formatting.parseLocalDate(raw)?.let { return it.plusDays(whole).toString() }
+                val date = Formatting.parseDate(raw, clock.zone) ?: return null
+                return Formatting.isoUtc(date.plus(Duration.ofDays(whole)))
+            }
+            "addHours" -> {
+                exactly(2, "addHours() expects 2 arguments (date, hours)")
+                val date = Formatting.parseDate(arg(0), clock.zone) ?: return null
+                val hours = toNumber(arg(1)) ?: return null
+                return Formatting.isoUtc(date.plusMillis(SwiftCompat.toIntTruncating(hours * 3_600_000.0)))
+            }
+            "startOfDay" -> {
+                exactly(1, "startOfDay() expects 1 argument")
+                val date = Formatting.parseDate(arg(0), clock.zone) ?: return null
+                return Formatting.isoUtc(date.atZone(clock.zone).toLocalDate().atStartOfDay(clock.zone).toInstant())
             }
 
             // Formatting — number & currency
@@ -663,6 +739,8 @@ public class ExpressionEvaluator {
             "uppercase", "lowercase", "trim", "replace", "split",
             "substring", "startsWith", "endsWith",
             "sort", "reverse", "join", "concat", "slice", "sum",
+            "prepend", "append", "uniqueBy", "remove",
+            "now", "today", "addDays", "addHours", "startOfDay",
         )
 
         /**

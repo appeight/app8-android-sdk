@@ -56,7 +56,13 @@ internal class ScreenSession private constructor(
 
     val content: StatefulContent? get() = (component as? ComponentEntity<*>)?.content as? StatefulContent
 
+    /** False once the screen left the app (popped, dismissed): late async results are dropped. */
+    var isAlive: Boolean = true
+        private set
+
     fun dispose() {
+        isAlive = false
+        runtime.unregisterDatasources(scope.store)
         scopes.forEach { it.dispose() }
         scope.dispose()
         (scope.store as? ScopedVariableStore)?.detach()
@@ -84,6 +90,8 @@ internal class ScreenSession private constructor(
             val content = (component as? ComponentEntity<*>)?.content as? StatefulContent
             content?.variables?.let { raw ->
                 var defs = App8Runtime.decodeVariableDefinitions(raw, runtime.diagnostics)
+                // `reloadDatasource` refetches these later.
+                runtime.registerDatasources(screenId, store, defs)
                 val loader = DatasourceLoader { s, d -> withContext(Dispatchers.IO) { runtime.dataSource.getDatasource(s, d) } }
                 if (DatasourceResolver.hasExternalDatasources(defs)) {
                     defs = try {

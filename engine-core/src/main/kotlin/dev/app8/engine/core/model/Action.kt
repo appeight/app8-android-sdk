@@ -51,12 +51,45 @@ public data class Action(
     val urlPresentation: URLPresentation? = null,
     val name: String? = null,
     val payload: Map<String, JsonElement>? = null,
+    /** forEach: the array to walk (usually an expression). */
+    val items: JsonElement? = null,
+    /** forEach: the element's name in the nested actions (JSON `as`, default `item`). */
+    val itemName: String? = null,
+    /**
+     * forEach: the index's name (a string). insertArrayItem / removeArrayItem: the position
+     * (a number or an expression). Kept raw because the key means different things per type.
+     */
+    val index: JsonElement? = null,
+    /** forEach / with: the nested actions. */
+    val actions: List<Action>? = null,
+    /** with: names bound for [actions], evaluated once. */
+    val values: Map<String, JsonElement>? = null,
+    /** upsertArrayItem: `start` or `end` (default) for a new element. */
+    val position: String? = null,
+    /** request: `GET` (default), `POST`, `PUT`, `PATCH` or `DELETE`. */
+    val method: String? = null,
+    /** request: header values (expressions allowed). */
+    val headers: Map<String, JsonElement>? = null,
+    /** request: JSON body (expressions allowed), sent as `application/json`. */
+    val body: JsonElement? = null,
+    /** request: a variable that receives the `response` object. */
+    val resultVariable: String? = null,
+    /** request: runs on a 2xx response, with `response` in scope. */
+    val onSuccess: List<Action>? = null,
+    /** request: runs on any other status or a network failure (status 0), with `response` in scope. */
+    val onError: List<Action>? = null,
+    /** reloadDatasource: the datasource to refetch (e.g. `datasources/items`). */
+    val source: String? = null,
+    /** incrementVariable / incrementArrayItem: `by` given as an expression (evaluated when the action runs). */
+    val byExpression: String? = null,
 ) {
     @Suppress("EnumEntryName")
     public enum class Type {
         navigation, dismiss, executeFunction, complete, completeFlow, setState, selectTab,
         updateVariable, incrementVariable, toggleArrayValue, appendToArray, incrementArrayItem,
+        insertArrayItem, upsertArrayItem, removeArrayItem,
         updateMultipleVariables, resetVariables,
+        forEach, with, request, reloadDatasource,
         focus, focusNext, focusPrevious, dismissKeyboard,
         showAlert, haptic, openURL, emit,
     }
@@ -105,9 +138,11 @@ internal fun decodeAction(c: Cursor): Action {
         transition = c.opt("transition", ::decodeScreenTransition),
         stateName = c.optString("stateName"),
         animated = c.optBool("animated"),
-        variableName = c.optString("variableName"),
+        // `variable` is accepted as a short form of `variableName`.
+        variableName = c.optString("variableName") ?: c.optString("variable"),
         value = c.opt("value") { it.element },
-        by = c.optDouble("by"),
+        by = c.opt("by") { it.doubleOrNull() },
+        byExpression = c.opt("by") { it.stringOrNull() },
         matchBy = c.optString("matchBy"),
         field = c.optString("field"),
         key = c.attempt { it.optString("key") },
@@ -123,6 +158,19 @@ internal fun decodeAction(c: Cursor): Action {
         urlPresentation = c.optEnum<Action.URLPresentation>("urlPresentation"),
         name = c.optString("name"),
         payload = c.opt("payload", ::decodeAnyMap),
+        items = c.opt("items") { it.element },
+        itemName = c.optString("as"),
+        index = c.opt("index") { it.element },
+        actions = c.opt("actions", ::decodeActionList),
+        values = c.opt("values", ::decodeAnyMap),
+        position = c.optString("position"),
+        method = c.optString("method"),
+        headers = c.opt("headers", ::decodeAnyMap),
+        body = c.opt("body") { it.element },
+        resultVariable = c.optString("resultVariable"),
+        onSuccess = c.opt("onSuccess", ::decodeActionList),
+        onError = c.opt("onError", ::decodeActionList),
+        source = c.optString("source"),
     )
 }
 
@@ -157,9 +205,9 @@ internal fun decodeSheetDetent(c: Cursor): Action.SheetDetent {
 
 /** A single action or an array of actions under one trigger key. Every action must decode. */
 internal fun decodeActionList(c: Cursor): List<Action> {
-    if (c.element is kotlinx.serialization.json.JsonArray) {
-        c.attempt { a -> a.list(::decodeAction) }?.let { return it }
-    }
+    // An array is a list; decoding it as a single action only reported "expected an object,
+    // found array" at the list's path instead of the element that failed.
+    if (c.element is kotlinx.serialization.json.JsonArray) return c.list(::decodeAction)
     return listOf(decodeAction(c))
 }
 
@@ -243,8 +291,8 @@ internal fun decodeAccessibility(c: Cursor): Accessibility {
         hint = c.optString("hint"),
         value = c.optString("value"),
         traits = c.opt("traits") { a -> a.list { it.strictEnum<Accessibility.Trait> { t -> t.raw } } },
-        isElement = c.optString("isElement"),
-        hidden = c.optString("hidden"),
+        isElement = c.optScalar("isElement"),
+        hidden = c.optScalar("hidden"),
     )
 }
 

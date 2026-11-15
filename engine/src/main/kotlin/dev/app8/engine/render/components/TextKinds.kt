@@ -37,6 +37,7 @@ import dev.app8.engine.render.LocalRenderEnv
 import dev.app8.engine.render.RenderEnv
 import dev.app8.engine.render.RenderNode
 import dev.app8.engine.render.bool
+import dev.app8.engine.render.hexColor
 import dev.app8.engine.render.localized
 import dev.app8.engine.render.string
 import dev.app8.engine.render.tapModifier
@@ -51,7 +52,7 @@ internal object LabelKind : ComponentKind {
 
     private fun resolve(node: RenderNode, env: RenderEnv): Resolved {
         val props = node.content.properties as? LabelProperties ?: LabelProperties()
-        val model = env.textModel((node.content.style as? LabelStyle)?.text)
+        val model = env.textModel((node.content.style as? LabelStyle)?.text, node)
         var style = env.text(model, 17f, env.labelColor, defaultLines = 1)
         props.numberOfLines?.let { n -> style = style.copy(maxLines = if (n <= 0) Int.MAX_VALUE else n) }
         // A one-line UILabel draws only the first line of multi-line text, without an ellipsis.
@@ -63,7 +64,7 @@ internal object LabelKind : ComponentKind {
                 val from = s.from.coerceIn(0, raw.length)
                 val to = s.to.coerceIn(from, raw.length)
                 if (to <= from) continue
-                val color = s.color?.let { ColorHex.parseOrFallback(it) }?.let { Color(it.argb) }
+                val color = node.hexColor(s.color)
                 addStyle(SpanStyle(color = color ?: Color.Unspecified), from, to)
             }
         }
@@ -84,7 +85,7 @@ internal object LabelKind : ComponentKind {
         val env = LocalRenderEnv.current
         val r = resolve(node, env)
         val props = node.content.properties as? LabelProperties
-        val bg = props?.backgroundColor?.let { node.string(it.value) }?.takeIf { it.isNotEmpty() }?.let { Color(ColorHex.parseOrFallback(it).argb) }
+        val bg = node.hexColor(props?.backgroundColor?.value)
         Box(if (bg != null) modifier.background(bg) else modifier, contentAlignment = Alignment.CenterStart) {
             DslText(r.text, r.style, Modifier.fillMaxWidth())
             ChildrenLayout(node, Modifier.fillMaxSize())
@@ -142,20 +143,20 @@ internal object ButtonKind : ComponentKind {
         else -> 17f
     }
 
-    private fun tint(system: SystemButtonStyle, env: RenderEnv): Color = env.color(system.tint) ?: when (system.role) {
+    private fun tint(system: SystemButtonStyle, env: RenderEnv, node: RenderNode? = null): Color = env.color(system.tint, node) ?: when (system.role) {
         SystemButtonStyle.Role.destructive -> IosSystemColors.of("systemRed", env.appearance)
         else -> IosSystemColors.of("systemBlue", env.appearance)
     }
 
-    private fun foreground(system: SystemButtonStyle, env: RenderEnv): Color {
-        env.color(system.foreground)?.let { return it }
+    private fun foreground(system: SystemButtonStyle, env: RenderEnv, node: RenderNode? = null): Color {
+        env.color(system.foreground, node)?.let { return it }
         return when (system.variant) {
             SystemButtonStyle.Variant.filled, SystemButtonStyle.Variant.borderedProminent, SystemButtonStyle.Variant.prominentGlass, null -> Color.White
             // iOS 26 `.gray()`, `.bordered()` and `.glass()` draw their title in `label`, not the
             // tint (conformance screens/ButtonExamples, apps/SystemButtonCatalog).
             SystemButtonStyle.Variant.gray, SystemButtonStyle.Variant.bordered, SystemButtonStyle.Variant.glass ->
                 IosSystemColors.of("label", env.appearance)
-            else -> tint(system, env)
+            else -> tint(system, env, node)
         }
     }
 
@@ -163,13 +164,13 @@ internal object ButtonKind : ComponentKind {
         val props = node.content.properties as? ButtonProperties ?: ButtonProperties()
         val style = node.content.style as? ButtonStyle
         val system = env.styles.let { style?.system?.value ?: style?.system?.pointerId?.let { id -> node.runtime.styles.content(id) as? SystemButtonStyle } }
-        val model = env.textModel(style?.text)
+        val model = env.textModel(style?.text, node)
         val title = node.string(props.text) ?: ""
         return if (system == null) {
             Resolved(title, env.text(model, 15f, IosSystemColors.of("systemBlue", env.appearance), 1).copy(maxLines = 1), null, 0.0, 6.0)
         } else {
             val (h, v) = systemInsets(system.size)
-            val t = env.text(model, systemFontSize(system.size), foreground(system, env), 1).copy(maxLines = 1)
+            val t = env.text(model, systemFontSize(system.size), foreground(system, env, node), 1).copy(maxLines = 1)
             Resolved(title, t, system, h, v)
         }
     }
@@ -205,7 +206,7 @@ internal object ButtonKind : ComponentKind {
                 SystemButtonStyle.CornerStyle.large -> RoundedCornerShape(12.dp)
                 else -> RoundedCornerShape(percent = 50)
             }
-            val tint = tint(system, env)
+            val tint = tint(system, env, node)
             val fill: Color? = when (system.variant) {
                 SystemButtonStyle.Variant.plain -> null
                 SystemButtonStyle.Variant.gray -> IosSystemColors.of("secondarySystemFill", env.appearance)

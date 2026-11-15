@@ -1,5 +1,6 @@
 package dev.app8.engine.navigation
 
+import dev.app8.engine.render.hexColor
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -61,7 +62,7 @@ internal fun TabBarHost(session: ScreenSession, flow: FlowController, layer: Lay
     }
     val holder = rememberSaveableStateHolder()
     val navInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding().value.toDouble()
-    fun hex(s: String?) = s?.let { Color(ColorHex.parseOrFallback(it).argb) }
+    fun hex(s: String?) = session.root.hexColor(s)
     val accent = hex(content.tintColor)
     val tint = accent ?: IosSystemColors.of("systemBlue", env.appearance)
     val unselected = hex(content.unselectedColor) ?: IosSystemColors.of("systemGray", env.appearance)

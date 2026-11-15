@@ -1,5 +1,6 @@
 package dev.app8.engine.render.components
 
+import dev.app8.engine.render.hexColor
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
@@ -35,6 +36,7 @@ internal object PageControlKind : ComponentKind {
     }
 
     override fun isHidden(node: RenderNode): Boolean {
+        if (super.isHidden(node)) return true
         val p = node.content.properties as? PageControlProperties ?: return false
         return p.hidesForSinglePage == true && pages(node) <= 1
     }
@@ -49,9 +51,8 @@ internal object PageControlKind : ComponentKind {
         val env = LocalRenderEnv.current
         val p = node.content.properties as? PageControlProperties
         val style = node.content.style as? PageControlStyle
-        fun hex(s: String?) = s?.let { Color(ColorHex.parseOrFallback(it).argb) }
-        val on = hex(style?.currentPageIndicatorTintColor) ?: IosSystemColors.of("label", env.appearance)
-        val off = hex(style?.pageIndicatorTintColor) ?: IosSystemColors.of("tertiaryLabel", env.appearance)
+        val on = node.hexColor(style?.currentPageIndicatorTintColor) ?: IosSystemColors.of("label", env.appearance)
+        val off = node.hexColor(style?.pageIndicatorTintColor) ?: IosSystemColors.of("tertiaryLabel", env.appearance)
         val n = pages(node)
         val cur = current(node)
         var m = modifier

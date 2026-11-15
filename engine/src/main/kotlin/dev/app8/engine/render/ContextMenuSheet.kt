@@ -126,7 +126,7 @@ internal fun Modifier.contextMenuSemantics(
 
 /** Runs [actions] in [node]'s scope (collection cells: the cell's scope, with `item`). */
 internal fun runMenuActions(dispatcher: dev.app8.engine.actions.ActionDispatcher, node: RenderNode, actions: List<Action>?) {
-    for (a in actions.orEmpty()) dispatcher.execute(node, a)
+    dispatcher.run(node, actions.orEmpty())
 }
 
 /**

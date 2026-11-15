@@ -21,7 +21,7 @@ internal fun decodeViewProperties(c: Cursor): ViewProperties {
         transformScale = c.opt("transformScale", ::decodeAnimatedString),
         transformTranslateX = c.opt("transformTranslateX", ::decodeAnimatedString),
         transformTranslateY = c.opt("transformTranslateY", ::decodeAnimatedString),
-        isHidden = c.optString("isHidden"),
+        isHidden = c.optScalar("isHidden"),
         alpha = c.opt("alpha", ::decodeAnimatedString),
     )
 }
@@ -30,7 +30,7 @@ public data class ButtonProperties(val text: String = "", val isEnabled: String?
 
 internal fun decodeButtonProperties(c: Cursor): ButtonProperties {
     c.obj()
-    return ButtonProperties(c.optString("text") ?: "", c.optString("isEnabled"), c.optString("isSelected"))
+    return ButtonProperties(c.optString("text") ?: "", c.optScalar("isEnabled"), c.optScalar("isSelected"))
 }
 
 public data class ImageProperties(val type: Type, val model: Model) {
@@ -46,9 +46,14 @@ public data class ImageProperties(val type: Type, val model: Model) {
 
 internal fun decodeImageProperties(c: Cursor): ImageProperties {
     c.obj()
-    val type = c.req("type") { it.strictEnum<ImageProperties.Type>() }
+    // `type` is optional (image.md documents only `url` / `asset`): inferred from the keys present.
+    val type = c.opt("type") { it.strictEnum<ImageProperties.Type>() } ?: when {
+        c.hasNonNull("url") -> ImageProperties.Type.remoteAsset
+        c.hasNonNull("asset") || c.hasNonNull("name") -> ImageProperties.Type.localAsset
+        else -> ImageProperties.Type.none
+    }
     val model = when (type) {
-        ImageProperties.Type.localAsset -> ImageProperties.Model.LocalAsset(c.reqString("name"))
+        ImageProperties.Type.localAsset -> ImageProperties.Model.LocalAsset(c.optString("name") ?: c.reqString("asset"))
         ImageProperties.Type.remoteAsset -> ImageProperties.Model.RemoteAsset(decodeAsset(c))
         ImageProperties.Type.none -> ImageProperties.Model.None
     }
@@ -79,7 +84,7 @@ internal fun decodeIconProperties(c: Cursor): IconProperties {
     val type = c.req("type") { it.strictEnum<IconProperties.Type>() }
     val backgroundColor = c.opt("backgroundColor", ::decodeAnimatedString)
     val tintColor = c.opt("tintColor", ::decodeAnimatedString)
-    val isHidden = c.optString("isHidden")
+    val isHidden = c.optScalar("isHidden")
     val model = when (type) {
         IconProperties.Type.symbol -> IconProperties.Model.Symbol(c.reqString("name"))
         IconProperties.Type.asset -> IconProperties.Model.AssetModel(c.reqString("name"))
@@ -106,7 +111,7 @@ internal fun decodeLabelProperties(c: Cursor): LabelProperties {
     return LabelProperties(
         text = c.opt("text", ::decodeLocalizedString) ?: LocalizedString.Literal(""),
         backgroundColor = c.opt("backgroundColor", ::decodeAnimatedString),
-        isHidden = c.optString("isHidden"),
+        isHidden = c.optScalar("isHidden"),
         numberOfLines = c.optInt("numberOfLines"),
         spans = c.opt("spans") { a ->
             a.list { s ->
@@ -200,7 +205,7 @@ public data class ActivityIndicatorProperties(val isAnimating: String? = null, v
 
 internal fun decodeActivityIndicatorProperties(c: Cursor): ActivityIndicatorProperties {
     c.obj()
-    return ActivityIndicatorProperties(c.optString("isAnimating"), c.optBool("hidesWhenStopped"))
+    return ActivityIndicatorProperties(c.optScalar("isAnimating"), c.optBool("hidesWhenStopped"))
 }
 
 public data class DatePickerProperties(
@@ -228,7 +233,7 @@ internal fun decodeDatePickerProperties(c: Cursor): DatePickerProperties {
         displayStyle = c.optEnum<DatePickerProperties.DisplayStyle>("displayStyle"),
         minimumDate = c.optString("minimumDate"),
         maximumDate = c.optString("maximumDate"),
-        isEnabled = c.optString("isEnabled"),
+        isEnabled = c.optScalar("isEnabled"),
     )
 }
 
@@ -241,7 +246,7 @@ public data class PageControlProperties(
 
 internal fun decodePageControlProperties(c: Cursor): PageControlProperties {
     c.obj()
-    return PageControlProperties(c.optString("numberOfPages"), c.optString("currentPage"), c.optString("bindVariable"), c.optBool("hidesForSinglePage"))
+    return PageControlProperties(c.optScalar("numberOfPages"), c.optScalar("currentPage"), c.optString("bindVariable"), c.optBool("hidesForSinglePage"))
 }
 
 public data class PickerProperties(
@@ -273,7 +278,7 @@ internal fun decodePickerProperties(c: Cursor): PickerProperties {
         bindVariable = c.optString("bindVariable"),
         displayMode = c.optEnum<PickerProperties.DisplayMode>("displayMode"),
         placeholder = c.optString("placeholder"),
-        isEnabled = c.optString("isEnabled"),
+        isEnabled = c.optScalar("isEnabled"),
         bindKey = c.optString("bindKey"),
         optionsExpression = c.opt("options") { it.stringOrNull() },
     )
@@ -332,7 +337,7 @@ public data class ShimmerProperties(val isAnimating: String? = null, val duratio
 
 internal fun decodeShimmerProperties(c: Cursor): ShimmerProperties {
     c.obj()
-    return ShimmerProperties(c.optString("isAnimating"), c.optDouble("duration"), c.optEnum<ShimmerProperties.Direction>("direction"))
+    return ShimmerProperties(c.optScalar("isAnimating"), c.optDouble("duration"), c.optEnum<ShimmerProperties.Direction>("direction"))
 }
 
 public data class SliderProperties(
@@ -347,8 +352,8 @@ public data class SliderProperties(
 internal fun decodeSliderProperties(c: Cursor): SliderProperties {
     c.obj()
     return SliderProperties(
-        c.optString("value"), c.optFloat("minimumValue"), c.optFloat("maximumValue"),
-        c.optFloat("step"), c.optString("bindVariable"), c.optString("isEnabled"),
+        c.optScalar("value"), c.optFloat("minimumValue"), c.optFloat("maximumValue"),
+        c.optFloat("step"), c.optString("bindVariable"), c.optScalar("isEnabled"),
     )
 }
 
@@ -356,7 +361,7 @@ public data class ToggleProperties(val isOn: String? = null, val bindVariable: S
 
 internal fun decodeToggleProperties(c: Cursor): ToggleProperties {
     c.obj()
-    return ToggleProperties(c.optString("isOn"), c.optString("bindVariable"), c.optString("isEnabled"))
+    return ToggleProperties(c.optScalar("isOn"), c.optString("bindVariable"), c.optScalar("isEnabled"))
 }
 
 @Suppress("EnumEntryName")

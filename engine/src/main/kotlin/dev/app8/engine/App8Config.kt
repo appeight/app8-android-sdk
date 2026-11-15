@@ -23,6 +23,11 @@ public data class App8Config(
      * the user's wallpaper palette.
      */
     val dynamicColor: Boolean = false,
+    /**
+     * Host views for DSL `native` components, keyed by their `module` (`"signaturePad"`). A module
+     * missing here renders the component's `fallback`, or nothing.
+     */
+    val nativeComponents: Map<String, dev.app8.engine.nativecomponent.App8NativeComponent> = emptyMap(),
 )
 
 /** iOS `UIUserInterfaceStyle`. */

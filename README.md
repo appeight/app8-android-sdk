@@ -104,6 +104,17 @@ class AssetsDataSource(
 Every method is called off the main thread, so implementations may do IO
 directly.
 
+The DSL `request` action sends HTTP requests itself. Each one first goes through
+`prepareRequest`, the place to add credentials or refuse a request (throw: the
+action's `onError` runs with status 0); the default sends it unchanged:
+
+```kotlin
+override suspend fun prepareRequest(request: App8HttpRequest): App8HttpRequest {
+    require(request.url.startsWith("https://api.example.com/")) { "not allowed" }
+    return request.copy(headers = request.headers + ("Authorization" to "Bearer ${tokens.current()}"))
+}
+```
+
 ### 2. Render
 
 With Compose, `App()` draws the whole app from its start flow: navigation,

@@ -22,6 +22,7 @@ import dev.app8.engine.events.App8EventBus
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -40,6 +41,13 @@ internal class App8Runtime(
     val appContext: Context,
     val dataSource: App8DataSource,
     config: App8Config,
+    /**
+     * Where action lists run; tests pass an immediate dispatcher. Null: the main thread
+     * ([mainDispatcherOrInline]), looked up on the first action.
+     */
+    private val mainDispatcher: kotlinx.coroutines.CoroutineDispatcher? = null,
+    /** Data-source and request calls; tests pass an immediate dispatcher. */
+    private val ioDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO,
 ) {
     val diagnostics = Diagnostics(config.logLevel)
     val translations = TranslationStore().apply { setActive(config.locale) }
@@ -48,6 +56,7 @@ internal class App8Runtime(
     var analyticsConfig: App8AnalyticsConfig = config.analytics
     val mapProvider: dev.app8.engine.maps.App8MapProvider? = config.mapProvider
     val dynamicColor: Boolean = config.dynamicColor
+    val nativeComponents: Map<String, dev.app8.engine.nativecomponent.App8NativeComponent> = config.nativeComponents
 
     /**
      * The app's brand accent for system chrome outside any tab bar (sheets, dialogs): the
@@ -59,6 +68,102 @@ internal class App8Runtime(
     private val decoder = DslDecoder(DecodeOptions(platform = Platform.ANDROID, errorCollector = decodeErrors))
     val propertyResolver = PropertyResolver(translations)
     val appStore = VariableStore().apply { logger = diagnostics }
+
+    /**
+     * Where action lists run (main thread). Outlives screens, so a `request` answered after its
+     * screen closed still runs its handlers. Lives as long as the instance. Created on the first
+     * action, so building an instance never touches `Dispatchers.Main` (a host JVM test that
+     * calls `Dispatchers.setMain` before running actions gets its dispatcher).
+     */
+    val actionScope: kotlinx.coroutines.CoroutineScope by lazy {
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + (mainDispatcher ?: mainDispatcherOrInline()))
+    }
+
+    /** The `request` action's HTTP client. */
+    var http: HttpTransport = OkHttpTransport()
+
+    /**
+     * Bumped on screen appear and on every `onEvent` timer tick. Expressions that read the clock
+     * (`now()`, `today()`, …) read it too, so they re-evaluate then (there is no continuous clock).
+     */
+    private val clockEpoch = androidx.compose.runtime.mutableIntStateOf(0)
+
+    fun tickClock() {
+        clockEpoch.intValue++
+    }
+
+    init {
+        propertyResolver.clockObserver = { clockEpoch.intValue }
+    }
+
+    /**
+     * Sends a DSL `request` through [App8DataSource.prepareRequest] and [http]: the `response`
+     * object, status 0 when the host rejects the request or the network fails.
+     */
+    suspend fun send(request: dev.app8.engine.App8HttpRequest): Map<String, Any?> {
+        beginWork()
+        return try {
+            val prepared = withContext(ioDispatcher) { dataSource.prepareRequest(request) }
+            http.send(prepared).toValue()
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            diagnostics.warn("action.request", "${request.method} ${request.url}: ${e.message ?: e.javaClass.simpleName}")
+            HttpResponse.failure()
+        } finally {
+            endWork()
+        }
+    }
+
+    /** A variable whose value comes from a datasource (`source`), for `reloadDatasource`. */
+    private class DatasourceBinding(
+        val screenId: String,
+        val store: java.lang.ref.WeakReference<dev.app8.engine.core.vars.VariableStoreProtocol>,
+        val name: String,
+        val definition: VariableDefinition,
+    )
+
+    private val datasourceBindings = ArrayList<DatasourceBinding>()
+
+    /** Remembers the `source` variables of [store] (a screen's or the app's). Main thread. */
+    fun registerDatasources(screenId: String, store: dev.app8.engine.core.vars.VariableStoreProtocol, definitions: Map<String, VariableDefinition>) {
+        for ((name, def) in definitions) {
+            if (def.source != null) datasourceBindings += DatasourceBinding(screenId, java.lang.ref.WeakReference(store), name, def)
+        }
+    }
+
+    fun unregisterDatasources(store: dev.app8.engine.core.vars.VariableStoreProtocol) {
+        datasourceBindings.removeAll { it.store.get().let { s -> s == null || s === store } }
+    }
+
+    /**
+     * `reloadDatasource`: fetches [source] once through the data source (for [screenId], the
+     * screen running the action) and writes it into every variable bound to it, in the app
+     * scope and in every live screen. False (with `datasource.reload.failed`) when the fetch fails.
+     */
+    suspend fun reloadDatasource(source: String, screenId: String): Boolean {
+        datasourceBindings.removeAll { it.store.get() == null }
+        beginWork()
+        try {
+            val bytes = try {
+                withContext(ioDispatcher) { dataSource.reloadDatasource(screenId, source) }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                diagnostics.warn("datasource.reload.failed", "'$source': ${e.message}")
+                return false
+            }
+            for (binding in datasourceBindings.filter { it.definition.source == source }) {
+                val store = binding.store.get() ?: continue
+                runCatching { dev.app8.engine.core.vars.DatasourceResolver.decodeValue(source, binding.definition, bytes) }
+                    .onSuccess { store.setExternalValue(binding.name, it) }
+                    .onFailure { diagnostics.warn("datasource.reload.failed", "'${binding.name}' ($source): ${it.message}") }
+            }
+            return true
+        } finally {
+            endWork()
+        }
+    }
 
     /** Keyed elements' frames, for the native zoom transition (`zoom` + `sourceKey`). */
     val zoomSources = dev.app8.engine.navigation.transitions.ZoomSources()
@@ -219,9 +324,34 @@ internal class App8Runtime(
     private fun persistFlag(element: JsonElement): Boolean =
         ((element as? kotlinx.serialization.json.JsonObject)?.get("persist") as? kotlinx.serialization.json.JsonPrimitive)?.content == "true"
 
+    /**
+     * App variables. A `source` variable loads through the data source in the background
+     * (`screenId` ""): until it arrives it has its `initialValue`, or its stored value with
+     * `persist`; the loaded value then replaces it.
+     */
     private fun defineAppVariables(raw: Map<String, JsonElement>) {
         val defs = decodeVariableDefinitions(raw, diagnostics)
         appStore.defineVariables(defs)
+        val sourced = defs.filterValues { it.source != null }
+        registerDatasources(APP_SCOPE_ID, appStore, sourced)
+        for ((name, def) in sourced) {
+            actionScope.launch {
+                loadAppSource(name, def)?.let { appStore.setExternalValue(name, it) }
+            }
+        }
+    }
+
+    private suspend fun loadAppSource(name: String, def: VariableDefinition): Any? {
+        val source = def.source ?: return null
+        return try {
+            val bytes = withContext(ioDispatcher) { dataSource.getDatasource(APP_SCOPE_ID, source) }
+            dev.app8.engine.core.vars.DatasourceResolver.decodeValue(source, def, bytes)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            diagnostics.warn("datasource.load.failed", "app variable '$name' ($source): ${e.message}")
+            null
+        }
     }
 
     private fun utf8(bytes: ByteArray, name: String): String = try {
@@ -231,6 +361,9 @@ internal class App8Runtime(
     }
 
     companion object {
+        /** The `screenId` passed to [App8DataSource.getDatasource] for app-scope variables. */
+        const val APP_SCOPE_ID = ""
+
         private val json = Json { ignoreUnknownKeys = true }
 
         fun decodeVariableDefinitions(raw: Map<String, JsonElement>, diagnostics: Diagnostics?): Map<String, VariableDefinition> {
@@ -243,4 +376,17 @@ internal class App8Runtime(
             return out
         }
     }
+}
+
+/**
+ * `Dispatchers.Main.immediate`, or [Dispatchers.Unconfined] where there is no main dispatcher
+ * (a host JVM without a main looper or `Dispatchers.setMain`): action lists then run on the
+ * calling thread, as on the main thread of an app, instead of every action failing with
+ * "Dispatchers.Main was accessed …". On a device the main dispatcher always exists.
+ */
+internal fun mainDispatcherOrInline(): kotlinx.coroutines.CoroutineDispatcher = try {
+    // A missing main dispatcher throws on `immediate` or on first use; probe both here.
+    Dispatchers.Main.immediate.also { it.isDispatchNeeded(kotlin.coroutines.EmptyCoroutineContext) }
+} catch (e: IllegalStateException) {
+    Dispatchers.Unconfined
 }

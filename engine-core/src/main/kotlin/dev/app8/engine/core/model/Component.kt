@@ -49,6 +49,8 @@ public sealed interface ComponentType {
         screen, view, button, image, icon, striplet, label, textField, textView, list, scrollView, tabBarScreen,
         collection, map, stackView, shape, tableView, activityIndicator, toggle, slider, pageControl, picker,
         shimmer, datePicker, video,
+        /** DSL 0.6: a host-registered view (`App8Config.nativeComponents` on Android). */
+        native,
     }
 
     public companion object {
@@ -77,6 +79,11 @@ public data class ComponentEntity<C : EntityContent>(
     override val templateId: String?,
     override val type: ComponentType,
     val content: C,
+    /**
+     * `content.properties.isHidden` (bool or expression) whatever the component type, so every
+     * component can be hidden, not only the types whose properties model it.
+     */
+    val isHidden: String? = null,
 ) : Component
 
 /** Shared surface of every component content. */
@@ -265,7 +272,9 @@ internal fun decodeComponent(input: Cursor): Component {
         return ComponentPointer(templateId = c.optString("templateId"), id = c.reqString("id"), type = type)
     }
     val templateId = c.optString("templateId")
-    val id = c.reqString("id")
+    // `id` is optional (components.md): a component without one gets a stable id from its
+    // position in the document, so it renders and keys like any other (nothing can target it).
+    val id = c.optString("id") ?: "_${type.raw}@${c.path}"
     val content: EntityContent = c.req("content") { raw ->
         val cc = Cursor(raw.element, raw.path, raw.options, input.componentDepth + 1)
         when ((type as? ComponentType.Known)?.key) {
@@ -291,9 +300,24 @@ internal fun decodeComponent(input: Cursor): Component {
             ComponentType.Key.picker -> decodeContent(cc, PICKER_SPEC)
             ComponentType.Key.shimmer -> decodeContent(cc, SHIMMER_SPEC)
             ComponentType.Key.datePicker -> decodeContent(cc, DATE_SPEC)
+            ComponentType.Key.native -> decodeNativeContent(cc)
             ComponentType.Key.striplet, ComponentType.Key.list -> c.fail("unsupported component type: ${type.raw}")
             null -> c.fail("unsupported custom component type with content: ${type.raw}")
         }
     }
-    return ComponentEntity(id = id, templateId = templateId, type = type, content = content)
+    return ComponentEntity(id = id, templateId = templateId, type = type, content = content, isHidden = rawIsHidden(c))
+}
+
+/** `content.properties.isHidden` read leniently: a bool or a string, anything else ignored. */
+private fun rawIsHidden(c: Cursor): String? {
+    val content = c.element as? JsonObject ?: return null
+    return rawPropertiesIsHidden(content["content"])
+}
+
+/** `properties.isHidden` of a content or state object, read leniently (bool or string). */
+internal fun rawPropertiesIsHidden(element: kotlinx.serialization.json.JsonElement?): String? {
+    val properties = (element as? JsonObject)?.get("properties") as? JsonObject ?: return null
+    val raw = properties["isHidden"] as? kotlinx.serialization.json.JsonPrimitive ?: return null
+    if (raw is kotlinx.serialization.json.JsonNull) return null
+    return raw.content
 }

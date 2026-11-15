@@ -28,6 +28,11 @@ public data class ComponentState<P, S>(
     val layout: Layout? = null,
     val childStates: Map<String, String>? = null,
     val animation: Animation? = null,
+    /**
+     * The state's `properties.isHidden` (bool or expression) whatever the component type, so a
+     * state can hide or show any component. Read only when the state has `properties`.
+     */
+    val isHidden: String? = null,
 )
 
 internal inline fun <P, S> decodeState(c: Cursor, decodeProps: (Cursor) -> P, decodeStyle: (Cursor) -> S): ComponentState<P, S> {
@@ -38,6 +43,7 @@ internal inline fun <P, S> decodeState(c: Cursor, decodeProps: (Cursor) -> P, de
         layout = c.opt("layout", ::decodeLayout),
         childStates = c.opt("childStates") { m -> m.map { it.string() } },
         animation = c.opt("animation", ::decodeAnimation),
+        isHidden = rawPropertiesIsHidden(c.element),
     )
 }
 

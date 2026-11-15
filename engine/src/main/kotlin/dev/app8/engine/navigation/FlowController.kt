@@ -11,6 +11,7 @@ import dev.app8.engine.core.model.ScreenTransition
 import dev.app8.engine.navigation.transitions.ResolvedTransition
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicLong
 
@@ -206,6 +207,13 @@ internal class FlowController(
         if (layers.indexOf(layer) > 0) layers.remove(layer)
     }
 
+    /** A navigator for the screen on top of [layer]: its selected tab's stack on the base flow, else its own. */
+    fun navigatorFor(layer: Layer): Navigator {
+        val tabs = this.tabs.takeIf { layers.firstOrNull() === layer }
+        val stack = tabs?.let { (state, stacks) -> stacks.getOrNull(state.selected) } ?: layer.stack
+        return StackNavigator(this, layer, stack, tabs?.first)
+    }
+
     fun dismissTop() {
         layers.lastOrNull()?.let { dismiss(it) }
     }
@@ -269,6 +277,29 @@ internal class StackNavigator(
     /** iOS `dismiss`: closes the presented modal this screen is in; on the base flow, pops. */
     override fun dismiss() {
         if (layer.presentation != null) flow.dismiss(layer) else pop(toRoot = false)
+    }
+
+    /**
+     * Dismisses the modal, waits until it is gone (a custom transition plays its exit first),
+     * then hands over to the layer that presented it. On the base flow it pops and stays here.
+     */
+    override suspend fun dismissAndAwait(): Navigator {
+        if (layer.presentation == null) {
+            pop(toRoot = false)
+            return this
+        }
+        val index = flow.layers.indexOf(layer)
+        val presenter = if (index > 0) flow.layers[index - 1] else null
+        flow.dismiss(layer)
+        kotlinx.coroutines.withTimeoutOrNull(DISMISS_TIMEOUT_MS) {
+            androidx.compose.runtime.snapshotFlow { layer in flow.layers }.first { !it }
+        }
+        return presenter?.let { flow.navigatorFor(it) } ?: this
+    }
+
+    private companion object {
+        /** Longest exit animation we wait for before navigating anyway. */
+        const val DISMISS_TIMEOUT_MS = 3_000L
     }
 
     override fun selectTab(index: Int?, id: String?) {

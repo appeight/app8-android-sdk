@@ -1,5 +1,6 @@
 package dev.app8.engine.render.components
 
+import dev.app8.engine.render.hexColor
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -81,7 +82,6 @@ import dev.app8.engine.render.resolve
 import dev.app8.engine.render.string
 import dev.app8.engine.style.IosSystemColors
 
-internal fun hexColor(s: String?): Color? = s?.takeIf { it.isNotEmpty() }?.let { Color(ColorHex.parseOrFallback(it).argb) }
 
 /** The tracked value of a `bindVariable` (null when unbound or undefined). */
 internal fun RenderNode.bound(name: String?): Any? = name?.let { resolve("{{$it}}") }
@@ -114,8 +114,8 @@ internal object ToggleKind : ComponentKind {
         val dispatcher = LocalDispatcher.current
         val on = Coerce.bool(node.bound(p.bindVariable)) ?: (node.ui["on"] as? Boolean) ?: node.bool(p.isOn) ?: false
         val enabled = (node.bool(p.isEnabled) ?: true) && LocalInteractionEnabled.current
-        val onTint = hexColor(style?.onTintColor)
-        val thumb = hexColor(style?.thumbTintColor)
+        val onTint = node.hexColor(style?.onTintColor)
+        val thumb = node.hexColor(style?.thumbTintColor)
         val d = SwitchDefaults.colors()
         val colors = SwitchDefaults.colors(
             checkedTrackColor = onTint ?: d.checkedTrackColor,
@@ -159,10 +159,10 @@ internal object SliderKind : ComponentKind {
             .coerceIn(min, max)
         val enabled = (node.bool(p.isEnabled) ?: true) && LocalInteractionEnabled.current
         val d = SliderDefaults.colors()
-        val active = hexColor(style?.minimumTrackTintColor)
-        val inactive = hexColor(style?.maximumTrackTintColor)
+        val active = node.hexColor(style?.minimumTrackTintColor)
+        val inactive = node.hexColor(style?.maximumTrackTintColor)
         val colors = SliderDefaults.colors(
-            thumbColor = hexColor(style?.thumbTintColor) ?: d.thumbColor,
+            thumbColor = node.hexColor(style?.thumbTintColor) ?: d.thumbColor,
             activeTrackColor = active ?: d.activeTrackColor,
             inactiveTrackColor = inactive ?: d.inactiveTrackColor,
             activeTickColor = inactive ?: d.activeTickColor,
@@ -236,7 +236,7 @@ internal object PickerKind : ComponentKind {
     }
 
     private fun menuText(node: RenderNode, env: RenderEnv) =
-        env.text(env.textModel((node.content.style as? PickerStyle)?.text), 15f, IosSystemColors.of("systemBlue", env.appearance), 1).copy(maxLines = 1)
+        env.text(env.textModel((node.content.style as? PickerStyle)?.text, node), 15f, IosSystemColors.of("systemBlue", env.appearance), 1).copy(maxLines = 1)
 
     /** Pull-down look title: `style.label` (brand font), default 15pt label color. */
     private fun labelText(style: PickerStyle, env: RenderEnv) =
@@ -315,7 +315,7 @@ internal object PickerKind : ComponentKind {
             return
         }
         if (p.displayMode == PickerProperties.DisplayMode.segmented) {
-            val tint = hexColor(style?.selectedSegmentTintColor)
+            val tint = node.hexColor(style?.selectedSegmentTintColor)
             val d = SegmentedButtonDefaults.colors()
             val colors = SegmentedButtonDefaults.colors(activeContainerColor = tint ?: d.activeContainerColor)
             Box(modifier, contentAlignment = Alignment.Center) {
@@ -400,7 +400,7 @@ private fun PullDown(
     val glyph = (style.indicator ?: "chevron.up.chevron.down").takeIf { it.isNotEmpty() }
         ?.let { MaterialSymbols.resolve(context, it, env.runtime.diagnostics, node.id) }
     val iconSize = (style.indicatorSize?.toFloat() ?: (fs * 0.8f)) * MATERIAL_GLYPH_SCALE.toFloat()
-    val iconColor = hexColor(style.indicatorColor) ?: text.style.color
+    val iconColor = node.hexColor(style.indicatorColor) ?: text.style.color
     val title = options.firstOrNull { it.value == sel }?.label ?: p.placeholder ?: "Select"
     var expanded by remember(node) { mutableStateOf(false) }
     Box(modifier, contentAlignment = Alignment.CenterStart) {
@@ -471,7 +471,7 @@ internal object ActivityIndicatorKind : ComponentKind {
         val p = node.content.properties as? ActivityIndicatorProperties ?: ActivityIndicatorProperties()
         val style = node.content.style as? ActivityIndicatorStyle
         val animating = node.bool(p.isAnimating) ?: true
-        val color = hexColor(style?.color) ?: IosSystemColors.of("secondaryLabel", env.appearance)
+        val color = node.hexColor(style?.color) ?: IosSystemColors.of("secondaryLabel", env.appearance)
         val s = side(node)
         val stroke = (s / 9.0).dp
         Box(modifier, contentAlignment = Alignment.Center) {

@@ -11,8 +11,8 @@ public final class dev/app8/engine/App8 {
 public final class dev/app8/engine/App8Config {
 	public static final field $stable I
 	public fun <init> ()V
-	public fun <init> (Ldev/app8/engine/events/App8AnalyticsConfig;Ldev/app8/engine/UserInterfaceStyle;Ljava/lang/String;Ldev/app8/engine/App8LogLevel;ZLdev/app8/engine/maps/App8MapProvider;Z)V
-	public synthetic fun <init> (Ldev/app8/engine/events/App8AnalyticsConfig;Ldev/app8/engine/UserInterfaceStyle;Ljava/lang/String;Ldev/app8/engine/App8LogLevel;ZLdev/app8/engine/maps/App8MapProvider;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ldev/app8/engine/events/App8AnalyticsConfig;Ldev/app8/engine/UserInterfaceStyle;Ljava/lang/String;Ldev/app8/engine/App8LogLevel;ZLdev/app8/engine/maps/App8MapProvider;ZLjava/util/Map;)V
+	public synthetic fun <init> (Ldev/app8/engine/events/App8AnalyticsConfig;Ldev/app8/engine/UserInterfaceStyle;Ljava/lang/String;Ldev/app8/engine/App8LogLevel;ZLdev/app8/engine/maps/App8MapProvider;ZLjava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ldev/app8/engine/events/App8AnalyticsConfig;
 	public final fun component2 ()Ldev/app8/engine/UserInterfaceStyle;
 	public final fun component3 ()Ljava/lang/String;
@@ -20,8 +20,9 @@ public final class dev/app8/engine/App8Config {
 	public final fun component5 ()Z
 	public final fun component6 ()Ldev/app8/engine/maps/App8MapProvider;
 	public final fun component7 ()Z
-	public final fun copy (Ldev/app8/engine/events/App8AnalyticsConfig;Ldev/app8/engine/UserInterfaceStyle;Ljava/lang/String;Ldev/app8/engine/App8LogLevel;ZLdev/app8/engine/maps/App8MapProvider;Z)Ldev/app8/engine/App8Config;
-	public static synthetic fun copy$default (Ldev/app8/engine/App8Config;Ldev/app8/engine/events/App8AnalyticsConfig;Ldev/app8/engine/UserInterfaceStyle;Ljava/lang/String;Ldev/app8/engine/App8LogLevel;ZLdev/app8/engine/maps/App8MapProvider;ZILjava/lang/Object;)Ldev/app8/engine/App8Config;
+	public final fun component8 ()Ljava/util/Map;
+	public final fun copy (Ldev/app8/engine/events/App8AnalyticsConfig;Ldev/app8/engine/UserInterfaceStyle;Ljava/lang/String;Ldev/app8/engine/App8LogLevel;ZLdev/app8/engine/maps/App8MapProvider;ZLjava/util/Map;)Ldev/app8/engine/App8Config;
+	public static synthetic fun copy$default (Ldev/app8/engine/App8Config;Ldev/app8/engine/events/App8AnalyticsConfig;Ldev/app8/engine/UserInterfaceStyle;Ljava/lang/String;Ldev/app8/engine/App8LogLevel;ZLdev/app8/engine/maps/App8MapProvider;ZLjava/util/Map;ILjava/lang/Object;)Ldev/app8/engine/App8Config;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAnalytics ()Ldev/app8/engine/events/App8AnalyticsConfig;
 	public final fun getDynamicColor ()Z
@@ -29,6 +30,7 @@ public final class dev/app8/engine/App8Config {
 	public final fun getLocale ()Ljava/lang/String;
 	public final fun getLogLevel ()Ldev/app8/engine/App8LogLevel;
 	public final fun getMapProvider ()Ldev/app8/engine/maps/App8MapProvider;
+	public final fun getNativeComponents ()Ljava/util/Map;
 	public final fun getUserInterfaceStyle ()Ldev/app8/engine/UserInterfaceStyle;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -44,6 +46,8 @@ public abstract interface class dev/app8/engine/App8DataSource {
 	public abstract fun getScreen (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun getStyles (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun getTranslations (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun prepareRequest (Ldev/app8/engine/App8HttpRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun reloadDatasource (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun streamDatasource (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lkotlinx/coroutines/flow/Flow;
 	public fun streamScreen (Ljava/lang/String;)Lkotlinx/coroutines/flow/Flow;
 	public fun streamStyles ()Lkotlinx/coroutines/flow/Flow;
@@ -53,6 +57,8 @@ public final class dev/app8/engine/App8DataSource$DefaultImpls {
 	public static fun getAllScreenIds (Ldev/app8/engine/App8DataSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun getDatasource (Ldev/app8/engine/App8DataSource;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun getTranslations (Ldev/app8/engine/App8DataSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static fun prepareRequest (Ldev/app8/engine/App8DataSource;Ldev/app8/engine/App8HttpRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static fun reloadDatasource (Ldev/app8/engine/App8DataSource;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun streamDatasource (Ldev/app8/engine/App8DataSource;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lkotlinx/coroutines/flow/Flow;
 	public static fun streamScreen (Ldev/app8/engine/App8DataSource;Ljava/lang/String;)Lkotlinx/coroutines/flow/Flow;
 	public static fun streamStyles (Ldev/app8/engine/App8DataSource;)Lkotlinx/coroutines/flow/Flow;
@@ -120,6 +126,25 @@ public final class dev/app8/engine/App8Error$UnsupportedPlatform : dev/app8/engi
 	public fun <init> (II)V
 	public final fun getDeviceSdk ()I
 	public final fun getRequiredSdk ()I
+}
+
+public final class dev/app8/engine/App8HttpRequest {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/util/Map;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;)Ldev/app8/engine/App8HttpRequest;
+	public static synthetic fun copy$default (Ldev/app8/engine/App8HttpRequest;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;ILjava/lang/Object;)Ldev/app8/engine/App8HttpRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBody ()Ljava/lang/String;
+	public final fun getHeaders ()Ljava/util/Map;
+	public final fun getMethod ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class dev/app8/engine/App8Instance {
@@ -535,6 +560,30 @@ public final class dev/app8/engine/maps/App8MapType : java/lang/Enum {
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Ldev/app8/engine/maps/App8MapType;
 	public static fun values ()[Ldev/app8/engine/maps/App8MapType;
+}
+
+public abstract interface class dev/app8/engine/nativecomponent/App8NativeComponent {
+	public abstract fun Content (Ldev/app8/engine/nativecomponent/App8NativeContext;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+}
+
+public final class dev/app8/engine/nativecomponent/App8NativeContext {
+	public static final field $stable I
+	public fun <init> (Ljava/util/Map;Lkotlin/jvm/functions/Function2;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/util/Map;
+	public final fun component2 ()Lkotlin/jvm/functions/Function2;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun copy (Ljava/util/Map;Lkotlin/jvm/functions/Function2;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ldev/app8/engine/nativecomponent/App8NativeContext;
+	public static synthetic fun copy$default (Ldev/app8/engine/nativecomponent/App8NativeContext;Ljava/util/Map;Lkotlin/jvm/functions/Function2;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ldev/app8/engine/nativecomponent/App8NativeContext;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAppId ()Ljava/lang/String;
+	public final fun getEmit ()Lkotlin/jvm/functions/Function2;
+	public final fun getModule ()Ljava/lang/String;
+	public final fun getProps ()Ljava/util/Map;
+	public final fun getScreenId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class dev/app8/engine/navigation/ComposableSingletons$FlowHostKt {

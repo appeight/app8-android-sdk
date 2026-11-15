@@ -182,4 +182,13 @@ class CornerGeometryTest {
         assertEquals(0f, clampRadius(-3f, 40f, 300f), 0f)
         assertEquals(12f, clampRadius(12f, 40f, 300f), 0f)
     }
+
+    @Test
+    fun `a square-cornered rect is drawn with lines so an even-odd ring keeps its hole`() {
+        val r = Recorder()
+        roundedRect(r, androidx.compose.ui.geometry.Rect(0f, 0f, 100f, 40f), CornerRadii(0f), 0f)
+        roundedRect(r, androidx.compose.ui.geometry.Rect(2f, 2f, 98f, 38f), CornerRadii(0f), 0f)
+        assertEquals(listOf("M", "L", "L", "L", "Z", "M", "L", "L", "L", "Z"), r.segs.map { it.kind })
+        assertEquals(listOf(98f to 38f), r.segs[7].points)
+    }
 }

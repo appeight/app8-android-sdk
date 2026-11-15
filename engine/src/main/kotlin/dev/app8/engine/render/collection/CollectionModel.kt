@@ -238,10 +238,12 @@ internal class Cell private constructor(
      * state: it re-solves only when a variable the layout reads changes, and the solve cache
      * makes a repeat solve free.
      */
-    fun layout(env: RenderEnv, width: Double, height: Double?, selfSizingWidth: Boolean = false, edges: Boolean = true): State<Solved> {
-        val key = listOf(env, width, height, selfSizingWidth, edges)
+    fun layout(env: RenderEnv, width: Double, height: Double?, selfSizingWidth: Boolean = false, edges: Boolean = true, stretch: Boolean = false): State<Solved> {
+        val key = listOf(env, width, height, selfSizingWidth, edges, stretch)
         layoutState?.let { if (key == layoutKey) return it }
-        val state = derivedStateOf(structuralEqualityPolicy()) { solve(env, width, height, selfSizingWidth, edges) }
+        val state = derivedStateOf(structuralEqualityPolicy()) {
+            solve(env, width, height, selfSizingWidth, edges).let { if (stretch && height != null) it.stretchedRoot(root.key, height) else it }
+        }
         layoutKey = key
         layoutState = state
         return state
@@ -277,7 +279,7 @@ internal class Cell private constructor(
         fun create(parent: RenderNode, template: Component, store: ScopedVariableStore, variable: String?, value: Any?): Cell? = traced("App8.cell") {
             val scope = Scope(store, parent.scope)
             val scopes = ArrayList<Scope>()
-            val root = RenderNode.build(parent.session, template, template.id, scope, parent.type, scopes)
+            val root = RenderNode.build(parent.session, template, template.id, scope, parent.type, scopes, inVerticalScroll = rowsInVerticalScroll(parent))
             if (root == null) {
                 scope.dispose()
                 store.detach()
@@ -286,10 +288,24 @@ internal class Cell private constructor(
             Cell(template, scope, root, scopes, variable, value)
         }
 
+        /**
+         * Whether the rows of [parent] (a collection or table) sit in a vertical scroller: the
+         * rows of a vertical or grid collection or of a table do, a horizontal collection's
+         * only when the collection itself does. A collection nested in such a row without a
+         * height of its own then sizes to its content and the row grows with it.
+         */
+        fun rowsInVerticalScroll(parent: RenderNode): Boolean {
+            if (parent.inVerticalScroll) return true
+            if (parent.typeKey == dev.app8.engine.core.model.ComponentType.Key.tableView) return true
+            val content = parent.content as? CollectionContent ?: return false
+            val type = content.properties.layout?.type
+            return type == null || type == dev.app8.engine.core.model.CollectionLayout.LayoutType.vertical || type == dev.app8.engine.core.model.CollectionLayout.LayoutType.grid
+        }
+
         /** A cell rendered in [parent]'s own scope (table rows): the scope is not the cell's to dispose. */
-        fun inParentScope(parent: RenderNode, template: Component): Cell? {
+        fun inParentScope(parent: RenderNode, template: Component, inVerticalScroll: Boolean = false): Cell? {
             val scopes = ArrayList<Scope>()
-            val root = RenderNode.build(parent.session, template, template.id, parent.scope, parent.type, scopes) ?: return null
+            val root = RenderNode.build(parent.session, template, template.id, parent.scope, parent.type, scopes, inVerticalScroll = inVerticalScroll) ?: return null
             return Cell(template, parent.scope, root, scopes, null, null, ownsScope = false)
         }
 
@@ -315,4 +331,20 @@ internal class Cell private constructor(
             return LayoutNode(key = ROOT, children = listOf(child))
         }
     }
+}
+
+/**
+ * A self-sizing grid item stretched to its row ([height]): the template root ([key]) reaches the
+ * cell's bottom even when its own constraints make it shorter (collections.md, "Self-sizing grid
+ * rows"), so its background spans the row like its neighbours'. Children keep their frames.
+ */
+internal fun Solved.stretchedRoot(key: String, height: Double): Solved {
+    val f = local[key] ?: return this
+    val target = height - f.y
+    if (f.height >= target) return this
+    val abs = absolute[key]
+    return copy(
+        local = local + (key to f.copy(height = target)),
+        absolute = if (abs == null) absolute else absolute + (key to abs.copy(height = target)),
+    )
 }

@@ -1,5 +1,6 @@
 package dev.app8.engine.render.components
 
+import dev.app8.engine.render.hexColor
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
@@ -27,7 +28,7 @@ internal object ShapeKind : ComponentKind {
     @Composable
     override fun Render(node: RenderNode, modifier: Modifier) {
         val p = node.content.properties as? ShapeProperties ?: return Box(modifier)
-        fun color(raw: String?): Color? = raw?.let { node.string(it) }?.takeIf { it.isNotEmpty() }?.let { Color(ColorHex.parseOrFallback(it).argb) }
+        fun color(raw: String?): Color? = node.hexColor(raw)
         val stroke = color(p.strokeColor) ?: Color.Black
         val track = color(p.trackColor) ?: Color.Transparent
         val fill = color(p.fillColor)

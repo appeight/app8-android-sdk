@@ -111,7 +111,7 @@ internal inline fun <T> decodeAnimatedValue(c: Cursor, decodeValue: (Cursor) -> 
     return AnimatedValue(decodeValue(c))
 }
 
-internal fun decodeAnimatedString(c: Cursor): AnimatedValue<String> = decodeAnimatedValue(c) { it.string() }
+internal fun decodeAnimatedString(c: Cursor): AnimatedValue<String> = decodeAnimatedValue(c) { it.scalarString() }
 
 /** A DSL text value: a plain literal or a `{"$i18n": "key"}` translation key. */
 public sealed interface LocalizedString {

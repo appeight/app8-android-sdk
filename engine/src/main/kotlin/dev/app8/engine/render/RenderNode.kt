@@ -9,6 +9,7 @@ import dev.app8.engine.core.model.ComponentContent
 import dev.app8.engine.core.model.ComponentEntity
 import dev.app8.engine.core.model.ComponentType
 import dev.app8.engine.core.model.EntityContent
+import dev.app8.engine.core.model.NativeContent
 import dev.app8.engine.core.model.StatefulContent
 import dev.app8.engine.core.model.style.TextInputStyle
 import dev.app8.engine.core.vars.ScopedVariableStore
@@ -32,6 +33,10 @@ internal class RenderNode(
     val scope: Scope,
     val session: ScreenSession,
     val parentType: ComponentType?,
+    /** Base `properties.isHidden` of any component type (see [ComponentEntity.isHidden]). */
+    private val baseHiddenBinding: String? = null,
+    /** Inside a vertical `scrollView` (directly or through other components). */
+    val inVerticalScroll: Boolean = false,
 ) {
     lateinit var children: List<RenderNode>
         internal set
@@ -60,6 +65,24 @@ internal class RenderNode(
     val content: EntityContent get() = applyState(base, stateName)
 
     val baseContent: EntityContent get() = base
+
+    /**
+     * `properties.isHidden` of any component type, state-aware (reads [stateName]): a state with
+     * `properties` replaces the base properties, its `isHidden` included, as [applyState] does.
+     */
+    val hiddenBinding: String?
+        get() {
+            val name = stateName ?: return baseHiddenBinding
+            val states = when (base) {
+                is ComponentContent<*, *> -> base.states
+                is dev.app8.engine.core.model.CollectionContent -> base.states
+                is dev.app8.engine.core.model.MapContent -> base.states
+                is dev.app8.engine.core.model.TableViewContent -> base.states
+                else -> null
+            }
+            val state = states?.get(name) ?: return baseHiddenBinding
+            return if (state.properties != null) state.isHidden else baseHiddenBinding
+        }
 
     /** Control state that outlives recomposition and feeds layout (a text input's text, …). */
     val ui = androidx.compose.runtime.mutableStateMapOf<String, Any?>()
@@ -119,6 +142,7 @@ internal class RenderNode(
             parentScope: Scope,
             parentType: ComponentType?,
             scopes: MutableList<Scope>,
+            inVerticalScroll: Boolean = false,
         ): RenderNode? {
             val entity = component as? ComponentEntity<*> ?: run {
                 session.runtime.diagnostics.warn("component.pointer", "'${component.id}' (${component.type.raw}) has no content and no template")
@@ -132,12 +156,17 @@ internal class RenderNode(
                 store.defineVariables(App8Runtime.decodeVariableDefinitions(raw, session.runtime.diagnostics))
                 Scope(store, parentScope).also { scopes += it }
             } ?: parentScope
-            val node = RenderNode(key, entity.id, entity.type, content, scope, session, parentType)
+            val node = RenderNode(key, entity.id, entity.type, content, scope, session, parentType, entity.isHidden, inVerticalScroll)
+            val scrollsVertically = (entity.type as? ComponentType.Known)?.key == ComponentType.Key.scrollView &&
+                (content.properties as? dev.app8.engine.core.model.ScrollViewProperties)?.direction != dev.app8.engine.core.model.ScrollViewProperties.Direction.horizontal
+            val childrenInScroll = inVerticalScroll || scrollsVertically
             val seen = HashSet<String>()
-            node.children = content.children.mapIndexedNotNull { i, child ->
+            // A registered `native` module replaces its fallback, so the fallback is not laid out.
+            val children = if (content is NativeContent && content.properties.module in session.runtime.nativeComponents) emptyList() else content.children
+            node.children = children.mapIndexedNotNull { i, child ->
                 // Keys must be unique among siblings even when ids repeat.
                 val childKey = "$key.${child.id}".let { if (seen.add(it)) it else "$it#$i" }
-                build(session, child, childKey, scope, entity.type, scopes)
+                build(session, child, childKey, scope, entity.type, scopes, childrenInScroll)
             }
             node.stateName?.let { applyChildStates(node, it) }
             return node

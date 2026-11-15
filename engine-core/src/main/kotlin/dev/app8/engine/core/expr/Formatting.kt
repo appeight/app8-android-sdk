@@ -140,5 +140,22 @@ internal object Formatting {
         return null
     }
 
+    /** ISO-8601 in UTC with `Z`, whole seconds (`2026-11-15T09:30:00Z`). */
+    fun isoUtc(instant: Instant): String =
+        DateTimeFormatter.ISO_INSTANT.format(instant.truncatedTo(java.time.temporal.ChronoUnit.SECONDS))
+
+    /** A date-only string (`yyyy-MM-dd`) as a calendar date; null for anything else. */
+    fun parseLocalDate(value: Any?): LocalDate? {
+        val str = value as? String ?: return null
+        val m = dateOnlyRegex.matchEntire(str) ?: return null
+        return try {
+            LocalDate.of(m.groupValues[1].toInt(), m.groupValues[2].toInt(), m.groupValues[3].toInt())
+        } catch (_: java.time.DateTimeException) {
+            null
+        } catch (_: NumberFormatException) {
+            null
+        }
+    }
+
     // endregion
 }
