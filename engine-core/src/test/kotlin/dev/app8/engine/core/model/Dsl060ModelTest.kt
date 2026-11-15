@@ -14,17 +14,17 @@ class Dsl060ModelTest {
     @Test
     fun `forEach and with nest single actions or lists`() {
         val loop = action(
-            """{"type":"forEach","items":"{{cartLines}}","as":"line","index":"i",
-               "actions":{"type":"incrementArrayItem","variableName":"cart","matchBy":"key","value":{"key":"{{line.key}}"}}}""",
+            """{"type":"forEach","items":"{{selectedTasks}}","as":"line","index":"i",
+               "actions":{"type":"incrementArrayItem","variableName":"tasks","matchBy":"key","value":{"key":"{{line.key}}"}}}""",
         )
         assertEquals(Action.Type.forEach, loop.type)
         assertEquals("line", loop.itemName)
         assertEquals(JsonPrimitive("i"), loop.index)
         assertEquals(Action.Type.incrementArrayItem, loop.actions!!.single().type)
 
-        val with = action("""{"type":"with","values":{"qty":1},"actions":[{"type":"dismiss"},{"type":"navigation","nextScreen":"next"}]}""")
+        val with = action("""{"type":"with","values":{"count":1},"actions":[{"type":"dismiss"},{"type":"navigation","nextScreen":"next"}]}""")
         assertEquals(Action.Type.with, with.type)
-        assertEquals(JsonPrimitive(1), with.values!!["qty"])
+        assertEquals(JsonPrimitive(1), with.values!!["count"])
         assertEquals(listOf(Action.Type.dismiss, Action.Type.navigation), with.actions!!.map { it.type })
     }
 

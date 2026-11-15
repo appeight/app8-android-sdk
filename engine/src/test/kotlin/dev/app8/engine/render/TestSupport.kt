@@ -48,7 +48,7 @@ internal class RecordingHost : HostEffects {
 }
 
 internal const val APP_JSON = """{"title":"T","navigation":{"startFlow":"f","flows":[{"id":"f","startScreen":"s"}]},
-  "variables":{"cartCount":{"type":"number","initialValue":2}}}"""
+  "variables":{"taskCount":{"type":"number","initialValue":2}}}"""
 
 internal fun runtime(screens: Map<String, String>, app: String = APP_JSON, datasources: Map<String, String> = emptyMap()) =
     runtime(MemoryDataSource(app, screens, datasources = datasources))

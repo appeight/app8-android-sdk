@@ -20,7 +20,7 @@ class NativeComponentTest {
       "children":[
         {"type":"native","id":"pad","content":{
           "properties":{"module":"signaturePad","props":{"tint":"{{tint}}","label":"Tint {{tint}}","colors":["black","{{tint}}"],
-            "nested":{"count":"{{cartCount}}"},"fixed":3,"none":null}},
+            "nested":{"count":"{{taskCount}}"},"fixed":3,"none":null}},
           "analytics":{"completed":{"name":"signatureCompleted","properties":{"signature":"{{event.signature.id}}"}}},
           "actions":{
             "completed":[

@@ -17,12 +17,12 @@ import kotlin.test.assertTrue
 class Dsl060ActionsTest {
     private val app = """{"title":"T","navigation":{"startFlow":"f","flows":[{"id":"f","startScreen":"s"}]},
       "variables":{"lastPing":{"type":"object"},
-        "catalog":{"type":"array","initialValue":[],"source":"datasources/items"}}}"""
+        "feed":{"type":"array","initialValue":[],"source":"datasources/items"}}}"""
 
     private val screen = """{"type":"screen","id":"s","content":{
       "variables":{
-        "lines":{"type":"array","initialValue":[{"key":"a","qty":2},{"key":"b","qty":1}]},
-        "cart":{"type":"array","initialValue":[]},
+        "lines":{"type":"array","initialValue":[{"key":"a","count":2},{"key":"b","count":1}]},
+        "tasks":{"type":"array","initialValue":[]},
         "log":{"type":"array","initialValue":[]},
         "item":{"type":"string","initialValue":"outer"},
         "items":{"type":"array","source":"datasources/items"},
@@ -33,7 +33,7 @@ class Dsl060ActionsTest {
       "children":[
         {"type":"view","id":"loop","content":{"actions":{"tap":[
           {"type":"forEach","items":"{{lines}}","as":"line","index":"i","actions":[
-            {"type":"appendToArray","variableName":"cart","value":{"key":"{{line.key}}","at":"{{i}}"}},
+            {"type":"appendToArray","variableName":"tasks","value":{"key":"{{line.key}}","at":"{{i}}"}},
             {"type":"appendToArray","variableName":"lines","value":{"key":"never visited"}},
             {"type":"forEach","items":"{{[1, 2]}}","actions":{"type":"appendToArray","variableName":"log","value":"{{line.key}}{{item}}"}}
           ]},
@@ -41,13 +41,13 @@ class Dsl060ActionsTest {
           {"type":"forEach","items":"{{missing}}","actions":{"type":"appendToArray","variableName":"log","value":"no"}}
         ]}}},
         {"type":"view","id":"with","content":{"actions":{"tap":
-          {"type":"with","values":{"product":{"key":"{{lines[0].key}}","n":"{{lines[0].qty}}"},"qty":1},"actions":[
+          {"type":"with","values":{"person":{"key":"{{lines[0].key}}","n":"{{lines[0].count}}"},"count":1},"actions":[
             {"type":"updateVariable","variableName":"lines","value":[]},
-            {"type":"upsertArrayItem","variableName":"cart","matchBy":"key","value":{"key":"{{product.key}}","n":"{{product.n}}","qty":"{{qty}}"}}
+            {"type":"upsertArrayItem","variableName":"tasks","matchBy":"key","value":{"key":"{{person.key}}","n":"{{person.n}}","count":"{{count}}"}}
           ]}}}},
         {"type":"view","id":"post","content":{"actions":{"tap":[
           {"type":"request","method":"post","url":"https://api.example.com/v1/items/{{lines[0].key}}","headers":{"Accept":"application/json"},
-            "body":{"key":"{{lines[0].key}}","qty":"{{lines[0].qty}}"},"resultVariable":"result",
+            "body":{"key":"{{lines[0].key}}","count":"{{lines[0].count}}"},"resultVariable":"result",
             "onSuccess":[{"type":"updateVariable","variableName":"message","value":"ok {{response.status}} {{response.body.id}} {{response.headers.etag}}"}],
             "onError":[{"type":"updateVariable","variableName":"message","value":"error {{response.status}}"}]},
           {"type":"appendToArray","variableName":"log","value":"after"}
@@ -108,7 +108,7 @@ class Dsl060ActionsTest {
     @Test
     fun `forEach walks a snapshot of items with element and index in scope`() {
         tap("loop")
-        assertEquals(listOf(mapOf("key" to "a", "at" to 0L), mapOf("key" to "b", "at" to 1L)), value("cart"))
+        assertEquals(listOf(mapOf("key" to "a", "at" to 0L), mapOf("key" to "b", "at" to 1L)), value("tasks"))
         assertEquals(4, (value("lines") as List<*>).size, "appends during the loop add no iterations")
         assertEquals(listOf("a1", "a2", "b1", "b2", "outer"), value("log"), "nested loops shadow `item` only inside")
     }
@@ -117,7 +117,7 @@ class Dsl060ActionsTest {
     fun `with evaluates its values once, before the nested actions`() {
         tap("with")
         assertEquals(emptyList<Any?>(), value("lines"))
-        assertEquals(listOf(mapOf("key" to "a", "n" to 2L, "qty" to 1L)), value("cart"))
+        assertEquals(listOf(mapOf("key" to "a", "n" to 2L, "count" to 1L)), value("tasks"))
     }
 
     @Test
@@ -126,7 +126,7 @@ class Dsl060ActionsTest {
         val sent = requests.single()
         assertEquals("POST", sent.method)
         assertEquals("https://api.example.com/v1/items/a", sent.url)
-        assertEquals("""{"key":"a","qty":2}""", sent.body)
+        assertEquals("""{"key":"a","count":2}""", sent.body)
         assertEquals(mapOf("Accept" to "application/json", "Content-Type" to "application/json", "Authorization" to "Bearer t"), sent.headers)
         assertEquals("ok 201 7 v1", value("message"))
         assertEquals(mapOf("status" to 201L, "body" to mapOf("id" to 7L), "headers" to mapOf("etag" to "v1")), value("result"))
@@ -169,7 +169,7 @@ class Dsl060ActionsTest {
 
     @Test
     fun `reloadDatasource refetches once and updates app and screen variables`() {
-        assertEquals(listOf(mapOf("id" to 1L)), rt.appStore.getValue("catalog"), "app variables load their source at start")
+        assertEquals(listOf(mapOf("id" to 1L)), rt.appStore.getValue("feed"), "app variables load their source at start")
         assertTrue(":datasources/items" in fetched, "app scope asks with an empty screen id")
         assertEquals(emptyList(), reloads, "the first load is not a reload")
         data["datasources/items"] = """[{"id":1},{"id":2}]"""
@@ -178,7 +178,7 @@ class Dsl060ActionsTest {
         assertEquals(listOf("s:datasources/items"), fetched)
         assertEquals(listOf("s:datasources/items"), reloads, "a reload goes through reloadDatasource (cache bypass)")
         assertEquals(2, (value("items") as List<*>).size)
-        assertEquals(2, (rt.appStore.getValue("catalog") as List<*>).size)
+        assertEquals(2, (rt.appStore.getValue("feed") as List<*>).size)
         assertEquals(true, value("reloaded"))
 
         data.remove("datasources/items")

@@ -18,7 +18,7 @@ class ArrayActionsTest {
         store = VariableStore()
         store.defineVariable("list", VariableDefinition(VariableType.ARRAY, listOf("a", "b", "c")))
         store.defineVariable(
-            "cart",
+            "tasks",
             VariableDefinition(
                 VariableType.ARRAY,
                 listOf(mapOf("key" to "x", "quantity" to 1L, "note" to "keep?"), mapOf("key" to "y", "quantity" to 2L), mapOf("key" to "x", "quantity" to 5L)),
@@ -54,40 +54,40 @@ class ArrayActionsTest {
 
     @Test
     fun `upsert replaces the first match exactly or inserts at position`() {
-        run("""{"type":"upsertArrayItem","variableName":"cart","matchBy":"key","value":{"key":"x","quantity":9}}""")
+        run("""{"type":"upsertArrayItem","variableName":"tasks","matchBy":"key","value":{"key":"x","quantity":9}}""")
         @Suppress("UNCHECKED_CAST")
-        val cart = store.getValue("cart") as List<Map<String, Any?>>
-        assertEquals(mapOf("key" to "x", "quantity" to 9L), cart[0], "replaced exactly, other fields dropped")
-        assertEquals(5L, cart[2]["quantity"], "only the first match")
-        run("""{"type":"upsertArrayItem","variableName":"cart","matchBy":"key","value":{"key":"z"},"position":"start"}""")
-        assertEquals(listOf("z", "x", "y", "x"), keys("cart"))
-        run("""{"type":"upsertArrayItem","variableName":"cart","matchBy":"key","value":{"key":"w"}}""")
-        assertEquals(listOf("z", "x", "y", "x", "w"), keys("cart"))
-        run("""{"type":"upsertArrayItem","variableName":"cart","matchBy":"key","value":{"other":1}}""")
-        assertEquals(5, (store.getValue("cart") as List<*>).size, "a missing match key is a no-op")
+        val tasks = store.getValue("tasks") as List<Map<String, Any?>>
+        assertEquals(mapOf("key" to "x", "quantity" to 9L), tasks[0], "replaced exactly, other fields dropped")
+        assertEquals(5L, tasks[2]["quantity"], "only the first match")
+        run("""{"type":"upsertArrayItem","variableName":"tasks","matchBy":"key","value":{"key":"z"},"position":"start"}""")
+        assertEquals(listOf("z", "x", "y", "x"), keys("tasks"))
+        run("""{"type":"upsertArrayItem","variableName":"tasks","matchBy":"key","value":{"key":"w"}}""")
+        assertEquals(listOf("z", "x", "y", "x", "w"), keys("tasks"))
+        run("""{"type":"upsertArrayItem","variableName":"tasks","matchBy":"key","value":{"other":1}}""")
+        assertEquals(5, (store.getValue("tasks") as List<*>).size, "a missing match key is a no-op")
     }
 
     @Test
     fun `remove by key removes every match, by index removes one`() {
-        run("""{"type":"removeArrayItem","variableName":"cart","matchBy":"key","value":"x"}""")
-        assertEquals(listOf("y"), keys("cart"))
+        run("""{"type":"removeArrayItem","variableName":"tasks","matchBy":"key","value":"x"}""")
+        assertEquals(listOf("y"), keys("tasks"))
         setUp()
-        run("""{"type":"removeArrayItem","variableName":"cart","matchBy":"key","value":{"key":"y","quantity":2}}""")
-        assertEquals(listOf("x", "x"), keys("cart"), "an object value uses its own key")
+        run("""{"type":"removeArrayItem","variableName":"tasks","matchBy":"key","value":{"key":"y","quantity":2}}""")
+        assertEquals(listOf("x", "x"), keys("tasks"), "an object value uses its own key")
         run("""{"type":"removeArrayItem","variableName":"list","index":-1}""")
         assertEquals(listOf("a", "b"), store.getValue("list"))
         run("""{"type":"removeArrayItem","variableName":"list","index":7}""")
         assertEquals(listOf("a", "b"), store.getValue("list"), "out of range: no-op")
         run("""{"type":"removeArrayItem","variableName":"list","index":0,"matchBy":"key","value":"b"}""")
         assertEquals(listOf("b"), store.getValue("list"), "index wins over matchBy")
-        run("""{"type":"removeArrayItem","variableName":"cart","matchBy":"key","value":"{{null}}"}""")
-        assertEquals(listOf("x", "x"), keys("cart"), "a null key is a no-op")
+        run("""{"type":"removeArrayItem","variableName":"tasks","matchBy":"key","value":"{{null}}"}""")
+        assertEquals(listOf("x", "x"), keys("tasks"), "a null key is a no-op")
     }
 
     @Test
     fun `incrementArrayItem with a null key does nothing`() {
-        run("""{"type":"incrementArrayItem","variableName":"cart","matchBy":"key","value":{"key":"{{null}}","quantity":1}}""")
-        run("""{"type":"incrementArrayItem","variableName":"cart","matchBy":"key","value":"{{null}}"}""")
-        assertEquals(listOf("x", "y", "x"), keys("cart"))
+        run("""{"type":"incrementArrayItem","variableName":"tasks","matchBy":"key","value":{"key":"{{null}}","quantity":1}}""")
+        run("""{"type":"incrementArrayItem","variableName":"tasks","matchBy":"key","value":"{{null}}"}""")
+        assertEquals(listOf("x", "y", "x"), keys("tasks"))
     }
 }
