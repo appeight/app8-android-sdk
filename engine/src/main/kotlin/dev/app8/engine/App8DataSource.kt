@@ -28,6 +28,13 @@ public interface App8DataSource {
     public suspend fun getDatasource(screenId: String, datasourceId: String): ByteArray =
         throw DatasourceException.NotFound(screenId, datasourceId)
 
+    /**
+     * Fetches a datasource again for the DSL `reloadDatasource` action; a caching source must
+     * bypass its cache. [screenId] is empty for app variables. Default: [getDatasource].
+     */
+    public suspend fun reloadDatasource(screenId: String, datasourceId: String): ByteArray =
+        getDatasource(screenId, datasourceId)
+
     /** Every screen id, when the source can enumerate them (diagnostics); null otherwise. */
     public suspend fun getAllScreenIds(): List<String>? = null
 

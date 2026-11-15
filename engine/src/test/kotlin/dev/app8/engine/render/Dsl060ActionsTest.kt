@@ -72,9 +72,15 @@ class Dsl060ActionsTest {
     private val data = mutableMapOf("datasources/items" to """[{"id":1}]""")
     private val requests = mutableListOf<App8HttpRequest>()
     private val fetched = mutableListOf<String>()
+    private val reloads = mutableListOf<String>()
     private var reject = false
 
     private val source = object : MemoryDataSource(app, mapOf("s" to screen)) {
+        override suspend fun reloadDatasource(screenId: String, datasourceId: String): ByteArray {
+            reloads += "$screenId:$datasourceId"
+            return super.reloadDatasource(screenId, datasourceId)
+        }
+
         override suspend fun getDatasource(screenId: String, datasourceId: String): ByteArray {
             fetched += "$screenId:$datasourceId"
             return (data[datasourceId] ?: error("offline")).encodeToByteArray()
@@ -165,10 +171,12 @@ class Dsl060ActionsTest {
     fun `reloadDatasource refetches once and updates app and screen variables`() {
         assertEquals(listOf(mapOf("id" to 1L)), rt.appStore.getValue("catalog"), "app variables load their source at start")
         assertTrue(":datasources/items" in fetched, "app scope asks with an empty screen id")
+        assertEquals(emptyList(), reloads, "the first load is not a reload")
         data["datasources/items"] = """[{"id":1},{"id":2}]"""
         fetched.clear()
         tap("reload")
         assertEquals(listOf("s:datasources/items"), fetched)
+        assertEquals(listOf("s:datasources/items"), reloads, "a reload goes through reloadDatasource (cache bypass)")
         assertEquals(2, (value("items") as List<*>).size)
         assertEquals(2, (rt.appStore.getValue("catalog") as List<*>).size)
         assertEquals(true, value("reloaded"))

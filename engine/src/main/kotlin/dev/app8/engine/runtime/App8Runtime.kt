@@ -140,7 +140,7 @@ internal class App8Runtime(
         beginWork()
         try {
             val bytes = try {
-                withContext(ioDispatcher) { dataSource.getDatasource(screenId, source) }
+                withContext(ioDispatcher) { dataSource.reloadDatasource(screenId, source) }
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
