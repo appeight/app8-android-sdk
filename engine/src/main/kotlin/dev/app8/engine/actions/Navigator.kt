@@ -13,6 +13,17 @@ internal interface Navigator {
     /** [transition]: a custom modal transition (`mode: modal`); null for a system presentation. */
     fun present(screenId: String, params: Map<String, Any?>, presentation: Action.PresentationStyle, detents: List<Action.SheetDetent>?, grabber: Boolean?, transition: dev.app8.engine.core.model.ScreenTransition? = null, zoom: dev.app8.engine.navigation.transitions.ZoomOrigin? = null)
     fun dismiss()
+
+    /**
+     * `dismiss` with more actions after it in the same list: dismisses, waits until the
+     * dismissal has finished, and returns the navigator the rest of the list uses (the
+     * presenting screen's stack).
+     */
+    suspend fun dismissAndAwait(): Navigator {
+        dismiss()
+        return this
+    }
+
     fun selectTab(index: Int?, id: String?)
     fun completeFlow(destination: String)
 

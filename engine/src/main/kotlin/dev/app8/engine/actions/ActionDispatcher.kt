@@ -17,7 +17,12 @@ import dev.app8.engine.events.App8Event
 import dev.app8.engine.render.RenderNode
 import dev.app8.engine.render.string
 import dev.app8.engine.runtime.App8Runtime
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
 
 /**
  * The one place DSL actions run (iOS `CBaseViewModel.dispatchTrigger` / `executeAction`).
@@ -31,7 +36,6 @@ internal class ActionDispatcher(
 ) {
     private val variableHandler = VariableActionHandler().apply { logger = runtime.diagnostics }
 
-    /** Fires analytics for [trigger] on [node], then runs its actions in order. */
     /**
      * Fires analytics for [trigger] on [node], then runs its actions in order. Collections pass
      * the tapped cell's [context] and [store] so `{{item}}` resolves and variable actions run
@@ -44,8 +48,39 @@ internal class ActionDispatcher(
         store: VariableStoreProtocol = node.scope.store,
     ) {
         fireTriggerAnalytics(node, trigger, context)
-        val actions = node.content.actions?.get(trigger).orEmpty()
-        for (action in actions) execute(node, action, context, store)
+        run(node, node.content.actions?.get(trigger).orEmpty(), context, store)
+    }
+
+    /**
+     * Runs [actions] in order, as one action list. Each action finishes before the next starts;
+     * the list runs synchronously until something has to wait (`dismiss` followed by more
+     * actions waits for the dismissal, `reloadDatasource` for the data). A `request` does not
+     * hold the list up: its `onSuccess` / `onError` run when the response arrives.
+     */
+    fun run(
+        node: RenderNode,
+        actions: List<Action>,
+        context: VariableContext = node.scope.untracked,
+        store: VariableStoreProtocol = node.scope.store,
+    ) {
+        if (actions.isEmpty()) return
+        runtime.actionScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            runList(node, actions, context, store, Exec(navigator))
+        }
+    }
+
+    /**
+     * The navigator an action list talks to. After a `dismiss` with more actions behind it,
+     * [pending] resolves to the presenting screen's navigator once the modal is gone; the
+     * next `navigation` waits for it, other actions run right away.
+     */
+    private class Exec(var navigator: Navigator) {
+        var pending: kotlinx.coroutines.Deferred<Navigator>? = null
+
+        suspend fun forNavigation(): Navigator {
+            pending?.let { navigator = it.await(); pending = null }
+            return navigator
+        }
     }
 
     /**
@@ -75,13 +110,14 @@ internal class ActionDispatcher(
             }
             analytics(node, normalizeAuthorAnalyticsName(binding.name, ::warnOnce), props, rowId, "tableViewRow")
         }
-        for (action in actions) execute(node, action, context)
+        run(node, actions, context)
     }
 
     /**
      * A `native` component's module event (contract: app8-dsl `docs/components/native.md`).
-     * Forwards it to the event bus as `native.<module>.<event>`, then runs `actions[event]` with [payload] in scope as `event` (the way
-     * `onAnnotationTap` exposes `item`). [payload] is normalized to DSL values first.
+     * Forwards it to the event bus as `native.<module>.<event>`, fires the author's
+     * `analytics[event]` binding, then runs `actions[event]` with [payload] in scope as `event`
+     * (the way `onAnnotationTap` exposes `item`). [payload] is normalized to DSL values first.
      */
     fun dispatchNativeEvent(node: RenderNode, event: String, payload: Map<String, Any?>) {
         val content = node.content as? NativeContent ?: return
@@ -103,29 +139,61 @@ internal class ActionDispatcher(
             ),
         )
         val context = node.scope.untracked.overlaying("event", value)
-        for (action in content.events[event].orEmpty()) execute(node, action, context)
+        content.eventAnalytics[event]?.let { binding -> fireBinding(node, binding, context) }
+        run(node, content.events[event].orEmpty(), context)
     }
 
+    /** Runs one action (a list of one). */
     fun execute(
         node: RenderNode,
         action: Action,
         context: VariableContext = node.scope.untracked,
         store: VariableStoreProtocol = node.scope.store,
-    ) {
+    ) = run(node, listOf(action), context, store)
+
+    private suspend fun runList(node: RenderNode, actions: List<Action>, context: VariableContext, store: VariableStoreProtocol, exec: Exec) {
+        for ((i, action) in actions.withIndex()) {
+            try {
+                runOne(node, action, context, store, exec, last = i == actions.lastIndex)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                runtime.diagnostics.warn("action", "${action.type} in ${node.key}: ${e.message}")
+            }
+        }
+    }
+
+    private suspend fun runOne(node: RenderNode, action: Action, context: VariableContext, store: VariableStoreProtocol, exec: Exec, last: Boolean) {
         // iOS gives every component its own store; here a component without variables shares
         // its parent's, so a `component`-scope reset from it resets nothing (its own store is empty).
         if (action.type == Action.Type.resetVariables && action.scope == Action.VariableScope.component && !node.ownsVariableScope) return
+        val navigator = exec.navigator
         when (action.type) {
             Action.Type.updateVariable, Action.Type.incrementVariable, Action.Type.toggleArrayValue,
             Action.Type.appendToArray, Action.Type.incrementArrayItem, Action.Type.updateMultipleVariables,
+            Action.Type.insertArrayItem, Action.Type.upsertArrayItem, Action.Type.removeArrayItem,
             Action.Type.resetVariables,
             -> runCatching { variableHandler.execute(action.toVariableAction(), store, context) }
                 .onFailure { runtime.diagnostics.warn("action.variable", "${action.type} in ${node.key}: ${it.message}") }
 
+            Action.Type.forEach -> forEach(node, action, context, store, exec)
+            Action.Type.with -> {
+                var scoped = context
+                for ((name, raw) in action.values.orEmpty()) scoped = scoped.overlaying(name, resolveDeep(raw, context))
+                runList(node, action.actions.orEmpty(), scoped, store, exec)
+            }
+            Action.Type.request -> request(node, action, context, store, exec)
+            Action.Type.reloadDatasource -> reloadDatasource(node, action, context, store, exec)
+
             Action.Type.setState -> action.stateName?.let { raw -> setState(node, node.string(raw, context) ?: raw) }
-            Action.Type.navigation -> navigation(node, action, context)
+            Action.Type.navigation -> navigation(node, action, context, exec.forNavigation())
             Action.Type.completeFlow -> action.destination?.let { navigator.completeFlow(it) }
-            Action.Type.dismiss -> navigator.dismiss()
+            // With more actions behind it, a dismiss lets the next `navigation` wait for it to finish.
+            Action.Type.dismiss -> if (last) {
+                navigator.dismiss()
+            } else {
+                exec.pending = runtime.actionScope.async(start = CoroutineStart.UNDISPATCHED) { navigator.dismissAndAwait() }
+            }
             Action.Type.selectTab -> navigator.selectTab(action.tabIndex, action.tabId)
             Action.Type.showAlert -> showAlert(node, action, context)
             Action.Type.haptic -> host.haptic(action.hapticStyle ?: Action.HapticStyle.medium)
@@ -145,6 +213,80 @@ internal class ActionDispatcher(
             Action.Type.focusPrevious -> node.session.focus.focusPrevious()
             Action.Type.dismissKeyboard -> node.session.focus.dismissKeyboard()
             Action.Type.executeFunction, Action.Type.complete -> Unit
+        }
+    }
+
+    /** `forEach`: the nested actions once per element of `items`, with the element (and index) in scope. */
+    private suspend fun forEach(node: RenderNode, action: Action, context: VariableContext, store: VariableStoreProtocol, exec: Exec) {
+        val raw = action.items ?: return
+        val items = resolveDeep(raw, context) as? List<*> ?: return
+        val itemName = action.itemName?.takeIf { it.isNotEmpty() } ?: "item"
+        val indexName = (action.index as? JsonPrimitive)?.takeIf { it.isString }?.content?.takeIf { it.isNotEmpty() }
+        val nested = action.actions.orEmpty()
+        for ((i, element) in items.withIndex()) {
+            var scoped = context.overlaying(itemName, element ?: Values.Null)
+            if (indexName != null) scoped = scoped.overlaying(indexName, i.toLong())
+            runList(node, nested, scoped, store, exec)
+        }
+    }
+
+    /**
+     * `request`: sends the HTTP request through the data source's `prepareRequest`, then runs
+     * `onSuccess` (2xx) or `onError` with `response` in scope. The action list goes on at once.
+     */
+    private fun request(node: RenderNode, action: Action, context: VariableContext, store: VariableStoreProtocol, exec: Exec) {
+        val method = (action.method ?: "GET").uppercase(java.util.Locale.ROOT)
+        val url = action.url?.let { node.string(it, context) }?.trim()
+        val headers = LinkedHashMap<String, String>()
+        for ((name, raw) in action.headers.orEmpty()) {
+            dev.app8.engine.render.Coerce.string(resolveDeep(raw, context))?.let { headers[name] = it }
+        }
+        var body = action.body?.let { Values.toJson(resolveDeep(it, context)).toString() }
+        if (body != null && method == "GET") {
+            runtime.diagnostics.warn("action.request", "GET request in ${node.key} has a body; it is not sent")
+            body = null
+        }
+        if (body != null && headers.keys.none { it.equals("Content-Type", ignoreCase = true) }) headers["Content-Type"] = "application/json"
+        val navigator = exec.navigator
+        runtime.actionScope.launch {
+            val absolute = url != null && (url.startsWith("https://", ignoreCase = true) || url.startsWith("http://", ignoreCase = true))
+            val response: Map<String, Any?> = if (!absolute || method !in HTTP_METHODS) {
+                runtime.diagnostics.warn("action.request", "request in ${node.key}: ${if (!absolute) "'${url.orEmpty()}' is not an absolute http(s) URL" else "unsupported method $method"}")
+                dev.app8.engine.runtime.HttpResponse.failure()
+            } else {
+                runtime.send(dev.app8.engine.App8HttpRequest(method, url!!, headers, body))
+            }
+            val alive = node.session.isAlive
+            action.resultVariable?.let { name ->
+                // Once the screen is gone only an app variable is still written.
+                val target = if (alive) store else runtime.appStore.takeIf { it.hasVariable(name) }
+                target?.let { t ->
+                    runCatching { t.setValue(name, response) }
+                        .onFailure { runtime.diagnostics.warn("action.request", "resultVariable '$name' in ${node.key}: ${it.message}") }
+                }
+            }
+            if (!alive) return@launch
+            val status = (response["status"] as? Number)?.toInt() ?: 0
+            val handlers = if (status in 200..299) action.onSuccess else action.onError
+            runList(node, handlers.orEmpty(), context.overlaying("response", response), store, Exec(navigator))
+        }
+    }
+
+    /**
+     * `reloadDatasource`: refetches `source` once (for this screen) and writes it into every
+     * bound variable, then runs `onSuccess` / `onError`. The action list goes on at once.
+     */
+    private fun reloadDatasource(node: RenderNode, action: Action, context: VariableContext, store: VariableStoreProtocol, exec: Exec) {
+        val source = action.source?.let { node.string(it, context) }
+        if (source.isNullOrEmpty()) {
+            runtime.diagnostics.warn("action.reloadDatasource", "reloadDatasource without `source` in ${node.key}")
+            return
+        }
+        val navigator = exec.navigator
+        runtime.actionScope.launch {
+            val ok = runtime.reloadDatasource(source, node.session.screenId)
+            if (!node.session.isAlive) return@launch
+            runList(node, (if (ok) action.onSuccess else action.onError).orEmpty(), context, store, Exec(navigator))
         }
     }
 
@@ -176,7 +318,7 @@ internal class ActionDispatcher(
         )
     }
 
-    private fun navigation(node: RenderNode, action: Action, context: VariableContext) {
+    private fun navigation(node: RenderNode, action: Action, context: VariableContext, navigator: Navigator) {
         var posted = false
         val next = action.nextScreen
         if (action.isBack == true) {
@@ -232,7 +374,7 @@ internal class ActionDispatcher(
 
     private fun showAlert(node: RenderNode, action: Action, context: VariableContext) {
         val buttons = action.alertActions?.map { a ->
-            AlertRequest.Button(a.title, a.style ?: Action.AlertActionStyle.default) { a.action?.let { execute(node, it, context) } }
+            AlertRequest.Button(a.title, a.style ?: Action.AlertActionStyle.default) { a.action?.let { run(node, listOf(it), context) } }
         } ?: listOf(AlertRequest.Button("OK", Action.AlertActionStyle.default) {})
         host.alert(AlertRequest(action.alertTitle?.let { node.string(it, context) }, action.alertMessage?.let { node.string(it, context) }, buttons))
     }
@@ -242,6 +384,11 @@ internal class ActionDispatcher(
             analytics(node, App8AnalyticsEvent.Auto.COMPONENT_TAPPED, emptyMap())
         }
         val binding: AnalyticsBinding = node.content.analytics?.get(trigger) ?: return
+        fireBinding(node, binding, context)
+    }
+
+    /** An author-declared analytics binding, its properties resolved in [context]. */
+    private fun fireBinding(node: RenderNode, binding: AnalyticsBinding, context: VariableContext) {
         val props = resolvePayload(node, binding.properties, context)
         for (key in props.keys) {
             if (key in App8AnalyticsEvent.canonicalKeys) {
@@ -277,6 +424,19 @@ internal class ActionDispatcher(
     private fun resolvePayload(node: RenderNode, raw: Map<String, JsonElement>?, context: VariableContext): Map<String, Any?> =
         raw.orEmpty().mapValues { (_, v) -> resolveValue(v, context) }
 
+    /** A JSON value with `{{…}}` resolved everywhere inside it (objects and arrays included). */
+    private fun resolveDeep(element: JsonElement, context: VariableContext): Any? {
+        val v = Values.fromJson(element)
+        if (v === Values.Null) return null
+        return runCatching { runtime.propertyResolver.resolveAny(v, context) }
+            .onFailure { runtime.diagnostics.warn("expression", "${it.message}") }
+            .getOrNull()?.takeUnless { it === Values.Null }
+    }
+
+    private companion object {
+        val HTTP_METHODS = setOf("GET", "POST", "PUT", "PATCH", "DELETE")
+    }
+
     /** iOS `resolvePayload`: strings get `{{…}}` resolution, other JSON passes through. */
     private fun resolveValue(element: JsonElement, context: VariableContext): Any? {
         val v = Values.fromJson(element)
@@ -310,4 +470,6 @@ internal fun Action.toVariableAction(): VariableAction = VariableAction(
     updates = updates?.mapValues { (_, v) -> AnyCodableValue.fromJson(v) },
     scope = scope?.name,
     key = key,
+    index = index?.let { AnyCodableValue.fromJson(it) },
+    position = position,
 )

@@ -230,6 +230,8 @@ private fun ScreenAnalytics(session: ScreenSession, bar: NavigationBar?) {
     val runtime = session.runtime
     DisposableEffect(session) {
         val start = System.currentTimeMillis()
+        // `now()` / `today()` re-evaluate when a screen appears.
+        runtime.tickClock()
         if (runtime.analyticsConfig.autoScreenEvents) {
             val title = bar?.title?.let { session.root.string(it, session.scope.untracked) }
             runtime.analyticsBus.dispatch(

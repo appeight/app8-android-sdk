@@ -27,10 +27,12 @@ public data class NativeContent(
     val events: Map<String, List<Action>> = emptyMap(),
     val fallback: Component? = null,
     override val accessibility: Accessibility? = null,
+    /** `content.analytics` keyed by module event name: fired when the module emits the event. */
+    val eventAnalytics: Map<String, AnalyticsBinding> = emptyMap(),
 ) : EntityContent {
     /**
-     * Module events are not component triggers: they run through [events]. Author analytics on
-     * module events are not part of DSL 0.6 (hosts observe `native.<module>.<event>`).
+     * Module events are not component triggers: they run through [events] and fire
+     * [eventAnalytics].
      */
     override val actions: Map<ActionTrigger, List<Action>>? get() = null
     override val analytics: Map<ActionTrigger, AnalyticsBinding>? get() = null
@@ -53,5 +55,6 @@ internal fun decodeNativeContent(c: Cursor): NativeContent {
         events = c.opt("actions") { m -> m.map(::decodeActionList) }.orEmpty(),
         fallback = c.optComponent("fallback"),
         accessibility = c.opt("accessibility", ::decodeAccessibility),
+        eventAnalytics = c.opt("analytics") { m -> m.map(::decodeAnalyticsBinding) }.orEmpty(),
     )
 }

@@ -28,6 +28,9 @@ public class VariableActionHandler {
             VariableActionType.TOGGLE_ARRAY_VALUE -> handleToggleArrayValue(action, store, context)
             VariableActionType.APPEND_TO_ARRAY -> handleAppendToArray(action, store, context)
             VariableActionType.INCREMENT_ARRAY_ITEM -> handleIncrementArrayItem(action, store, context)
+            VariableActionType.INSERT_ARRAY_ITEM -> handleInsertArrayItem(action, store, context)
+            VariableActionType.UPSERT_ARRAY_ITEM -> handleUpsertArrayItem(action, store, context)
+            VariableActionType.REMOVE_ARRAY_ITEM -> handleRemoveArrayItem(action, store, context)
             VariableActionType.UPDATE_MULTIPLE_VARIABLES -> handleUpdateMultipleVariables(action, store, context)
             VariableActionType.RESET_VARIABLES -> handleResetVariables(action, store)
             null -> Unit
@@ -150,7 +153,8 @@ public class VariableActionHandler {
         val by = action.by ?: 1.0
         val resolved = resolveValue(value.value, context)
         val obj = Values.asMap(resolved)
-        val key: Any = (if (obj != null) obj[matchKey] else resolved) ?: return
+        // A null or missing match key is a no-op (never matches, never appends).
+        val key: Any = (if (obj != null) obj[matchKey] else resolved)?.takeUnless { Values.isNullish(it) } ?: return
 
         val array = (Values.asList(store.getValue(variableName)) ?: emptyList()).toMutableList()
         val index = array.indexOfFirst { element -> Values.asMap(element)?.get(matchKey)?.let { isEqual(it, key) } ?: false }
@@ -170,6 +174,100 @@ public class VariableActionHandler {
             return
         }
         store.setValue(variableName, array)
+    }
+
+    /** The array variable's elements; nil / undefined counts as empty. */
+    private fun currentArray(variableName: String, store: VariableStoreProtocol): List<Any?> {
+        val existing = store.getValue(variableName)
+        return Values.asList(existing)
+            ?: if (existing == null || existing === Values.Null) emptyList() else throw VariableException.TypeMismatch(
+                variableName, VariableType.ARRAY, Values.swiftTypeName(existing),
+            )
+    }
+
+    private fun resolvedIndex(action: VariableAction, context: VariableContext): Long? {
+        val raw = action.index?.value ?: return null
+        val v = resolveValue(raw, context)
+        return Values.asInt(v) ?: Values.asDouble(v)?.toLong() ?: (v as? String)?.trim()?.toDoubleOrNull()?.toLong()
+    }
+
+    /**
+     * Inserts `value` at `index` (default 0: prepend). The index clamps to `[0, count]`; a
+     * negative index counts from the end, so -1 appends.
+     */
+    private fun handleInsertArrayItem(action: VariableAction, store: VariableStoreProtocol, context: VariableContext) {
+        val variableName = action.variableName
+            ?: throw VariableException.UndefinedVariable("No variable name specified in insertArrayItem action")
+        val value = action.value
+            ?: throw VariableException.UndefinedVariable("No value specified in insertArrayItem action for '$variableName'")
+        val array = currentArray(variableName, store)
+        if (array.size >= EngineLimits.maxArrayVariableCount) {
+            logger?.warning("insertArrayItem: '$variableName' already at the ${EngineLimits.maxArrayVariableCount}-element cap — insert dropped")
+            return
+        }
+        val count = array.size.toLong()
+        val requested = resolvedIndex(action, context) ?: 0L
+        val at = (if (requested < 0) count + 1 + requested else requested).coerceIn(0L, count).toInt()
+        val out = array.toMutableList()
+        out.add(at, resolveValue(value.value, context))
+        store.setValue(variableName, out)
+    }
+
+    /**
+     * Replaces the first element whose `matchBy` key equals `value[matchBy]` with `value`
+     * exactly; otherwise inserts it at `position` (`end` by default, or `start`). A null or
+     * missing match key is a no-op.
+     */
+    private fun handleUpsertArrayItem(action: VariableAction, store: VariableStoreProtocol, context: VariableContext) {
+        val variableName = action.variableName
+            ?: throw VariableException.UndefinedVariable("No variable name specified in upsertArrayItem action")
+        val matchKey = action.matchBy
+            ?: throw VariableException.UndefinedVariable("No matchBy specified in upsertArrayItem action for '$variableName'")
+        val value = action.value
+            ?: throw VariableException.UndefinedVariable("No value specified in upsertArrayItem action for '$variableName'")
+        val resolved = resolveValue(value.value, context)
+        val key = Values.asMap(resolved)?.get(matchKey)?.takeUnless { Values.isNullish(it) } ?: return
+        val out = currentArray(variableName, store).toMutableList()
+        val index = out.indexOfFirst { e -> Values.asMap(e)?.get(matchKey)?.let { isEqual(it, key) } ?: false }
+        if (index >= 0) {
+            out[index] = resolved
+        } else {
+            if (out.size >= EngineLimits.maxArrayVariableCount) {
+                logger?.warning("upsertArrayItem: '$variableName' already at the ${EngineLimits.maxArrayVariableCount}-element cap — insert dropped")
+                return
+            }
+            if (action.position == "start") out.add(0, resolved) else out.add(resolved)
+        }
+        store.setValue(variableName, out)
+    }
+
+    /**
+     * With `index`: removes that element (negative counts from the end; out of range is a no-op).
+     * With `matchBy` + `value`: removes every object whose key equals the value (a full object
+     * value contributes its own key). With only `value`: removes every element equal to it.
+     */
+    private fun handleRemoveArrayItem(action: VariableAction, store: VariableStoreProtocol, context: VariableContext) {
+        val variableName = action.variableName
+            ?: throw VariableException.UndefinedVariable("No variable name specified in removeArrayItem action")
+        val array = currentArray(variableName, store)
+        val requested = resolvedIndex(action, context)
+        val out: List<Any?> = if (requested != null) {
+            val at = if (requested < 0) array.size + requested else requested
+            if (at < 0 || at >= array.size) return
+            array.filterIndexed { i, _ -> i.toLong() != at }
+        } else {
+            val value = action.value
+                ?: throw VariableException.UndefinedVariable("removeArrayItem needs `index` or `value` for '$variableName'")
+            val resolved = resolveValue(value.value, context)
+            val matchKey = action.matchBy
+            if (matchKey != null) {
+                val key = (Values.asMap(resolved)?.get(matchKey) ?: resolved)?.takeUnless { Values.isNullish(it) } ?: return
+                array.filterNot { e -> Values.asMap(e)?.get(matchKey)?.let { isEqual(it, key) } ?: false }
+            } else {
+                array.filterNot { isEqual(it, resolved) }
+            }
+        }
+        if (out.size != array.size) store.setValue(variableName, out)
     }
 
     private fun handleUpdateMultipleVariables(action: VariableAction, store: VariableStoreProtocol, context: VariableContext) {

@@ -11,7 +11,7 @@ import dev.app8.engine.runtime.App8Runtime
 import kotlinx.coroutines.runBlocking
 
 /** An app held in memory: `app.json`, screens by id, one stylesheet. */
-internal class MemoryDataSource(
+internal open class MemoryDataSource(
     private val app: String,
     private val screens: Map<String, String>,
     private val styles: String = "[]",
@@ -51,7 +51,11 @@ internal const val APP_JSON = """{"title":"T","navigation":{"startFlow":"f","flo
   "variables":{"cartCount":{"type":"number","initialValue":2}}}"""
 
 internal fun runtime(screens: Map<String, String>, app: String = APP_JSON, datasources: Map<String, String> = emptyMap()) =
-    App8Runtime(ContextWrapper(null), MemoryDataSource(app, screens, datasources = datasources), App8Config())
+    runtime(MemoryDataSource(app, screens, datasources = datasources))
+
+/** A runtime whose action lists and data-source calls run immediately on the calling thread. */
+internal fun runtime(source: App8DataSource, config: App8Config = App8Config()) =
+    App8Runtime(ContextWrapper(null), source, config, kotlinx.coroutines.Dispatchers.Unconfined, kotlinx.coroutines.Dispatchers.Unconfined)
 
 internal fun session(rt: App8Runtime, screenId: String = "s", params: Map<String, Any?> = emptyMap()): ScreenSession = runBlocking {
     rt.ensureReady()

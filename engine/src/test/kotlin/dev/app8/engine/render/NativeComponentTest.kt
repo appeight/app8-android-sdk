@@ -1,6 +1,5 @@
 package dev.app8.engine.render
 
-import android.content.ContextWrapper
 import dev.app8.engine.App8Config
 import dev.app8.engine.actions.ActionDispatcher
 import dev.app8.engine.core.model.NativeContent
@@ -9,7 +8,6 @@ import dev.app8.engine.events.App8Event
 import dev.app8.engine.nativecomponent.App8NativeComponent
 import dev.app8.engine.render.components.ComponentRegistry
 import dev.app8.engine.render.components.NativeKind
-import dev.app8.engine.runtime.App8Runtime
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertSame
@@ -36,11 +34,8 @@ class NativeComponentTest {
         }}
       ]}}"""
 
-    private fun runtime(components: Map<String, App8NativeComponent>) = App8Runtime(
-        ContextWrapper(null),
-        MemoryDataSource(APP_JSON, mapOf("s" to screen)),
-        App8Config(nativeComponents = components),
-    )
+    private fun runtime(components: Map<String, App8NativeComponent>) =
+        runtime(MemoryDataSource(APP_JSON, mapOf("s" to screen)), App8Config(nativeComponents = components))
 
     private val registered = App8NativeComponent { _, _ -> }
 
@@ -104,8 +99,11 @@ class NativeComponentTest {
         assertEquals("native", e.componentType)
         assertEquals(mapOf("id" to "abc", "levels" to listOf(mapOf("level" to 3L))), e.payload["signature"])
         assertEquals(0.5, e.payload["score"])
-        // DSL 0.6 has no author analytics on module events: only the navigation's auto event fires.
-        assertEquals(listOf("app8.navigation.pushed"), analytics.map { it.name })
+        // The author binding keyed by the event name fires with `event` in scope (no auto tap event).
+        assertEquals(listOf("app8.signatureCompleted", "app8.navigation.pushed"), analytics.map { it.name })
+        assertEquals("abc", analytics[0].properties["signature"])
+        assertEquals("pad", analytics[0].properties["component_id"])
+        assertEquals("native", analytics[0].properties["component_type"])
         assertEquals("abc", s.scope.store.getValue("lastSignatureId"))
         assertEquals(listOf("push:receipt"), nav.calls)
         assertEquals(mapOf("signatureId" to "abc", "level" to 3L), nav.params.single())

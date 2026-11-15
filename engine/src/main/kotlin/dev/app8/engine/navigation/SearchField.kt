@@ -129,7 +129,7 @@ internal fun NavSearchField(
             onQueryChange = ::write,
             onSearch = {
                 // Like UISearchBar, the field keeps focus (and the keyboard) after submit.
-                search.onSubmit?.forEach { dispatcher.execute(root, it) }
+                search.onSubmit?.let { dispatcher.run(root, it) }
             },
             expanded = expanded,
             onExpandedChange = { expanded = it },
