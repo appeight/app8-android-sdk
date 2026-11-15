@@ -73,13 +73,26 @@ internal fun outlineOf(rect: Rect, radii: CornerRadii, smoothing: Float): Outlin
 }
 
 /** Appends a rounded [rect] with [radii] (px). Clamps every radius to half the shorter side like UIKit. */
-internal fun Path.addRoundedRect(rect: Rect, radii: CornerRadii, smoothing: Float) {
+internal fun Path.addRoundedRect(rect: Rect, radii: CornerRadii, smoothing: Float) =
+    roundedRect(ComposePathSink(this), rect, radii, smoothing)
+
+/**
+ * [Path.addRoundedRect] into any [sink]. A square-cornered rect is drawn with lines, never
+ * `addRect`: before Android 13 a path made only of `addRect` calls is a "simple path" that
+ * HWUI draws as the union of its rects, ignoring the fill type, so an even-odd outline ring
+ * (two rects) filled solid.
+ */
+internal fun roundedRect(sink: PathSink, rect: Rect, radii: CornerRadii, smoothing: Float) {
     if (rect.width <= 0f || rect.height <= 0f) return
     if (radii.isZero) {
-        addRect(rect)
+        sink.moveTo(rect.left, rect.top)
+        sink.lineTo(rect.right, rect.top)
+        sink.lineTo(rect.right, rect.bottom)
+        sink.lineTo(rect.left, rect.bottom)
+        sink.close()
         return
     }
-    continuousRoundedRect(ComposePathSink(this), rect.left, rect.top, rect.width, rect.height, radii, smoothing)
+    continuousRoundedRect(sink, rect.left, rect.top, rect.width, rect.height, radii, smoothing)
 }
 
 private class ComposePathSink(private val path: Path) : PathSink {
