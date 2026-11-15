@@ -86,6 +86,21 @@ class CollectionPlanTest {
     }
 
     @Test
+    fun `self-sizing grid rows take the tallest natural item, fixed rows the cell height`() {
+        // DemoStore collection grid: 2 columns, estimatedItemHeight 470, no itemHeight.
+        val st = CollectionPlan.mixedStyle(
+            CollectionLayout(type = CollectionLayout.LayoutType.grid, columns = 2, itemSpacing = 10.0, estimatedItemHeight = 470.0, contentInsets = EdgeInsets(0.0, 10.0, 0.0, 10.0)),
+            null, false, null to null,
+        )
+        val g = CollectionPlan.grid(402.0, st)
+        assertEquals(null, g.cellHeight)
+        assertEquals(428.0, CollectionPlan.gridRowFill(g, listOf(402.0, 428.0)))
+        assertEquals(null, CollectionPlan.gridRowFill(g, listOf(0.0, 0.0)))
+        val fixed = CollectionPlan.grid(402.0, st.copy(itemHeight = 300.0))
+        assertEquals(300.0, CollectionPlan.gridRowFill(fixed, listOf(402.0, 428.0)))
+    }
+
+    @Test
     fun `mixed grid splits spacing around items and takes it back from the insets`() {
         val st = CollectionPlan.mixedStyle(
             CollectionLayout(type = CollectionLayout.LayoutType.grid, columns = 2, itemSpacing = 10.0, itemHeight = 50.0, contentInsets = EdgeInsets(0.0, 16.0, 0.0, 16.0)),
