@@ -1,4 +1,4 @@
-// Macrobenchmarks and the Baseline Profile generator, run against the sample app (DemoStore
+// Macrobenchmarks and the Baseline Profile generator, run against the sample app (the commerce sample
 // and the long list fixture). See docs/performance.md for the numbers and how to run them.
 plugins {
     alias(libs.plugins.android.test)

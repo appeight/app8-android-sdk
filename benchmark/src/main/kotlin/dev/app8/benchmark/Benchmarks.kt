@@ -14,7 +14,7 @@ import dev.app8.benchmark.Journeys.openProductAndBack
 import dev.app8.benchmark.Journeys.openShop
 import dev.app8.benchmark.Journeys.scrollLongList
 import dev.app8.benchmark.Journeys.scrollShop
-import dev.app8.benchmark.Journeys.startDemoStore
+import dev.app8.benchmark.Journeys.startSampleApp
 import dev.app8.benchmark.Journeys.startLongList
 import org.junit.Rule
 import org.junit.Test
@@ -51,7 +51,7 @@ class Benchmarks {
         startupMode = StartupMode.COLD,
         iterations = STARTUP_ITERATIONS,
         setupBlock = { pressHome() },
-    ) { startDemoStore() }
+    ) { startSampleApp() }
 
     private fun scrollShop(mode: CompilationMode) = rule.measureRepeated(
         packageName = PACKAGE,
@@ -61,7 +61,7 @@ class Benchmarks {
         iterations = ITERATIONS,
         setupBlock = {
             killProcess()
-            startDemoStore()
+            startSampleApp()
             openShop()
         },
     ) { scrollShop() }
@@ -74,7 +74,7 @@ class Benchmarks {
         iterations = ITERATIONS,
         setupBlock = {
             killProcess()
-            startDemoStore()
+            startSampleApp()
             openShop()
         },
     ) { openProductAndBack() }

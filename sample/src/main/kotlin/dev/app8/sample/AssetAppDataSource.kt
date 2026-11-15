@@ -5,7 +5,7 @@ import dev.app8.engine.App8DataSource
 import dev.app8.engine.core.vars.DatasourceException
 
 /**
- * An app bundled in the sample's assets, in the shoppu-web demo layout:
+ * An app bundled in the sample's assets, in the demo bundle layout:
  * `app.json`, `styles.json`, `components/`, `screens/<id>.json`, `datasources/<name>.json`,
  * `media/<asset>.(jpg|png)`.
  */

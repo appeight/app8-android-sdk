@@ -9,7 +9,7 @@ import kotlin.math.sqrt
 import kotlin.math.tan
 
 // Continuous ("squircle") corners, as CALayer.cornerCurve = .continuous draws
-// them on iOS. A port of shoppu-web `render/corner.ts` (`continuousPath`), which
+// them on iOS. A port of the web renderer's `corner.ts` (`continuousPath`), which
 // reconstructs Figma's corner smoothing (figma-squircle, MIT): each corner is a
 // cubic Bézier, a shorter circular arc and a mirrored cubic. Smoothing 0.6 is
 // Figma's "iOS" preset and matches UIKit's curve to a fraction of a point.

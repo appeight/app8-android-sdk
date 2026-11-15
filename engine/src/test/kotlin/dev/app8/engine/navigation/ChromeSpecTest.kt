@@ -8,7 +8,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * Pins the system chrome numbers to docs/android-chrome-spec.md, which the Studio web
+ * Pins the system chrome numbers to docs/android-chrome-spec.md, which the web
  * renderer copies. Change both together, with the Material source that justifies it.
  */
 class ChromeSpecTest {

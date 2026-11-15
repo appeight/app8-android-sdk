@@ -28,7 +28,7 @@ import androidx.navigation3.scene.Scene
  *   by 1/20 of its width; the screen below fades and slides in from the shared axis. The
  *   top screen fades only in the last third, so the preview stays readable.
  *
- * Studio's web renderer copies these numbers (docs/android-chrome-spec.md).
+ * The web renderer copies these numbers (docs/android-chrome-spec.md).
  */
 internal object MaterialTransitions {
     /** M3 `motionDurationLong1`, the shared axis duration MDC uses with M3 themes. */

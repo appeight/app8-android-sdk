@@ -22,7 +22,7 @@ import dev.app8.engine.core.model.style.VisualEffect
 // - iOS 26 Liquid Glass (UIGlassEffect) refracts and lenses the backdrop, adds
 //   specular highlights that follow device motion and morphs between shapes.
 //   None of that is reproducible with RenderEffect cheaply. We draw the same
-//   approximation as the web port (shoppu-web `GLASS`): a light blur, strong
+//   approximation as the web port (`GLASS`): a light blur, strong
 //   saturation, a thin white tint, a bright rim on top and a soft lift shadow.
 //   `container` (content inside the glass, interactive morph) has no equivalent:
 //   children are drawn above the glass, as for non-container glass.

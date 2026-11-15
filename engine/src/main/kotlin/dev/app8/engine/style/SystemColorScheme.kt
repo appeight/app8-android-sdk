@@ -11,7 +11,7 @@ import kotlin.math.roundToInt
  * The Material 3 color scheme system chrome (top app bar search field, navigation bar,
  * sheets, dialogs, pickers, ripple) draws with, built from the app's own DSL colors and
  * never Material's purple baseline (app8-dsl platforms.md, "Android system colors").
- * The Studio web renderer (`shoppu-web` `packages/app-dsl/src/android/colors.ts`)
+ * The web renderer
  * implements the same function; keep both identical.
  *
  * - [accent]: the brand accent (component tint, else the tab bar tint), null for none:
@@ -69,7 +69,7 @@ internal fun systemColorScheme(accent: Color?, dark: Boolean, background: Color 
     )
 }
 
-/** sRGB channel mix rounded to 8 bits, so Android and Studio produce the same hex. */
+/** sRGB channel mix rounded to 8 bits, so Android and the web renderer produce the same hex. */
 internal fun mix(a: Color, b: Color, t: Float): Color {
     val k = t.toDouble()
     fun ch(x: Float, y: Float) = (Math.round(x * 255.0) * (1 - k) + Math.round(y * 255.0) * k).roundToInt().coerceIn(0, 255) / 255f

@@ -17,9 +17,9 @@
    "initialValue": [
     {
      "handle": "item-a",
-     "title": "Sample Product 146",
+     "title": "Sample Item A",
      "price": "\u00a320.00",
-     "image": "p-sample-product-146",
+     "image": "p-item-a",
      "variant": "50ml",
      "variants": [
       {
@@ -37,21 +37,21 @@
      ],
      "images": [
       {
-       "image": "p-sample-product-146"
+       "image": "p-item-a"
       },
       {
-       "image": "p-sample-product-105"
+       "image": "p-item-b"
       },
       {
-       "image": "p-sample-product-x"
+       "image": "p-item-c"
       }
      ]
     },
     {
      "handle": "item-b",
-     "title": "Sample Product 105",
+     "title": "Sample Item B",
      "price": "\u00a321.00",
-     "image": "p-sample-product-105",
+     "image": "p-item-b",
      "variant": "50ml",
      "variants": [
       {
@@ -69,18 +69,18 @@
      ],
      "images": [
       {
-       "image": "p-sample-product-105"
+       "image": "p-item-b"
       },
       {
-       "image": "p-sample-product-161"
+       "image": "p-item-d"
       }
      ]
     },
     {
      "handle": "item-c",
-     "title": "sample-product-x",
+     "title": "Sample Item C",
      "price": "\u00a322.00",
-     "image": "p-sample-product-x",
+     "image": "p-item-c",
      "variant": "50ml",
      "variants": [
       {
@@ -98,10 +98,10 @@
      ],
      "images": [
       {
-       "image": "p-sample-product-x"
+       "image": "p-item-c"
       },
       {
-       "image": "p-sample-product-146"
+       "image": "p-item-a"
       }
      ]
     }
