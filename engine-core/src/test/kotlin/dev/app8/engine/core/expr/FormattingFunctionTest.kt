@@ -13,6 +13,7 @@ import java.util.Locale
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /** Port of iOS `FormattingFunctionTests` (locale pinned to en_US, as on iOS). */
@@ -39,7 +40,8 @@ class FormattingFunctionTest {
     }
 
     @Test fun formatDateWeekdayShort() = assertEquals("Mon", evaluate("{{formatDate('2026-01-12', 'weekdayShort')}}"))
-    @Test fun formatDateNilInput() = assertEquals("", evaluate("{{formatDate(null, 'short')}}"))
+    @Test fun formatDateNilInput() = assertNull(evaluate("{{formatDate(null, 'short')}}"))
+    @Test fun formatDateInvalidInput() = assertNull(evaluate("{{formatDate('not-a-date')}}"))
 
     @Test
     fun formatDateISOWithTime() {
@@ -61,7 +63,7 @@ class FormattingFunctionTest {
         assertTrue(result.contains("30"), "Expected ':30' in '$result'")
     }
 
-    @Test fun formatTimeNilInput() = assertEquals("", evaluate("{{formatTime(null)}}"))
+    @Test fun formatTimeNilInput() = assertNull(evaluate("{{formatTime(null)}}"))
 
     // formatDuration
 
@@ -88,14 +90,15 @@ class FormattingFunctionTest {
     }
 
     @Test fun ageInYearsFutureDate() = assertEquals(0L, evaluate("{{ageInYears('2099-01-01')}}"))
-    @Test fun ageInYearsInvalidInput() = assertEquals(0L, evaluate("{{ageInYears('not-a-date')}}"))
+    @Test fun ageInYearsInvalidInput() = assertNull(evaluate("{{ageInYears('not-a-date')}}"))
 
     // daysBetween
 
     @Test fun daysBetween() = assertEquals(5L, evaluate("{{daysBetween('2026-01-12', '2026-01-17')}}"))
     @Test fun daysBetweenSameDate() = assertEquals(0L, evaluate("{{daysBetween('2026-01-12', '2026-01-12')}}"))
     @Test fun daysBetweenReversedIsAbsolute() = assertEquals(5L, evaluate("{{daysBetween('2026-01-17', '2026-01-12')}}"))
-    @Test fun daysBetweenInvalidInput() = assertEquals(0L, evaluate("{{daysBetween('bad', '2026-01-12')}}"))
+    @Test fun daysBetweenInvalidInput() = assertNull(evaluate("{{daysBetween('bad', '2026-01-12')}}"))
+    @Test fun daysBetweenInvalidEnd() = assertNull(evaluate("{{daysBetween('2026-01-12', 'bad')}}"))
 
     // timeAgo
 
@@ -111,7 +114,8 @@ class FormattingFunctionTest {
         assertTrue(result.contains("days ago") || !result.contains("years"), "Expected 'days ago' in '$result'")
     }
 
-    @Test fun timeAgoInvalidInput() = assertEquals("", evaluate("{{timeAgo('not-a-date')}}"))
+    @Test fun timeAgoInvalidInput() = assertNull(evaluate("{{timeAgo('not-a-date')}}"))
+    @Test fun daysUntilInvalidInput() = assertNull(evaluate("{{daysUntil('not-a-date')}}"))
 
     // daysUntil
 

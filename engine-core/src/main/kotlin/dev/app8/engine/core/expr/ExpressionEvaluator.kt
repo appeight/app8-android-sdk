@@ -431,10 +431,10 @@ public class ExpressionEvaluator {
                 return result?.let { Values.wholeOrDouble(it) } ?: 0L
             }
 
-            // Formatting — date & time
+            // Formatting — date & time. An input that does not parse as a date gives null.
             "formatDate" -> {
                 between(1..2, "formatDate() expects 1 or 2 arguments")
-                val date = Formatting.parseDate(arg(0), clock.zone) ?: return ""
+                val date = Formatting.parseDate(arg(0), clock.zone) ?: return null
                 val style = if (args.size == 2) toString(arg(1)) else "medium"
                 val pattern = when (style) {
                     "short" -> "MMM d"
@@ -448,7 +448,7 @@ public class ExpressionEvaluator {
             }
             "formatTime" -> {
                 between(1..2, "formatTime() expects 1 or 2 arguments")
-                val date = Formatting.parseDate(arg(0), clock.zone) ?: return ""
+                val date = Formatting.parseDate(arg(0), clock.zone) ?: return null
                 val timeFormat = if (args.size == 2) toString(arg(1)) else "12h"
                 return Formatting.formatDate(date, if (timeFormat == "24h") "HH:mm" else "h:mm a", locale, clock.zone)
             }
@@ -471,7 +471,7 @@ public class ExpressionEvaluator {
             }
             "ageInYears" -> {
                 exactly(1, "ageInYears() expects 1 argument")
-                val birth = Formatting.parseDate(arg(0), clock.zone) ?: return 0L
+                val birth = Formatting.parseDate(arg(0), clock.zone) ?: return null
                 val years = ChronoUnit.YEARS.between(birth.atZone(clock.zone), nowInstant().atZone(clock.zone))
                 return maxOf(0L, years)
             }
@@ -479,13 +479,13 @@ public class ExpressionEvaluator {
                 exactly(2, "daysBetween() expects 2 arguments")
                 val startVal = arg(0)
                 val endVal = arg(1)
-                val start = Formatting.parseDate(startVal, clock.zone) ?: return 0L
-                val end = Formatting.parseDate(endVal, clock.zone) ?: return 0L
+                val start = Formatting.parseDate(startVal, clock.zone) ?: return null
+                val end = Formatting.parseDate(endVal, clock.zone) ?: return null
                 return abs(ChronoUnit.DAYS.between(start.atZone(clock.zone), end.atZone(clock.zone)))
             }
             "timeAgo" -> {
                 exactly(1, "timeAgo() expects 1 argument")
-                val date = Formatting.parseDate(arg(0), clock.zone) ?: return ""
+                val date = Formatting.parseDate(arg(0), clock.zone) ?: return null
                 val seconds = Duration.between(date, nowInstant()).toMillis() / 1000
                 if (seconds < 60) return "just now"
                 val minutes = seconds / 60
@@ -498,7 +498,7 @@ public class ExpressionEvaluator {
             }
             "daysUntil" -> {
                 exactly(1, "daysUntil() expects 1 argument")
-                val future = Formatting.parseDate(arg(0), clock.zone) ?: return 0L
+                val future = Formatting.parseDate(arg(0), clock.zone) ?: return null
                 val today = nowInstant().atZone(clock.zone).toLocalDate()
                 val target = future.atZone(clock.zone).toLocalDate()
                 return ChronoUnit.DAYS.between(today, target)
