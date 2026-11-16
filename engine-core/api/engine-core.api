@@ -3131,13 +3131,14 @@ public final class dev/app8/engine/core/model/NativeProperties {
 
 public final class dev/app8/engine/core/model/NavigationBar {
 	public fun <init> ()V
-	public fun <init> (Ljava/lang/String;Ldev/app8/engine/core/model/Component;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/BarAction;Ldev/app8/engine/core/model/BarAction;Ljava/util/List;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/NavigationBar$EdgeEffect;Ldev/app8/engine/core/model/SearchBar;Ldev/app8/engine/core/model/NavigationBar$TopAppBarStyle;)V
-	public synthetic fun <init> (Ljava/lang/String;Ldev/app8/engine/core/model/Component;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/BarAction;Ldev/app8/engine/core/model/BarAction;Ljava/util/List;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/NavigationBar$EdgeEffect;Ldev/app8/engine/core/model/SearchBar;Ldev/app8/engine/core/model/NavigationBar$TopAppBarStyle;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ldev/app8/engine/core/model/Component;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/BarAction;Ldev/app8/engine/core/model/BarAction;Ljava/util/List;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/NavigationBar$EdgeEffect;Ldev/app8/engine/core/model/SearchBar;Ldev/app8/engine/core/model/NavigationBar$TopAppBarStyle;)V
+	public synthetic fun <init> (Ljava/lang/String;Ldev/app8/engine/core/model/Component;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/BarAction;Ldev/app8/engine/core/model/BarAction;Ljava/util/List;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/NavigationBar$EdgeEffect;Ldev/app8/engine/core/model/SearchBar;Ldev/app8/engine/core/model/NavigationBar$TopAppBarStyle;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component10 ()Ljava/lang/String;
-	public final fun component11 ()Ldev/app8/engine/core/model/NavigationBar$EdgeEffect;
-	public final fun component12 ()Ldev/app8/engine/core/model/SearchBar;
-	public final fun component13 ()Ldev/app8/engine/core/model/NavigationBar$TopAppBarStyle;
+	public final fun component11 ()Ljava/lang/String;
+	public final fun component12 ()Ldev/app8/engine/core/model/NavigationBar$EdgeEffect;
+	public final fun component13 ()Ldev/app8/engine/core/model/SearchBar;
+	public final fun component14 ()Ldev/app8/engine/core/model/NavigationBar$TopAppBarStyle;
 	public final fun component2 ()Ldev/app8/engine/core/model/Component;
 	public final fun component3 ()Ljava/lang/String;
 	public final fun component4 ()Ljava/lang/String;
@@ -3145,12 +3146,13 @@ public final class dev/app8/engine/core/model/NavigationBar {
 	public final fun component6 ()Ldev/app8/engine/core/model/BarAction;
 	public final fun component7 ()Ljava/util/List;
 	public final fun component8 ()Ljava/lang/Boolean;
-	public final fun component9 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;Ldev/app8/engine/core/model/Component;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/BarAction;Ldev/app8/engine/core/model/BarAction;Ljava/util/List;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/NavigationBar$EdgeEffect;Ldev/app8/engine/core/model/SearchBar;Ldev/app8/engine/core/model/NavigationBar$TopAppBarStyle;)Ldev/app8/engine/core/model/NavigationBar;
-	public static synthetic fun copy$default (Ldev/app8/engine/core/model/NavigationBar;Ljava/lang/String;Ldev/app8/engine/core/model/Component;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/BarAction;Ldev/app8/engine/core/model/BarAction;Ljava/util/List;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/NavigationBar$EdgeEffect;Ldev/app8/engine/core/model/SearchBar;Ldev/app8/engine/core/model/NavigationBar$TopAppBarStyle;ILjava/lang/Object;)Ldev/app8/engine/core/model/NavigationBar;
+	public final fun component9 ()Ljava/lang/Boolean;
+	public final fun copy (Ljava/lang/String;Ldev/app8/engine/core/model/Component;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/BarAction;Ldev/app8/engine/core/model/BarAction;Ljava/util/List;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/NavigationBar$EdgeEffect;Ldev/app8/engine/core/model/SearchBar;Ldev/app8/engine/core/model/NavigationBar$TopAppBarStyle;)Ldev/app8/engine/core/model/NavigationBar;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/NavigationBar;Ljava/lang/String;Ldev/app8/engine/core/model/Component;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/BarAction;Ldev/app8/engine/core/model/BarAction;Ljava/util/List;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/NavigationBar$EdgeEffect;Ldev/app8/engine/core/model/SearchBar;Ldev/app8/engine/core/model/NavigationBar$TopAppBarStyle;ILjava/lang/Object;)Ldev/app8/engine/core/model/NavigationBar;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBackLabel ()Ljava/lang/String;
 	public final fun getHidden ()Ljava/lang/Boolean;
+	public final fun getHidesBackButton ()Ljava/lang/Boolean;
 	public final fun getLeftAction ()Ldev/app8/engine/core/model/BarAction;
 	public final fun getRightAction ()Ldev/app8/engine/core/model/BarAction;
 	public final fun getRightActions ()Ljava/util/List;
@@ -3855,27 +3857,44 @@ public final class dev/app8/engine/core/model/ScrollViewProperties$KeyboardDismi
 
 public final class dev/app8/engine/core/model/SearchBar {
 	public fun <init> ()V
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/SearchBar$Placement;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/Boolean;Ljava/util/List;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/SearchBar$Placement;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/Boolean;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/SearchBar$Placement;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/Boolean;Ljava/util/List;Ldev/app8/engine/core/model/SearchBar$Mode;Ljava/util/List;Ljava/lang/Boolean;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/SearchBar$Placement;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/Boolean;Ljava/util/List;Ldev/app8/engine/core/model/SearchBar$Mode;Ljava/util/List;Ljava/lang/Boolean;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Ljava/lang/Boolean;
+	public final fun component11 ()Ljava/util/List;
 	public final fun component2 ()Ljava/lang/String;
 	public final fun component3 ()Ldev/app8/engine/core/model/SearchBar$Placement;
 	public final fun component4 ()Ljava/lang/Boolean;
 	public final fun component5 ()Ljava/lang/String;
 	public final fun component6 ()Ljava/lang/Boolean;
 	public final fun component7 ()Ljava/util/List;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/SearchBar$Placement;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/Boolean;Ljava/util/List;)Ldev/app8/engine/core/model/SearchBar;
-	public static synthetic fun copy$default (Ldev/app8/engine/core/model/SearchBar;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/SearchBar$Placement;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/Boolean;Ljava/util/List;ILjava/lang/Object;)Ldev/app8/engine/core/model/SearchBar;
+	public final fun component8 ()Ldev/app8/engine/core/model/SearchBar$Mode;
+	public final fun component9 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/SearchBar$Placement;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/Boolean;Ljava/util/List;Ldev/app8/engine/core/model/SearchBar$Mode;Ljava/util/List;Ljava/lang/Boolean;Ljava/util/List;)Ldev/app8/engine/core/model/SearchBar;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/SearchBar;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/SearchBar$Placement;Ljava/lang/Boolean;Ljava/lang/String;Ljava/lang/Boolean;Ljava/util/List;Ldev/app8/engine/core/model/SearchBar$Mode;Ljava/util/List;Ljava/lang/Boolean;Ljava/util/List;ILjava/lang/Object;)Ldev/app8/engine/core/model/SearchBar;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAutoFocus ()Ljava/lang/Boolean;
 	public final fun getBindVariable ()Ljava/lang/String;
 	public final fun getFillsBar ()Ljava/lang/Boolean;
 	public final fun getHidesWhenScrolling ()Ljava/lang/Boolean;
+	public final fun getMode ()Ldev/app8/engine/core/model/SearchBar$Mode;
+	public final fun getOnCancel ()Ljava/util/List;
 	public final fun getOnSubmit ()Ljava/util/List;
+	public final fun getOnTap ()Ljava/util/List;
 	public final fun getPlaceholder ()Ljava/lang/String;
 	public final fun getPlacement ()Ldev/app8/engine/core/model/SearchBar$Placement;
 	public final fun getTintColor ()Ljava/lang/String;
 	public fun hashCode ()I
+	public final fun isButton ()Z
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/app8/engine/core/model/SearchBar$Mode : java/lang/Enum {
+	public static final field button Ldev/app8/engine/core/model/SearchBar$Mode;
+	public static final field field Ldev/app8/engine/core/model/SearchBar$Mode;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/app8/engine/core/model/SearchBar$Mode;
+	public static fun values ()[Ldev/app8/engine/core/model/SearchBar$Mode;
 }
 
 public final class dev/app8/engine/core/model/SearchBar$Placement : java/lang/Enum {
