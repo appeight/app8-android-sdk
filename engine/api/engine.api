@@ -2,6 +2,7 @@ public final class dev/app8/engine/App8 {
 	public static final field $stable I
 	public static final field INSTANCE Ldev/app8/engine/App8;
 	public static final field MIN_SDK I
+	public static final fun clearPersistedData (Landroid/content/Context;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun instance (Landroid/content/Context;Ldev/app8/engine/App8DataSource;)Ldev/app8/engine/App8Instance;
 	public static final fun instance (Landroid/content/Context;Ldev/app8/engine/App8DataSource;Ldev/app8/engine/App8Config;)Ldev/app8/engine/App8Instance;
 	public static synthetic fun instance$default (Landroid/content/Context;Ldev/app8/engine/App8DataSource;Ldev/app8/engine/App8Config;ILjava/lang/Object;)Ldev/app8/engine/App8Instance;

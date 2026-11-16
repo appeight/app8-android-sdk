@@ -2,6 +2,7 @@ package dev.app8.engine
 
 import android.content.Context
 import android.os.Build
+import dev.app8.engine.runtime.DataStoreVariablePersistence
 
 /** Entry point, mirroring `App8` on iOS. */
 public object App8 {
@@ -22,5 +23,16 @@ public object App8 {
             throw App8Error.UnsupportedPlatform(Build.VERSION.SDK_INT, MIN_SDK)
         }
         return App8Instance(context.applicationContext, dataSource, config)
+    }
+
+    /**
+     * Removes the `persist: true` variables of every app on this device (iOS
+     * `App8.clearPersistedData()`). Hosts call it when the signed-in user changes so the next
+     * user's apps start from their initial values. Close running instances first: they keep
+     * their values in memory and would write them back.
+     */
+    @JvmStatic
+    public suspend fun clearPersistedData(context: Context) {
+        DataStoreVariablePersistence.clearAll(context)
     }
 }
