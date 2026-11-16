@@ -51,7 +51,7 @@ internal fun decodeNativeProperties(c: Cursor): NativeProperties {
     c.obj()
     val module = c.reqString("module")
     if (module.isBlank()) c.fail("native `module` is empty")
-    return NativeProperties(module = module, props = c.opt("props", ::decodeAnyMap).orEmpty(), isHidden = c.optScalar("isHidden"))
+    return NativeProperties(module = module, props = c.opt("props", ::decodeAnyMap).orEmpty(), isHidden = c.optHidden())
 }
 
 internal fun decodeNativeContent(c: Cursor): NativeContent {

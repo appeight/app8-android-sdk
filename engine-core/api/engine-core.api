@@ -1954,15 +1954,16 @@ public final class dev/app8/engine/core/model/ComponentContent : dev/app8/engine
 }
 
 public final class dev/app8/engine/core/model/ComponentEntity : dev/app8/engine/core/model/Component {
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/ComponentType;Ldev/app8/engine/core/model/EntityContent;Ljava/lang/String;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/ComponentType;Ldev/app8/engine/core/model/EntityContent;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/ComponentType;Ldev/app8/engine/core/model/EntityContent;Ljava/lang/String;Ldev/app8/engine/core/model/Animation;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/ComponentType;Ldev/app8/engine/core/model/EntityContent;Ljava/lang/String;Ldev/app8/engine/core/model/Animation;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/lang/String;
 	public final fun component3 ()Ldev/app8/engine/core/model/ComponentType;
 	public final fun component4 ()Ldev/app8/engine/core/model/EntityContent;
 	public final fun component5 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/ComponentType;Ldev/app8/engine/core/model/EntityContent;Ljava/lang/String;)Ldev/app8/engine/core/model/ComponentEntity;
-	public static synthetic fun copy$default (Ldev/app8/engine/core/model/ComponentEntity;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/ComponentType;Ldev/app8/engine/core/model/EntityContent;Ljava/lang/String;ILjava/lang/Object;)Ldev/app8/engine/core/model/ComponentEntity;
+	public final fun component6 ()Ldev/app8/engine/core/model/Animation;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/ComponentType;Ldev/app8/engine/core/model/EntityContent;Ljava/lang/String;Ldev/app8/engine/core/model/Animation;)Ldev/app8/engine/core/model/ComponentEntity;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/ComponentEntity;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/ComponentType;Ldev/app8/engine/core/model/EntityContent;Ljava/lang/String;Ldev/app8/engine/core/model/Animation;ILjava/lang/Object;)Ldev/app8/engine/core/model/ComponentEntity;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getContent ()Ldev/app8/engine/core/model/EntityContent;
 	public fun getId ()Ljava/lang/String;
@@ -1970,6 +1971,7 @@ public final class dev/app8/engine/core/model/ComponentEntity : dev/app8/engine/
 	public fun getType ()Ldev/app8/engine/core/model/ComponentType;
 	public fun hashCode ()I
 	public final fun isHidden ()Ljava/lang/String;
+	public final fun isHiddenAnimation ()Ldev/app8/engine/core/model/Animation;
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -2000,16 +2002,17 @@ public final class dev/app8/engine/core/model/ComponentSerializer : dev/app8/eng
 
 public final class dev/app8/engine/core/model/ComponentState {
 	public fun <init> ()V
-	public fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ldev/app8/engine/core/model/Animation;Ljava/lang/String;)V
-	public synthetic fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ldev/app8/engine/core/model/Animation;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ldev/app8/engine/core/model/Animation;Ljava/lang/String;Ldev/app8/engine/core/model/Animation;)V
+	public synthetic fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ldev/app8/engine/core/model/Animation;Ljava/lang/String;Ldev/app8/engine/core/model/Animation;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/Object;
 	public final fun component2 ()Ljava/lang/Object;
 	public final fun component3 ()Ldev/app8/engine/core/model/Layout;
 	public final fun component4 ()Ljava/util/Map;
 	public final fun component5 ()Ldev/app8/engine/core/model/Animation;
 	public final fun component6 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ldev/app8/engine/core/model/Animation;Ljava/lang/String;)Ldev/app8/engine/core/model/ComponentState;
-	public static synthetic fun copy$default (Ldev/app8/engine/core/model/ComponentState;Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ldev/app8/engine/core/model/Animation;Ljava/lang/String;ILjava/lang/Object;)Ldev/app8/engine/core/model/ComponentState;
+	public final fun component7 ()Ldev/app8/engine/core/model/Animation;
+	public final fun copy (Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ldev/app8/engine/core/model/Animation;Ljava/lang/String;Ldev/app8/engine/core/model/Animation;)Ldev/app8/engine/core/model/ComponentState;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/ComponentState;Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ldev/app8/engine/core/model/Animation;Ljava/lang/String;Ldev/app8/engine/core/model/Animation;ILjava/lang/Object;)Ldev/app8/engine/core/model/ComponentState;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAnimation ()Ldev/app8/engine/core/model/Animation;
 	public final fun getChildStates ()Ljava/util/Map;
@@ -2018,6 +2021,7 @@ public final class dev/app8/engine/core/model/ComponentState {
 	public final fun getStyle ()Ljava/lang/Object;
 	public fun hashCode ()I
 	public final fun isHidden ()Ljava/lang/String;
+	public final fun isHiddenAnimation ()Ldev/app8/engine/core/model/Animation;
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -4633,8 +4637,8 @@ public final class dev/app8/engine/core/model/VideoProperties$Type : java/lang/E
 
 public final class dev/app8/engine/core/model/ViewProperties {
 	public fun <init> ()V
-	public fun <init> (Ldev/app8/engine/core/model/AnimatedValue;Ljava/lang/Double;Ldev/app8/engine/core/model/AnimatedValue;Ldev/app8/engine/core/model/AnimatedValue;Ldev/app8/engine/core/model/AnimatedValue;Ljava/lang/String;Ldev/app8/engine/core/model/AnimatedValue;)V
-	public synthetic fun <init> (Ldev/app8/engine/core/model/AnimatedValue;Ljava/lang/Double;Ldev/app8/engine/core/model/AnimatedValue;Ldev/app8/engine/core/model/AnimatedValue;Ldev/app8/engine/core/model/AnimatedValue;Ljava/lang/String;Ldev/app8/engine/core/model/AnimatedValue;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ldev/app8/engine/core/model/AnimatedValue;Ljava/lang/Double;Ldev/app8/engine/core/model/AnimatedValue;Ldev/app8/engine/core/model/AnimatedValue;Ldev/app8/engine/core/model/AnimatedValue;Ljava/lang/String;Ldev/app8/engine/core/model/AnimatedValue;Ldev/app8/engine/core/model/AnimatedValue;)V
+	public synthetic fun <init> (Ldev/app8/engine/core/model/AnimatedValue;Ljava/lang/Double;Ldev/app8/engine/core/model/AnimatedValue;Ldev/app8/engine/core/model/AnimatedValue;Ldev/app8/engine/core/model/AnimatedValue;Ljava/lang/String;Ldev/app8/engine/core/model/AnimatedValue;Ldev/app8/engine/core/model/AnimatedValue;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ldev/app8/engine/core/model/AnimatedValue;
 	public final fun component2 ()Ljava/lang/Double;
 	public final fun component3 ()Ldev/app8/engine/core/model/AnimatedValue;
@@ -4642,12 +4646,14 @@ public final class dev/app8/engine/core/model/ViewProperties {
 	public final fun component5 ()Ldev/app8/engine/core/model/AnimatedValue;
 	public final fun component6 ()Ljava/lang/String;
 	public final fun component7 ()Ldev/app8/engine/core/model/AnimatedValue;
-	public final fun copy (Ldev/app8/engine/core/model/AnimatedValue;Ljava/lang/Double;Ldev/app8/engine/core/model/AnimatedValue;Ldev/app8/engine/core/model/AnimatedValue;Ldev/app8/engine/core/model/AnimatedValue;Ljava/lang/String;Ldev/app8/engine/core/model/AnimatedValue;)Ldev/app8/engine/core/model/ViewProperties;
-	public static synthetic fun copy$default (Ldev/app8/engine/core/model/ViewProperties;Ldev/app8/engine/core/model/AnimatedValue;Ljava/lang/Double;Ldev/app8/engine/core/model/AnimatedValue;Ldev/app8/engine/core/model/AnimatedValue;Ldev/app8/engine/core/model/AnimatedValue;Ljava/lang/String;Ldev/app8/engine/core/model/AnimatedValue;ILjava/lang/Object;)Ldev/app8/engine/core/model/ViewProperties;
+	public final fun component8 ()Ldev/app8/engine/core/model/AnimatedValue;
+	public final fun copy (Ldev/app8/engine/core/model/AnimatedValue;Ljava/lang/Double;Ldev/app8/engine/core/model/AnimatedValue;Ldev/app8/engine/core/model/AnimatedValue;Ldev/app8/engine/core/model/AnimatedValue;Ljava/lang/String;Ldev/app8/engine/core/model/AnimatedValue;Ldev/app8/engine/core/model/AnimatedValue;)Ldev/app8/engine/core/model/ViewProperties;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/ViewProperties;Ldev/app8/engine/core/model/AnimatedValue;Ljava/lang/Double;Ldev/app8/engine/core/model/AnimatedValue;Ldev/app8/engine/core/model/AnimatedValue;Ldev/app8/engine/core/model/AnimatedValue;Ljava/lang/String;Ldev/app8/engine/core/model/AnimatedValue;Ldev/app8/engine/core/model/AnimatedValue;ILjava/lang/Object;)Ldev/app8/engine/core/model/ViewProperties;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAlpha ()Ldev/app8/engine/core/model/AnimatedValue;
 	public final fun getBackgroundColor ()Ldev/app8/engine/core/model/AnimatedValue;
 	public final fun getCornerRadius ()Ljava/lang/Double;
+	public final fun getTransformRotation ()Ldev/app8/engine/core/model/AnimatedValue;
 	public final fun getTransformScale ()Ldev/app8/engine/core/model/AnimatedValue;
 	public final fun getTransformTranslateX ()Ldev/app8/engine/core/model/AnimatedValue;
 	public final fun getTransformTranslateY ()Ldev/app8/engine/core/model/AnimatedValue;

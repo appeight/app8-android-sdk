@@ -28,7 +28,7 @@ internal fun CellView(cell: Cell, solved: State<Solved>, modifier: Modifier = Mo
     // window (a prefetched, recycled or scrolled-out cell is not).
     val onScreen = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
     val parentOnScreen = LocalCellOnScreen.current
-    CompositionLocalProvider(LocalSolved provides solved, LocalCellOnScreen provides (parentOnScreen && onScreen.value)) {
+    CompositionLocalProvider(LocalSolved provides solved, dev.app8.engine.render.LocalLayoutTransition provides null, LocalCellOnScreen provides (parentOnScreen && onScreen.value)) {
         Layout(
             content = { NodeView(cell.root) },
             modifier = modifier.onGloballyPositioned { onScreen.value = it.isAttached && it.boundsInWindow().let { b -> b.width > 0f && b.height > 0f } },

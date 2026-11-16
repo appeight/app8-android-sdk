@@ -37,6 +37,8 @@ internal class RenderNode(
     private val baseHiddenBinding: String? = null,
     /** Inside a vertical `scrollView` (directly or through other components). */
     val inVerticalScroll: Boolean = false,
+    /** Base `animation` of a wrapped `properties.isHidden` (see [ComponentEntity.isHiddenAnimation]). */
+    private val baseHiddenAnimation: dev.app8.engine.core.model.Animation? = null,
 ) {
     lateinit var children: List<RenderNode>
         internal set
@@ -82,6 +84,24 @@ internal class RenderNode(
             }
             val state = states?.get(name) ?: return baseHiddenBinding
             return if (state.properties != null) state.isHidden else baseHiddenBinding
+        }
+
+    /**
+     * The `animation` of a wrapped `properties.isHidden`, state-aware like [hiddenBinding]: a
+     * change of the hidden value then animates (see `LayoutTransition`). Null applies it at once.
+     */
+    val hiddenAnimation: dev.app8.engine.core.model.Animation?
+        get() {
+            val name = stateName ?: return baseHiddenAnimation
+            val states = when (base) {
+                is ComponentContent<*, *> -> base.states
+                is dev.app8.engine.core.model.CollectionContent -> base.states
+                is dev.app8.engine.core.model.MapContent -> base.states
+                is dev.app8.engine.core.model.TableViewContent -> base.states
+                else -> null
+            }
+            val state = states?.get(name) ?: return baseHiddenAnimation
+            return if (state.properties != null) state.isHiddenAnimation else baseHiddenAnimation
         }
 
     /** Control state that outlives recomposition and feeds layout (a text input's text, …). */
@@ -156,7 +176,7 @@ internal class RenderNode(
                 store.defineVariables(App8Runtime.decodeVariableDefinitions(raw, session.runtime.diagnostics))
                 Scope(store, parentScope).also { scopes += it }
             } ?: parentScope
-            val node = RenderNode(key, entity.id, entity.type, content, scope, session, parentType, entity.isHidden, inVerticalScroll)
+            val node = RenderNode(key, entity.id, entity.type, content, scope, session, parentType, entity.isHidden, inVerticalScroll, entity.isHiddenAnimation)
             val scrollsVertically = (entity.type as? ComponentType.Known)?.key == ComponentType.Key.scrollView &&
                 (content.properties as? dev.app8.engine.core.model.ScrollViewProperties)?.direction != dev.app8.engine.core.model.ScrollViewProperties.Direction.horizontal
             val childrenInScroll = inVerticalScroll || scrollsVertically

@@ -113,6 +113,12 @@ internal inline fun <T> decodeAnimatedValue(c: Cursor, decodeValue: (Cursor) -> 
 
 internal fun decodeAnimatedString(c: Cursor): AnimatedValue<String> = decodeAnimatedValue(c) { it.scalarString() }
 
+/**
+ * `properties.isHidden`, bare or wrapped (`{ "value": …, "animation": … }`): the value. The
+ * animation is read for every component type by [rawPropertiesHiddenAnimation].
+ */
+internal fun Cursor.optHidden(): String? = opt("isHidden") { decodeAnimatedString(it).value }
+
 /** A DSL text value: a plain literal or a `{"$i18n": "key"}` translation key. */
 public sealed interface LocalizedString {
     public data class Literal(val text: String) : LocalizedString
