@@ -73,6 +73,30 @@ class DSLLeniencyTest {
     }
 
     @Test
+    fun navigationBarSearchButtonAndSearchScreen() {
+        val browse = decoder.decode(
+            """{ "search": { "placeholder": "Search", "mode": "button", "onTap": { "type": "navigation", "nextScreen": "search" } } }""",
+            ::decodeNavigationBar,
+        )
+        val button = assertNotNull(browse.search)
+        assertEquals(SearchBar.Mode.button, button.mode)
+        assertEquals(true, button.isButton)
+        assertEquals(1, button.onTap?.size)
+        val screen = decoder.decode(
+            """{ "hidesBackButton": true, "search": { "bindVariable": "query", "autoFocus": true,
+                 "onCancel": [ { "type": "navigation", "isBack": true } ] } }""",
+            ::decodeNavigationBar,
+        )
+        assertEquals(true, screen.hidesBackButton)
+        assertEquals(true, screen.search?.autoFocus)
+        assertEquals(false, screen.search?.isButton)
+        assertEquals(1, screen.search?.onCancel?.size)
+        // An unknown mode is a plain field, never a dead button.
+        val unknown = decoder.decode("""{ "search": { "mode": "chip" } }""", ::decodeNavigationBar)
+        assertEquals(SearchBar.Mode.field, unknown.search?.mode)
+    }
+
+    @Test
     fun navigationBarTopAppBarStyle() {
         fun style(json: String) = decoder.decode(json, ::decodeNavigationBar).topAppBar
         assertEquals(null, style("""{ "title": "Inbox" }"""))

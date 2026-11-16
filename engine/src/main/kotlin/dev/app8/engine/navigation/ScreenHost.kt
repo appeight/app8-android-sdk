@@ -325,7 +325,7 @@ private fun TopBar(
         val left = bar.leftAction?.takeIf { bar.titleAlignment != "left" || bar.titleView == null }
         when {
             left != null -> BarItem(left, root.hexColor(left.color) ?: tint, iconContainer) { dispatcher.execute(root, left.action) }
-            canGoBack -> IconButton(onClick = { dispatcher.execute(root, BACK) }, colors = iconColors(iconContainer)) { Symbol("arrow_back", tint) }
+            canGoBack && bar.hidesBackButton != true -> IconButton(onClick = { dispatcher.execute(root, BACK) }, colors = iconColors(iconContainer)) { Symbol("arrow_back", tint) }
         }
     }
     val actions: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit = {
