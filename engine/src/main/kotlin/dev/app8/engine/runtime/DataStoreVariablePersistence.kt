@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStoreFile
+import java.io.File
 import dev.app8.engine.core.vars.VariablePersistence
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -99,6 +100,21 @@ internal class DataStoreVariablePersistence(
         private const val DEBOUNCE_MS = 500L
 
         fun fileName(appId: String): String = "app8_" + appId.replace(Regex("[^A-Za-z0-9._-]"), "_")
+
+        /**
+         * Removes every app's persisted variables: the files of stores this process opened are
+         * emptied through their DataStore (it caches what it read), the others are deleted.
+         * Apps already running keep their values in memory until they are recreated.
+         */
+        suspend fun clearAll(context: Context) {
+            val open = synchronized(stores) { stores.toMap() }
+            for (store in open.values) runCatching { store.edit { it.clear() } }
+            withContext(Dispatchers.IO) {
+                val dir = context.applicationContext.preferencesDataStoreFile("app8_").parentFile ?: return@withContext
+                dir.listFiles { f: File -> f.name.startsWith("app8_") && f.name.removeSuffix(".preferences_pb") !in open }
+                    ?.forEach { it.delete() }
+            }
+        }
 
         // DataStore allows one instance per file per process.
         private val stores = HashMap<String, DataStore<Preferences>>()
