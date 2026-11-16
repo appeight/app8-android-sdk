@@ -19,9 +19,8 @@ import kotlin.math.max
  * - [radius] is `shadowRadius`: the Gaussian's standard deviation (Figma / CSS blur = 2 × radius).
  * - [opacity] multiplies the color's alpha (`shadowOpacity`).
  * - [spread] grows the shadow path; CALayer has none, so DSL shadows always use 0.
- * - A non-[hollow] layer also fills the shape with [color] (iOS sets the shadow
- *   layer's `backgroundColor` to the shadow color); a hollow one draws only the shadow.
- *   Either way the shadow is cast by the whole shape (`shadowPath`), not cut out.
+ * - The shadow is cast by the whole shape (`shadowPath`), not cut out. It never paints
+ *   the shape itself, hollow or not: a shadow under a translucent fill shows the fill.
  */
 @Immutable
 internal data class ShadowSpec(
@@ -58,12 +57,14 @@ internal data class MaterialPlan(val corner: Corner?, val layers: List<MaterialL
 
 /**
  * iOS `MaterialView.update(material:)`: the first `corner` applies to every layer;
- * fill / outline / shadow layers (CALayers) in array order; visual effects and nested
- * materials (UIViews) above all of them, also in array order. Unresolved pointers and
- * layers that produce nothing are skipped.
+ * shadow layers under every fill and outline (a shadow is cast behind the shape, wherever
+ * it sits in the array), then fill / outline layers (CALayers) in array order; visual
+ * effects and nested materials (UIViews) above all of them, also in array order.
+ * Unresolved pointers and layers that produce nothing are skipped.
  */
 internal fun Material.resolve(appearance: App8Appearance): MaterialPlan {
     val corner = layers.firstNotNullOfOrNull { it.contentIf<Corner>(StyleType.Key.corner) }
+    val shadows = mutableListOf<MaterialLayer>()
     val below = mutableListOf<MaterialLayer>()
     val above = mutableListOf<MaterialLayer>()
     for (style in layers) {
@@ -74,14 +75,14 @@ internal fun Material.resolve(appearance: App8Appearance): MaterialPlan {
                 o.fill.toPaint(appearance)?.let { below += MaterialLayer.OutlineLayer(max(0f, o.lineWidth), o.position, it) }
             }
             StyleType.Key.shadow -> style.contentIf<Shadow>(key)?.let { s ->
-                if (s.layers.isNotEmpty()) below += MaterialLayer.ShadowLayer(s.layers.map { it.toSpec(appearance) })
+                if (s.layers.isNotEmpty()) shadows += MaterialLayer.ShadowLayer(s.layers.map { it.toSpec(appearance) })
             }
             StyleType.Key.visualEffect -> style.contentIf<VisualEffect>(key)?.let { above += MaterialLayer.EffectLayer(it.effectSpec(appearance)) }
             StyleType.Key.material -> style.contentIf<Material>(key)?.let { above += MaterialLayer.Nested(it.resolve(appearance)) }
             else -> Unit
         }
     }
-    return MaterialPlan(corner, below + above)
+    return MaterialPlan(corner, shadows + below + above)
 }
 
 internal fun Shadow.Layer.toSpec(appearance: App8Appearance): ShadowSpec = ShadowSpec(

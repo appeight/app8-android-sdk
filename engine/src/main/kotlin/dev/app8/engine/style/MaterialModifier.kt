@@ -235,12 +235,7 @@ internal fun DrawScope.drawPlan(plan: MaterialPlan, shadows: ShadowContext, effe
                 }
                 drawPath(ring, layer.paint.toBrush(g.outer))
             }
-            is MaterialLayer.ShadowLayer -> layer.shadows.forEach { s ->
-                drawShadow(s, plan.corner, shadows)
-                if (!s.hollow) {
-                    if (radius > 0f) drawPath(shape.path, s.color) else drawRect(s.color)
-                }
-            }
+            is MaterialLayer.ShadowLayer -> layer.shadows.forEach { s -> drawShadow(s, plan.corner, shadows) }
             is MaterialLayer.EffectLayer -> effect(layer.spec, shape)
             is MaterialLayer.Nested -> drawPlan(layer.plan, shadows, effect)
         }
