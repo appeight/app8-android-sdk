@@ -1,0 +1,2674 @@
+{
+ "type": "screen",
+ "id": "faq",
+ "flowId": "main",
+ "content": {
+  "navigationBar": {
+   "title": "Questions"
+  },
+  "variables": {
+   "openRows": {
+    "type": "array",
+    "initialValue": []
+   }
+  },
+  "children": [
+   {
+    "id": "page",
+    "type": "scrollView",
+    "content": {
+     "properties": {
+      "direction": "vertical"
+     },
+     "layout": {
+      "constraints": [
+       {
+        "type": "top",
+        "target": "safeArea"
+       },
+       {
+        "type": "leading",
+        "target": "superview"
+       },
+       {
+        "type": "trailing",
+        "target": "superview"
+       },
+       {
+        "type": "bottom",
+        "target": "superview"
+       }
+      ]
+     },
+     "children": [
+      {
+       "id": "list",
+       "type": "stackView",
+       "content": {
+        "properties": {
+         "axis": "vertical"
+        },
+        "layout": {
+         "constraints": [
+          {
+           "type": "top",
+           "target": "superview"
+          },
+          {
+           "type": "leading",
+           "target": "superview"
+          },
+          {
+           "type": "trailing",
+           "target": "superview"
+          },
+          {
+           "type": "bottom",
+           "target": "superview"
+          },
+          {
+           "type": "width",
+           "target": "superview"
+          }
+         ]
+        },
+        "children": [
+         {
+          "id": "intro",
+          "type": "view",
+          "content": {
+           "children": [
+            {
+             "id": "introText",
+             "type": "label",
+             "content": {
+              "properties": {
+               "text": "Frequently asked questions. Tap a row to open it."
+              },
+              "style": {
+               "text": {
+                "id": "rowBody"
+               }
+              },
+              "layout": {
+               "constraints": [
+                {
+                 "type": "top",
+                 "target": "superview",
+                 "constant": 24
+                },
+                {
+                 "type": "leading",
+                 "target": "superview",
+                 "constant": 20
+                },
+                {
+                 "type": "trailing",
+                 "target": "superview",
+                 "constant": -20
+                },
+                {
+                 "type": "bottom",
+                 "target": "superview",
+                 "constant": -24
+                }
+               ]
+              }
+             }
+            }
+           ]
+          }
+         },
+         {
+          "id": "shipping",
+          "type": "stackView",
+          "content": {
+           "properties": {
+            "axis": "vertical"
+           },
+           "children": [
+            {
+             "id": "shippingLine",
+             "type": "view",
+             "content": {
+              "properties": {
+               "backgroundColor": "#E0E0E0"
+              },
+              "layout": {
+               "height": 1
+              }
+             }
+            },
+            {
+             "id": "shippingHead",
+             "type": "view",
+             "content": {
+              "actions": {
+               "tap": [
+                {
+                 "type": "toggleArrayValue",
+                 "variableName": "openRows",
+                 "value": "shipping"
+                }
+               ]
+              },
+              "children": [
+               {
+                "id": "shippingTitle",
+                "type": "label",
+                "content": {
+                 "properties": {
+                  "text": "Shipping"
+                 },
+                 "style": {
+                  "text": {
+                   "id": "rowTitle"
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "top",
+                    "target": "superview",
+                    "constant": 18
+                   },
+                   {
+                    "type": "leading",
+                    "target": "superview",
+                    "constant": 20
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -52
+                   },
+                   {
+                    "type": "bottom",
+                    "target": "superview",
+                    "constant": -18
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "id": "shippingTurn",
+                "type": "view",
+                "content": {
+                 "properties": {
+                  "transformRotation": {
+                   "value": "{{ includes(openRows, 'shipping') ? 180 : 0 }}",
+                   "animation": {
+                    "duration": 0.3,
+                    "cubicBezier": [
+                     0.33,
+                     1,
+                     0.68,
+                     1
+                    ]
+                   }
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "centerY",
+                    "target": "superview"
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -20
+                   }
+                  ]
+                 },
+                 "children": [
+                  {
+                   "id": "shippingChevron",
+                   "type": "icon",
+                   "content": {
+                    "properties": {
+                     "type": "symbol",
+                     "name": "chevron.down"
+                    },
+                    "style": {
+                     "tint": "#000000",
+                     "symbolFontSize": 14
+                    },
+                    "layout": {
+                     "constraints": [
+                      {
+                       "type": "top",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "leading",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "trailing",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "bottom",
+                       "target": "superview",
+                       "constant": 0
+                      }
+                     ]
+                    }
+                   }
+                  }
+                 ]
+                }
+               }
+              ]
+             }
+            },
+            {
+             "id": "shippingBody",
+             "type": "view",
+             "content": {
+              "properties": {
+               "isHidden": {
+                "value": "{{ !includes(openRows, 'shipping') }}",
+                "animation": {
+                 "duration": 0.3,
+                 "cubicBezier": [
+                  0.33,
+                  1,
+                  0.68,
+                  1
+                 ]
+                }
+               }
+              },
+              "children": [
+               {
+                "id": "shippingText",
+                "type": "label",
+                "content": {
+                 "properties": {
+                  "text": "Placeholder answer text. It wraps over several lines so the body has some height, and the rows below it move down as it opens. Placeholder answer text. It wraps over several lines so the body has some height, and the rows below it move down as it opens. "
+                 },
+                 "style": {
+                  "text": {
+                   "id": "rowBody"
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "top",
+                    "target": "superview",
+                    "constant": 0
+                   },
+                   {
+                    "type": "leading",
+                    "target": "superview",
+                    "constant": 20
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -20
+                   },
+                   {
+                    "type": "bottom",
+                    "target": "superview",
+                    "constant": -20
+                   }
+                  ]
+                 }
+                }
+               }
+              ]
+             }
+            }
+           ]
+          }
+         },
+         {
+          "id": "returns",
+          "type": "stackView",
+          "content": {
+           "properties": {
+            "axis": "vertical"
+           },
+           "children": [
+            {
+             "id": "returnsLine",
+             "type": "view",
+             "content": {
+              "properties": {
+               "backgroundColor": "#E0E0E0"
+              },
+              "layout": {
+               "height": 1
+              }
+             }
+            },
+            {
+             "id": "returnsHead",
+             "type": "view",
+             "content": {
+              "actions": {
+               "tap": [
+                {
+                 "type": "toggleArrayValue",
+                 "variableName": "openRows",
+                 "value": "returns"
+                }
+               ]
+              },
+              "children": [
+               {
+                "id": "returnsTitle",
+                "type": "label",
+                "content": {
+                 "properties": {
+                  "text": "Returns"
+                 },
+                 "style": {
+                  "text": {
+                   "id": "rowTitle"
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "top",
+                    "target": "superview",
+                    "constant": 18
+                   },
+                   {
+                    "type": "leading",
+                    "target": "superview",
+                    "constant": 20
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -52
+                   },
+                   {
+                    "type": "bottom",
+                    "target": "superview",
+                    "constant": -18
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "id": "returnsTurn",
+                "type": "view",
+                "content": {
+                 "properties": {
+                  "transformRotation": {
+                   "value": "{{ includes(openRows, 'returns') ? 180 : 0 }}",
+                   "animation": {
+                    "duration": 0.3,
+                    "cubicBezier": [
+                     0.33,
+                     1,
+                     0.68,
+                     1
+                    ]
+                   }
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "centerY",
+                    "target": "superview"
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -20
+                   }
+                  ]
+                 },
+                 "children": [
+                  {
+                   "id": "returnsChevron",
+                   "type": "icon",
+                   "content": {
+                    "properties": {
+                     "type": "symbol",
+                     "name": "chevron.down"
+                    },
+                    "style": {
+                     "tint": "#000000",
+                     "symbolFontSize": 14
+                    },
+                    "layout": {
+                     "constraints": [
+                      {
+                       "type": "top",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "leading",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "trailing",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "bottom",
+                       "target": "superview",
+                       "constant": 0
+                      }
+                     ]
+                    }
+                   }
+                  }
+                 ]
+                }
+               }
+              ]
+             }
+            },
+            {
+             "id": "returnsBody",
+             "type": "view",
+             "content": {
+              "properties": {
+               "isHidden": {
+                "value": "{{ !includes(openRows, 'returns') }}",
+                "animation": {
+                 "duration": 0.3,
+                 "cubicBezier": [
+                  0.33,
+                  1,
+                  0.68,
+                  1
+                 ]
+                }
+               }
+              },
+              "children": [
+               {
+                "id": "returnsText",
+                "type": "label",
+                "content": {
+                 "properties": {
+                  "text": "Placeholder answer text. It wraps over several lines so the body has some height, and the rows below it move down as it opens. "
+                 },
+                 "style": {
+                  "text": {
+                   "id": "rowBody"
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "top",
+                    "target": "superview",
+                    "constant": 0
+                   },
+                   {
+                    "type": "leading",
+                    "target": "superview",
+                    "constant": 20
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -20
+                   },
+                   {
+                    "type": "bottom",
+                    "target": "superview",
+                    "constant": -20
+                   }
+                  ]
+                 }
+                }
+               }
+              ]
+             }
+            }
+           ]
+          }
+         },
+         {
+          "id": "care",
+          "type": "stackView",
+          "content": {
+           "properties": {
+            "axis": "vertical"
+           },
+           "children": [
+            {
+             "id": "careLine",
+             "type": "view",
+             "content": {
+              "properties": {
+               "backgroundColor": "#E0E0E0"
+              },
+              "layout": {
+               "height": 1
+              }
+             }
+            },
+            {
+             "id": "careHead",
+             "type": "view",
+             "content": {
+              "actions": {
+               "tap": [
+                {
+                 "type": "toggleArrayValue",
+                 "variableName": "openRows",
+                 "value": "care"
+                }
+               ]
+              },
+              "children": [
+               {
+                "id": "careTitle",
+                "type": "label",
+                "content": {
+                 "properties": {
+                  "text": "Care"
+                 },
+                 "style": {
+                  "text": {
+                   "id": "rowTitle"
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "top",
+                    "target": "superview",
+                    "constant": 18
+                   },
+                   {
+                    "type": "leading",
+                    "target": "superview",
+                    "constant": 20
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -52
+                   },
+                   {
+                    "type": "bottom",
+                    "target": "superview",
+                    "constant": -18
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "id": "careTurn",
+                "type": "view",
+                "content": {
+                 "properties": {
+                  "transformRotation": {
+                   "value": "{{ includes(openRows, 'care') ? 180 : 0 }}",
+                   "animation": {
+                    "duration": 0.3,
+                    "cubicBezier": [
+                     0.33,
+                     1,
+                     0.68,
+                     1
+                    ]
+                   }
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "centerY",
+                    "target": "superview"
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -20
+                   }
+                  ]
+                 },
+                 "children": [
+                  {
+                   "id": "careChevron",
+                   "type": "icon",
+                   "content": {
+                    "properties": {
+                     "type": "symbol",
+                     "name": "chevron.down"
+                    },
+                    "style": {
+                     "tint": "#000000",
+                     "symbolFontSize": 14
+                    },
+                    "layout": {
+                     "constraints": [
+                      {
+                       "type": "top",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "leading",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "trailing",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "bottom",
+                       "target": "superview",
+                       "constant": 0
+                      }
+                     ]
+                    }
+                   }
+                  }
+                 ]
+                }
+               }
+              ]
+             }
+            },
+            {
+             "id": "careBody",
+             "type": "view",
+             "content": {
+              "properties": {
+               "isHidden": {
+                "value": "{{ !includes(openRows, 'care') }}",
+                "animation": {
+                 "duration": 0.3,
+                 "cubicBezier": [
+                  0.33,
+                  1,
+                  0.68,
+                  1
+                 ]
+                }
+               }
+              },
+              "children": [
+               {
+                "id": "careText",
+                "type": "label",
+                "content": {
+                 "properties": {
+                  "text": "Placeholder answer text. It wraps over several lines so the body has some height, and the rows below it move down as it opens. Placeholder answer text. It wraps over several lines so the body has some height, and the rows below it move down as it opens. Placeholder answer text. It wraps over several lines so the body has some height, and the rows below it move down as it opens. "
+                 },
+                 "style": {
+                  "text": {
+                   "id": "rowBody"
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "top",
+                    "target": "superview",
+                    "constant": 0
+                   },
+                   {
+                    "type": "leading",
+                    "target": "superview",
+                    "constant": 20
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -20
+                   },
+                   {
+                    "type": "bottom",
+                    "target": "superview",
+                    "constant": -20
+                   }
+                  ]
+                 }
+                }
+               }
+              ]
+             }
+            }
+           ]
+          }
+         },
+         {
+          "id": "sizing",
+          "type": "stackView",
+          "content": {
+           "properties": {
+            "axis": "vertical"
+           },
+           "children": [
+            {
+             "id": "sizingLine",
+             "type": "view",
+             "content": {
+              "properties": {
+               "backgroundColor": "#E0E0E0"
+              },
+              "layout": {
+               "height": 1
+              }
+             }
+            },
+            {
+             "id": "sizingHead",
+             "type": "view",
+             "content": {
+              "actions": {
+               "tap": [
+                {
+                 "type": "toggleArrayValue",
+                 "variableName": "openRows",
+                 "value": "sizing"
+                }
+               ]
+              },
+              "children": [
+               {
+                "id": "sizingTitle",
+                "type": "label",
+                "content": {
+                 "properties": {
+                  "text": "Sizing"
+                 },
+                 "style": {
+                  "text": {
+                   "id": "rowTitle"
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "top",
+                    "target": "superview",
+                    "constant": 18
+                   },
+                   {
+                    "type": "leading",
+                    "target": "superview",
+                    "constant": 20
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -52
+                   },
+                   {
+                    "type": "bottom",
+                    "target": "superview",
+                    "constant": -18
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "id": "sizingTurn",
+                "type": "view",
+                "content": {
+                 "properties": {
+                  "transformRotation": {
+                   "value": "{{ includes(openRows, 'sizing') ? 180 : 0 }}",
+                   "animation": {
+                    "duration": 0.3,
+                    "cubicBezier": [
+                     0.33,
+                     1,
+                     0.68,
+                     1
+                    ]
+                   }
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "centerY",
+                    "target": "superview"
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -20
+                   }
+                  ]
+                 },
+                 "children": [
+                  {
+                   "id": "sizingChevron",
+                   "type": "icon",
+                   "content": {
+                    "properties": {
+                     "type": "symbol",
+                     "name": "chevron.down"
+                    },
+                    "style": {
+                     "tint": "#000000",
+                     "symbolFontSize": 14
+                    },
+                    "layout": {
+                     "constraints": [
+                      {
+                       "type": "top",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "leading",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "trailing",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "bottom",
+                       "target": "superview",
+                       "constant": 0
+                      }
+                     ]
+                    }
+                   }
+                  }
+                 ]
+                }
+               }
+              ]
+             }
+            },
+            {
+             "id": "sizingBody",
+             "type": "view",
+             "content": {
+              "properties": {
+               "isHidden": {
+                "value": "{{ !includes(openRows, 'sizing') }}",
+                "animation": {
+                 "duration": 0.3,
+                 "cubicBezier": [
+                  0.33,
+                  1,
+                  0.68,
+                  1
+                 ]
+                }
+               }
+              },
+              "children": [
+               {
+                "id": "sizingText",
+                "type": "label",
+                "content": {
+                 "properties": {
+                  "text": "Placeholder answer text. It wraps over several lines so the body has some height, and the rows below it move down as it opens. "
+                 },
+                 "style": {
+                  "text": {
+                   "id": "rowBody"
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "top",
+                    "target": "superview",
+                    "constant": 0
+                   },
+                   {
+                    "type": "leading",
+                    "target": "superview",
+                    "constant": 20
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -20
+                   },
+                   {
+                    "type": "bottom",
+                    "target": "superview",
+                    "constant": -20
+                   }
+                  ]
+                 }
+                }
+               }
+              ]
+             }
+            }
+           ]
+          }
+         },
+         {
+          "id": "payment",
+          "type": "stackView",
+          "content": {
+           "properties": {
+            "axis": "vertical"
+           },
+           "children": [
+            {
+             "id": "paymentLine",
+             "type": "view",
+             "content": {
+              "properties": {
+               "backgroundColor": "#E0E0E0"
+              },
+              "layout": {
+               "height": 1
+              }
+             }
+            },
+            {
+             "id": "paymentHead",
+             "type": "view",
+             "content": {
+              "actions": {
+               "tap": [
+                {
+                 "type": "toggleArrayValue",
+                 "variableName": "openRows",
+                 "value": "payment"
+                }
+               ]
+              },
+              "children": [
+               {
+                "id": "paymentTitle",
+                "type": "label",
+                "content": {
+                 "properties": {
+                  "text": "Payment"
+                 },
+                 "style": {
+                  "text": {
+                   "id": "rowTitle"
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "top",
+                    "target": "superview",
+                    "constant": 18
+                   },
+                   {
+                    "type": "leading",
+                    "target": "superview",
+                    "constant": 20
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -52
+                   },
+                   {
+                    "type": "bottom",
+                    "target": "superview",
+                    "constant": -18
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "id": "paymentTurn",
+                "type": "view",
+                "content": {
+                 "properties": {
+                  "transformRotation": {
+                   "value": "{{ includes(openRows, 'payment') ? 180 : 0 }}",
+                   "animation": {
+                    "duration": 0.3,
+                    "cubicBezier": [
+                     0.33,
+                     1,
+                     0.68,
+                     1
+                    ]
+                   }
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "centerY",
+                    "target": "superview"
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -20
+                   }
+                  ]
+                 },
+                 "children": [
+                  {
+                   "id": "paymentChevron",
+                   "type": "icon",
+                   "content": {
+                    "properties": {
+                     "type": "symbol",
+                     "name": "chevron.down"
+                    },
+                    "style": {
+                     "tint": "#000000",
+                     "symbolFontSize": 14
+                    },
+                    "layout": {
+                     "constraints": [
+                      {
+                       "type": "top",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "leading",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "trailing",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "bottom",
+                       "target": "superview",
+                       "constant": 0
+                      }
+                     ]
+                    }
+                   }
+                  }
+                 ]
+                }
+               }
+              ]
+             }
+            },
+            {
+             "id": "paymentBody",
+             "type": "view",
+             "content": {
+              "properties": {
+               "isHidden": {
+                "value": "{{ !includes(openRows, 'payment') }}",
+                "animation": {
+                 "duration": 0.3,
+                 "cubicBezier": [
+                  0.33,
+                  1,
+                  0.68,
+                  1
+                 ]
+                }
+               }
+              },
+              "children": [
+               {
+                "id": "paymentText",
+                "type": "label",
+                "content": {
+                 "properties": {
+                  "text": "Placeholder answer text. It wraps over several lines so the body has some height, and the rows below it move down as it opens. Placeholder answer text. It wraps over several lines so the body has some height, and the rows below it move down as it opens. "
+                 },
+                 "style": {
+                  "text": {
+                   "id": "rowBody"
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "top",
+                    "target": "superview",
+                    "constant": 0
+                   },
+                   {
+                    "type": "leading",
+                    "target": "superview",
+                    "constant": 20
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -20
+                   },
+                   {
+                    "type": "bottom",
+                    "target": "superview",
+                    "constant": -20
+                   }
+                  ]
+                 }
+                }
+               }
+              ]
+             }
+            }
+           ]
+          }
+         },
+         {
+          "id": "gifts",
+          "type": "stackView",
+          "content": {
+           "properties": {
+            "axis": "vertical"
+           },
+           "children": [
+            {
+             "id": "giftsLine",
+             "type": "view",
+             "content": {
+              "properties": {
+               "backgroundColor": "#E0E0E0"
+              },
+              "layout": {
+               "height": 1
+              }
+             }
+            },
+            {
+             "id": "giftsHead",
+             "type": "view",
+             "content": {
+              "actions": {
+               "tap": [
+                {
+                 "type": "toggleArrayValue",
+                 "variableName": "openRows",
+                 "value": "gifts"
+                }
+               ]
+              },
+              "children": [
+               {
+                "id": "giftsTitle",
+                "type": "label",
+                "content": {
+                 "properties": {
+                  "text": "Gift wrap"
+                 },
+                 "style": {
+                  "text": {
+                   "id": "rowTitle"
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "top",
+                    "target": "superview",
+                    "constant": 18
+                   },
+                   {
+                    "type": "leading",
+                    "target": "superview",
+                    "constant": 20
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -52
+                   },
+                   {
+                    "type": "bottom",
+                    "target": "superview",
+                    "constant": -18
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "id": "giftsTurn",
+                "type": "view",
+                "content": {
+                 "properties": {
+                  "transformRotation": {
+                   "value": "{{ includes(openRows, 'gifts') ? 180 : 0 }}",
+                   "animation": {
+                    "duration": 0.3,
+                    "cubicBezier": [
+                     0.33,
+                     1,
+                     0.68,
+                     1
+                    ]
+                   }
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "centerY",
+                    "target": "superview"
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -20
+                   }
+                  ]
+                 },
+                 "children": [
+                  {
+                   "id": "giftsChevron",
+                   "type": "icon",
+                   "content": {
+                    "properties": {
+                     "type": "symbol",
+                     "name": "chevron.down"
+                    },
+                    "style": {
+                     "tint": "#000000",
+                     "symbolFontSize": 14
+                    },
+                    "layout": {
+                     "constraints": [
+                      {
+                       "type": "top",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "leading",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "trailing",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "bottom",
+                       "target": "superview",
+                       "constant": 0
+                      }
+                     ]
+                    }
+                   }
+                  }
+                 ]
+                }
+               }
+              ]
+             }
+            },
+            {
+             "id": "giftsBody",
+             "type": "view",
+             "content": {
+              "properties": {
+               "isHidden": {
+                "value": "{{ !includes(openRows, 'gifts') }}",
+                "animation": {
+                 "duration": 0.3,
+                 "cubicBezier": [
+                  0.33,
+                  1,
+                  0.68,
+                  1
+                 ]
+                }
+               }
+              },
+              "children": [
+               {
+                "id": "giftsText",
+                "type": "label",
+                "content": {
+                 "properties": {
+                  "text": "Placeholder answer text. It wraps over several lines so the body has some height, and the rows below it move down as it opens. "
+                 },
+                 "style": {
+                  "text": {
+                   "id": "rowBody"
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "top",
+                    "target": "superview",
+                    "constant": 0
+                   },
+                   {
+                    "type": "leading",
+                    "target": "superview",
+                    "constant": 20
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -20
+                   },
+                   {
+                    "type": "bottom",
+                    "target": "superview",
+                    "constant": -20
+                   }
+                  ]
+                 }
+                }
+               }
+              ]
+             }
+            }
+           ]
+          }
+         },
+         {
+          "id": "warranty",
+          "type": "stackView",
+          "content": {
+           "properties": {
+            "axis": "vertical"
+           },
+           "children": [
+            {
+             "id": "warrantyLine",
+             "type": "view",
+             "content": {
+              "properties": {
+               "backgroundColor": "#E0E0E0"
+              },
+              "layout": {
+               "height": 1
+              }
+             }
+            },
+            {
+             "id": "warrantyHead",
+             "type": "view",
+             "content": {
+              "actions": {
+               "tap": [
+                {
+                 "type": "toggleArrayValue",
+                 "variableName": "openRows",
+                 "value": "warranty"
+                }
+               ]
+              },
+              "children": [
+               {
+                "id": "warrantyTitle",
+                "type": "label",
+                "content": {
+                 "properties": {
+                  "text": "Warranty"
+                 },
+                 "style": {
+                  "text": {
+                   "id": "rowTitle"
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "top",
+                    "target": "superview",
+                    "constant": 18
+                   },
+                   {
+                    "type": "leading",
+                    "target": "superview",
+                    "constant": 20
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -52
+                   },
+                   {
+                    "type": "bottom",
+                    "target": "superview",
+                    "constant": -18
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "id": "warrantyTurn",
+                "type": "view",
+                "content": {
+                 "properties": {
+                  "transformRotation": {
+                   "value": "{{ includes(openRows, 'warranty') ? 180 : 0 }}",
+                   "animation": {
+                    "duration": 0.3,
+                    "cubicBezier": [
+                     0.33,
+                     1,
+                     0.68,
+                     1
+                    ]
+                   }
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "centerY",
+                    "target": "superview"
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -20
+                   }
+                  ]
+                 },
+                 "children": [
+                  {
+                   "id": "warrantyChevron",
+                   "type": "icon",
+                   "content": {
+                    "properties": {
+                     "type": "symbol",
+                     "name": "chevron.down"
+                    },
+                    "style": {
+                     "tint": "#000000",
+                     "symbolFontSize": 14
+                    },
+                    "layout": {
+                     "constraints": [
+                      {
+                       "type": "top",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "leading",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "trailing",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "bottom",
+                       "target": "superview",
+                       "constant": 0
+                      }
+                     ]
+                    }
+                   }
+                  }
+                 ]
+                }
+               }
+              ]
+             }
+            },
+            {
+             "id": "warrantyBody",
+             "type": "view",
+             "content": {
+              "properties": {
+               "isHidden": {
+                "value": "{{ !includes(openRows, 'warranty') }}",
+                "animation": {
+                 "duration": 0.3,
+                 "cubicBezier": [
+                  0.33,
+                  1,
+                  0.68,
+                  1
+                 ]
+                }
+               }
+              },
+              "children": [
+               {
+                "id": "warrantyText",
+                "type": "label",
+                "content": {
+                 "properties": {
+                  "text": "Placeholder answer text. It wraps over several lines so the body has some height, and the rows below it move down as it opens. Placeholder answer text. It wraps over several lines so the body has some height, and the rows below it move down as it opens. "
+                 },
+                 "style": {
+                  "text": {
+                   "id": "rowBody"
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "top",
+                    "target": "superview",
+                    "constant": 0
+                   },
+                   {
+                    "type": "leading",
+                    "target": "superview",
+                    "constant": 20
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -20
+                   },
+                   {
+                    "type": "bottom",
+                    "target": "superview",
+                    "constant": -20
+                   }
+                  ]
+                 }
+                }
+               }
+              ]
+             }
+            }
+           ]
+          }
+         },
+         {
+          "id": "orders",
+          "type": "stackView",
+          "content": {
+           "properties": {
+            "axis": "vertical"
+           },
+           "children": [
+            {
+             "id": "ordersLine",
+             "type": "view",
+             "content": {
+              "properties": {
+               "backgroundColor": "#E0E0E0"
+              },
+              "layout": {
+               "height": 1
+              }
+             }
+            },
+            {
+             "id": "ordersHead",
+             "type": "view",
+             "content": {
+              "actions": {
+               "tap": [
+                {
+                 "type": "toggleArrayValue",
+                 "variableName": "openRows",
+                 "value": "orders"
+                }
+               ]
+              },
+              "children": [
+               {
+                "id": "ordersTitle",
+                "type": "label",
+                "content": {
+                 "properties": {
+                  "text": "Orders"
+                 },
+                 "style": {
+                  "text": {
+                   "id": "rowTitle"
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "top",
+                    "target": "superview",
+                    "constant": 18
+                   },
+                   {
+                    "type": "leading",
+                    "target": "superview",
+                    "constant": 20
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -52
+                   },
+                   {
+                    "type": "bottom",
+                    "target": "superview",
+                    "constant": -18
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "id": "ordersTurn",
+                "type": "view",
+                "content": {
+                 "properties": {
+                  "transformRotation": {
+                   "value": "{{ includes(openRows, 'orders') ? 180 : 0 }}",
+                   "animation": {
+                    "duration": 0.3,
+                    "cubicBezier": [
+                     0.33,
+                     1,
+                     0.68,
+                     1
+                    ]
+                   }
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "centerY",
+                    "target": "superview"
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -20
+                   }
+                  ]
+                 },
+                 "children": [
+                  {
+                   "id": "ordersChevron",
+                   "type": "icon",
+                   "content": {
+                    "properties": {
+                     "type": "symbol",
+                     "name": "chevron.down"
+                    },
+                    "style": {
+                     "tint": "#000000",
+                     "symbolFontSize": 14
+                    },
+                    "layout": {
+                     "constraints": [
+                      {
+                       "type": "top",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "leading",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "trailing",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "bottom",
+                       "target": "superview",
+                       "constant": 0
+                      }
+                     ]
+                    }
+                   }
+                  }
+                 ]
+                }
+               }
+              ]
+             }
+            },
+            {
+             "id": "ordersBody",
+             "type": "view",
+             "content": {
+              "properties": {
+               "isHidden": {
+                "value": "{{ !includes(openRows, 'orders') }}",
+                "animation": {
+                 "duration": 0.3,
+                 "cubicBezier": [
+                  0.33,
+                  1,
+                  0.68,
+                  1
+                 ]
+                }
+               }
+              },
+              "children": [
+               {
+                "id": "ordersText",
+                "type": "label",
+                "content": {
+                 "properties": {
+                  "text": "Placeholder answer text. It wraps over several lines so the body has some height, and the rows below it move down as it opens. "
+                 },
+                 "style": {
+                  "text": {
+                   "id": "rowBody"
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "top",
+                    "target": "superview",
+                    "constant": 0
+                   },
+                   {
+                    "type": "leading",
+                    "target": "superview",
+                    "constant": 20
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -20
+                   },
+                   {
+                    "type": "bottom",
+                    "target": "superview",
+                    "constant": -20
+                   }
+                  ]
+                 }
+                }
+               }
+              ]
+             }
+            }
+           ]
+          }
+         },
+         {
+          "id": "delivery",
+          "type": "stackView",
+          "content": {
+           "properties": {
+            "axis": "vertical"
+           },
+           "children": [
+            {
+             "id": "deliveryLine",
+             "type": "view",
+             "content": {
+              "properties": {
+               "backgroundColor": "#E0E0E0"
+              },
+              "layout": {
+               "height": 1
+              }
+             }
+            },
+            {
+             "id": "deliveryHead",
+             "type": "view",
+             "content": {
+              "actions": {
+               "tap": [
+                {
+                 "type": "toggleArrayValue",
+                 "variableName": "openRows",
+                 "value": "delivery"
+                }
+               ]
+              },
+              "children": [
+               {
+                "id": "deliveryTitle",
+                "type": "label",
+                "content": {
+                 "properties": {
+                  "text": "Delivery times"
+                 },
+                 "style": {
+                  "text": {
+                   "id": "rowTitle"
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "top",
+                    "target": "superview",
+                    "constant": 18
+                   },
+                   {
+                    "type": "leading",
+                    "target": "superview",
+                    "constant": 20
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -52
+                   },
+                   {
+                    "type": "bottom",
+                    "target": "superview",
+                    "constant": -18
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "id": "deliveryTurn",
+                "type": "view",
+                "content": {
+                 "properties": {
+                  "transformRotation": {
+                   "value": "{{ includes(openRows, 'delivery') ? 180 : 0 }}",
+                   "animation": {
+                    "duration": 0.3,
+                    "cubicBezier": [
+                     0.33,
+                     1,
+                     0.68,
+                     1
+                    ]
+                   }
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "centerY",
+                    "target": "superview"
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -20
+                   }
+                  ]
+                 },
+                 "children": [
+                  {
+                   "id": "deliveryChevron",
+                   "type": "icon",
+                   "content": {
+                    "properties": {
+                     "type": "symbol",
+                     "name": "chevron.down"
+                    },
+                    "style": {
+                     "tint": "#000000",
+                     "symbolFontSize": 14
+                    },
+                    "layout": {
+                     "constraints": [
+                      {
+                       "type": "top",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "leading",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "trailing",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "bottom",
+                       "target": "superview",
+                       "constant": 0
+                      }
+                     ]
+                    }
+                   }
+                  }
+                 ]
+                }
+               }
+              ]
+             }
+            },
+            {
+             "id": "deliveryBody",
+             "type": "view",
+             "content": {
+              "properties": {
+               "isHidden": {
+                "value": "{{ !includes(openRows, 'delivery') }}",
+                "animation": {
+                 "duration": 0.3,
+                 "cubicBezier": [
+                  0.33,
+                  1,
+                  0.68,
+                  1
+                 ]
+                }
+               }
+              },
+              "children": [
+               {
+                "id": "deliveryText",
+                "type": "label",
+                "content": {
+                 "properties": {
+                  "text": "Placeholder answer text. It wraps over several lines so the body has some height, and the rows below it move down as it opens. Placeholder answer text. It wraps over several lines so the body has some height, and the rows below it move down as it opens. "
+                 },
+                 "style": {
+                  "text": {
+                   "id": "rowBody"
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "top",
+                    "target": "superview",
+                    "constant": 0
+                   },
+                   {
+                    "type": "leading",
+                    "target": "superview",
+                    "constant": 20
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -20
+                   },
+                   {
+                    "type": "bottom",
+                    "target": "superview",
+                    "constant": -20
+                   }
+                  ]
+                 }
+                }
+               }
+              ]
+             }
+            }
+           ]
+          }
+         },
+         {
+          "id": "exchanges",
+          "type": "stackView",
+          "content": {
+           "properties": {
+            "axis": "vertical"
+           },
+           "children": [
+            {
+             "id": "exchangesLine",
+             "type": "view",
+             "content": {
+              "properties": {
+               "backgroundColor": "#E0E0E0"
+              },
+              "layout": {
+               "height": 1
+              }
+             }
+            },
+            {
+             "id": "exchangesHead",
+             "type": "view",
+             "content": {
+              "actions": {
+               "tap": [
+                {
+                 "type": "toggleArrayValue",
+                 "variableName": "openRows",
+                 "value": "exchanges"
+                }
+               ]
+              },
+              "children": [
+               {
+                "id": "exchangesTitle",
+                "type": "label",
+                "content": {
+                 "properties": {
+                  "text": "Exchanges"
+                 },
+                 "style": {
+                  "text": {
+                   "id": "rowTitle"
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "top",
+                    "target": "superview",
+                    "constant": 18
+                   },
+                   {
+                    "type": "leading",
+                    "target": "superview",
+                    "constant": 20
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -52
+                   },
+                   {
+                    "type": "bottom",
+                    "target": "superview",
+                    "constant": -18
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "id": "exchangesTurn",
+                "type": "view",
+                "content": {
+                 "properties": {
+                  "transformRotation": {
+                   "value": "{{ includes(openRows, 'exchanges') ? 180 : 0 }}",
+                   "animation": {
+                    "duration": 0.3,
+                    "cubicBezier": [
+                     0.33,
+                     1,
+                     0.68,
+                     1
+                    ]
+                   }
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "centerY",
+                    "target": "superview"
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -20
+                   }
+                  ]
+                 },
+                 "children": [
+                  {
+                   "id": "exchangesChevron",
+                   "type": "icon",
+                   "content": {
+                    "properties": {
+                     "type": "symbol",
+                     "name": "chevron.down"
+                    },
+                    "style": {
+                     "tint": "#000000",
+                     "symbolFontSize": 14
+                    },
+                    "layout": {
+                     "constraints": [
+                      {
+                       "type": "top",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "leading",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "trailing",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "bottom",
+                       "target": "superview",
+                       "constant": 0
+                      }
+                     ]
+                    }
+                   }
+                  }
+                 ]
+                }
+               }
+              ]
+             }
+            },
+            {
+             "id": "exchangesBody",
+             "type": "view",
+             "content": {
+              "properties": {
+               "isHidden": {
+                "value": "{{ !includes(openRows, 'exchanges') }}",
+                "animation": {
+                 "duration": 0.3,
+                 "cubicBezier": [
+                  0.33,
+                  1,
+                  0.68,
+                  1
+                 ]
+                }
+               }
+              },
+              "children": [
+               {
+                "id": "exchangesText",
+                "type": "label",
+                "content": {
+                 "properties": {
+                  "text": "Placeholder answer text. It wraps over several lines so the body has some height, and the rows below it move down as it opens. "
+                 },
+                 "style": {
+                  "text": {
+                   "id": "rowBody"
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "top",
+                    "target": "superview",
+                    "constant": 0
+                   },
+                   {
+                    "type": "leading",
+                    "target": "superview",
+                    "constant": 20
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -20
+                   },
+                   {
+                    "type": "bottom",
+                    "target": "superview",
+                    "constant": -20
+                   }
+                  ]
+                 }
+                }
+               }
+              ]
+             }
+            }
+           ]
+          }
+         },
+         {
+          "id": "accounts",
+          "type": "stackView",
+          "content": {
+           "properties": {
+            "axis": "vertical"
+           },
+           "children": [
+            {
+             "id": "accountsLine",
+             "type": "view",
+             "content": {
+              "properties": {
+               "backgroundColor": "#E0E0E0"
+              },
+              "layout": {
+               "height": 1
+              }
+             }
+            },
+            {
+             "id": "accountsHead",
+             "type": "view",
+             "content": {
+              "actions": {
+               "tap": [
+                {
+                 "type": "toggleArrayValue",
+                 "variableName": "openRows",
+                 "value": "accounts"
+                }
+               ]
+              },
+              "children": [
+               {
+                "id": "accountsTitle",
+                "type": "label",
+                "content": {
+                 "properties": {
+                  "text": "Accounts"
+                 },
+                 "style": {
+                  "text": {
+                   "id": "rowTitle"
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "top",
+                    "target": "superview",
+                    "constant": 18
+                   },
+                   {
+                    "type": "leading",
+                    "target": "superview",
+                    "constant": 20
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -52
+                   },
+                   {
+                    "type": "bottom",
+                    "target": "superview",
+                    "constant": -18
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "id": "accountsTurn",
+                "type": "view",
+                "content": {
+                 "properties": {
+                  "transformRotation": {
+                   "value": "{{ includes(openRows, 'accounts') ? 180 : 0 }}",
+                   "animation": {
+                    "duration": 0.3,
+                    "cubicBezier": [
+                     0.33,
+                     1,
+                     0.68,
+                     1
+                    ]
+                   }
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "centerY",
+                    "target": "superview"
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -20
+                   }
+                  ]
+                 },
+                 "children": [
+                  {
+                   "id": "accountsChevron",
+                   "type": "icon",
+                   "content": {
+                    "properties": {
+                     "type": "symbol",
+                     "name": "chevron.down"
+                    },
+                    "style": {
+                     "tint": "#000000",
+                     "symbolFontSize": 14
+                    },
+                    "layout": {
+                     "constraints": [
+                      {
+                       "type": "top",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "leading",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "trailing",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "bottom",
+                       "target": "superview",
+                       "constant": 0
+                      }
+                     ]
+                    }
+                   }
+                  }
+                 ]
+                }
+               }
+              ]
+             }
+            },
+            {
+             "id": "accountsBody",
+             "type": "view",
+             "content": {
+              "properties": {
+               "isHidden": {
+                "value": "{{ !includes(openRows, 'accounts') }}",
+                "animation": {
+                 "duration": 0.3,
+                 "cubicBezier": [
+                  0.33,
+                  1,
+                  0.68,
+                  1
+                 ]
+                }
+               }
+              },
+              "children": [
+               {
+                "id": "accountsText",
+                "type": "label",
+                "content": {
+                 "properties": {
+                  "text": "Placeholder answer text. It wraps over several lines so the body has some height, and the rows below it move down as it opens. Placeholder answer text. It wraps over several lines so the body has some height, and the rows below it move down as it opens. "
+                 },
+                 "style": {
+                  "text": {
+                   "id": "rowBody"
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "top",
+                    "target": "superview",
+                    "constant": 0
+                   },
+                   {
+                    "type": "leading",
+                    "target": "superview",
+                    "constant": 20
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -20
+                   },
+                   {
+                    "type": "bottom",
+                    "target": "superview",
+                    "constant": -20
+                   }
+                  ]
+                 }
+                }
+               }
+              ]
+             }
+            }
+           ]
+          }
+         },
+         {
+          "id": "contact",
+          "type": "stackView",
+          "content": {
+           "properties": {
+            "axis": "vertical"
+           },
+           "children": [
+            {
+             "id": "contactLine",
+             "type": "view",
+             "content": {
+              "properties": {
+               "backgroundColor": "#E0E0E0"
+              },
+              "layout": {
+               "height": 1
+              }
+             }
+            },
+            {
+             "id": "contactHead",
+             "type": "view",
+             "content": {
+              "actions": {
+               "tap": [
+                {
+                 "type": "toggleArrayValue",
+                 "variableName": "openRows",
+                 "value": "contact"
+                }
+               ]
+              },
+              "children": [
+               {
+                "id": "contactTitle",
+                "type": "label",
+                "content": {
+                 "properties": {
+                  "text": "Contact"
+                 },
+                 "style": {
+                  "text": {
+                   "id": "rowTitle"
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "top",
+                    "target": "superview",
+                    "constant": 18
+                   },
+                   {
+                    "type": "leading",
+                    "target": "superview",
+                    "constant": 20
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -52
+                   },
+                   {
+                    "type": "bottom",
+                    "target": "superview",
+                    "constant": -18
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "id": "contactTurn",
+                "type": "view",
+                "content": {
+                 "properties": {
+                  "transformRotation": {
+                   "value": "{{ includes(openRows, 'contact') ? 180 : 0 }}",
+                   "animation": {
+                    "duration": 0.3,
+                    "cubicBezier": [
+                     0.33,
+                     1,
+                     0.68,
+                     1
+                    ]
+                   }
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "centerY",
+                    "target": "superview"
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -20
+                   }
+                  ]
+                 },
+                 "children": [
+                  {
+                   "id": "contactChevron",
+                   "type": "icon",
+                   "content": {
+                    "properties": {
+                     "type": "symbol",
+                     "name": "chevron.down"
+                    },
+                    "style": {
+                     "tint": "#000000",
+                     "symbolFontSize": 14
+                    },
+                    "layout": {
+                     "constraints": [
+                      {
+                       "type": "top",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "leading",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "trailing",
+                       "target": "superview",
+                       "constant": 0
+                      },
+                      {
+                       "type": "bottom",
+                       "target": "superview",
+                       "constant": 0
+                      }
+                     ]
+                    }
+                   }
+                  }
+                 ]
+                }
+               }
+              ]
+             }
+            },
+            {
+             "id": "contactBody",
+             "type": "view",
+             "content": {
+              "properties": {
+               "isHidden": {
+                "value": "{{ !includes(openRows, 'contact') }}",
+                "animation": {
+                 "duration": 0.3,
+                 "cubicBezier": [
+                  0.33,
+                  1,
+                  0.68,
+                  1
+                 ]
+                }
+               }
+              },
+              "children": [
+               {
+                "id": "contactText",
+                "type": "label",
+                "content": {
+                 "properties": {
+                  "text": "Placeholder answer text. It wraps over several lines so the body has some height, and the rows below it move down as it opens. Placeholder answer text. It wraps over several lines so the body has some height, and the rows below it move down as it opens. "
+                 },
+                 "style": {
+                  "text": {
+                   "id": "rowBody"
+                  }
+                 },
+                 "layout": {
+                  "constraints": [
+                   {
+                    "type": "top",
+                    "target": "superview",
+                    "constant": 0
+                   },
+                   {
+                    "type": "leading",
+                    "target": "superview",
+                    "constant": 20
+                   },
+                   {
+                    "type": "trailing",
+                    "target": "superview",
+                    "constant": -20
+                   },
+                   {
+                    "type": "bottom",
+                    "target": "superview",
+                    "constant": -20
+                   }
+                  ]
+                 }
+                }
+               }
+              ]
+             }
+            }
+           ]
+          }
+         },
+         {
+          "id": "endLine",
+          "type": "view",
+          "content": {
+           "properties": {
+            "backgroundColor": "#E0E0E0"
+           },
+           "layout": {
+            "height": 1
+           }
+          }
+         }
+        ]
+       }
+      }
+     ]
+    }
+   }
+  ]
+ }
+}

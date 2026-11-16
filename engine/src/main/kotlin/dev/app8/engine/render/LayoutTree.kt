@@ -40,6 +40,8 @@ internal data class Solved(
     val safeArea: EdgeInsets,
     /** The root's height, or for a content-sized root (self-sizing cells), how far its content reaches. */
     val contentHeight: Double = 0.0,
+    /** The tree's shape, for animated `isHidden` changes; null when no component animates one. */
+    val structure: LayoutStructure? = null,
 ) {
     companion object {
         val EMPTY = Solved(emptyMap(), emptyMap(), emptyMap(), EdgeInsets.ZERO)
@@ -52,13 +54,28 @@ internal data class Solved(
  * variable it reads becomes a dependency of the layout and nothing else.
  */
 internal object LayoutTree {
-    fun build(node: RenderNode, env: RenderEnv, isRoot: Boolean = false): Pair<LayoutNode, String> = traced("App8.layoutTree") {
+    /**
+     * @param animated collects the components whose `isHidden` is wrapped with an `animation`
+     *   (key → descriptor), for [LayoutTransition].
+     */
+    fun build(
+        node: RenderNode,
+        env: RenderEnv,
+        isRoot: Boolean = false,
+        animated: MutableMap<String, dev.app8.engine.core.model.Animation>? = null,
+    ): Pair<LayoutNode, String> = traced("App8.layoutTree") {
         val sig = StringBuilder()
-        val tree = build(node, env, isRoot, sig)
+        val tree = build(node, env, isRoot, sig, animated)
         tree to sig.toString()
     }
 
-    private fun build(node: RenderNode, env: RenderEnv, isRoot: Boolean, sig: StringBuilder): LayoutNode {
+    private fun build(
+        node: RenderNode,
+        env: RenderEnv,
+        isRoot: Boolean,
+        sig: StringBuilder,
+        animated: MutableMap<String, dev.app8.engine.core.model.Animation>?,
+    ): LayoutNode {
         val content = node.content
         val kind = ComponentRegistry.kind(node)
         val traits = kind.traits(node, env)
@@ -67,7 +84,8 @@ internal object LayoutTree {
         sig.append('[').append(node.key).append('|').append(layout).append('|').append(traits.stack).append('|')
             .append(traits.scroll).append('|').append(hidden).append('|').append(traits.opaque).append('|')
             .append(traits.signature).append('|').append(traits.hugging).append(traits.compression)
-        val children = if (traits.opaque) emptyList() else node.children.map { build(it, env, false, sig) }
+        if (animated != null) node.hiddenAnimation?.let { animated[node.key] = it; sig.append("|~").append(it.hashCode()) }
+        val children = if (traits.opaque) emptyList() else node.children.map { build(it, env, false, sig, animated) }
         sig.append(']')
         return LayoutNode(
             key = node.key,
@@ -104,7 +122,16 @@ internal class SolveCache(
     var misses = 0
         private set
 
-    fun solve(tree: LayoutNode, signature: String, bounds: LayoutBounds, safeArea: EdgeInsets, scale: Double, keyboardHeight: Double = 0.0): Solved {
+    /** @param structure built on a cache miss only (see [Solved.structure]). */
+    fun solve(
+        tree: LayoutNode,
+        signature: String,
+        bounds: LayoutBounds,
+        safeArea: EdgeInsets,
+        scale: Double,
+        keyboardHeight: Double = 0.0,
+        structure: (() -> LayoutStructure?)? = null,
+    ): Solved {
         val key = "${bounds.width},${bounds.height};${safeArea.top},${safeArea.left},${safeArea.bottom},${safeArea.right};$scale;kb$keyboardHeight;$signature"
         cache[key]?.let { hits++; return it }
         misses++
@@ -112,7 +139,7 @@ internal class SolveCache(
         if (r.conflicts.isNotEmpty()) onConflicts(r.conflicts)
         val local = HashMap<String, Frame>(r.frames.size)
         for (k in r.frames.keys) r.localFrame(k)?.let { local[k] = it }
-        return Solved(local, r.frames, r.contentSizes, safeArea, r.contentHeight).also { cache[key] = it }
+        return Solved(local, r.frames, r.contentSizes, safeArea, r.contentHeight, structure?.invoke()).also { cache[key] = it }
     }
 
     fun clear() = cache.clear()

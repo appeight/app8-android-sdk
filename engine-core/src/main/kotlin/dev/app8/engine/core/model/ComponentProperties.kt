@@ -11,6 +11,8 @@ public data class ViewProperties(
     val transformTranslateY: AnimatedValue<String>? = null,
     val isHidden: String? = null,
     val alpha: AnimatedValue<String>? = null,
+    /** Degrees, clockwise, about the centre; composes as translate, then rotate, then scale. */
+    val transformRotation: AnimatedValue<String>? = null,
 )
 
 internal fun decodeViewProperties(c: Cursor): ViewProperties {
@@ -21,8 +23,9 @@ internal fun decodeViewProperties(c: Cursor): ViewProperties {
         transformScale = c.opt("transformScale", ::decodeAnimatedString),
         transformTranslateX = c.opt("transformTranslateX", ::decodeAnimatedString),
         transformTranslateY = c.opt("transformTranslateY", ::decodeAnimatedString),
-        isHidden = c.optScalar("isHidden"),
+        isHidden = c.optHidden(),
         alpha = c.opt("alpha", ::decodeAnimatedString),
+        transformRotation = c.opt("transformRotation", ::decodeAnimatedString),
     )
 }
 
@@ -84,7 +87,7 @@ internal fun decodeIconProperties(c: Cursor): IconProperties {
     val type = c.req("type") { it.strictEnum<IconProperties.Type>() }
     val backgroundColor = c.opt("backgroundColor", ::decodeAnimatedString)
     val tintColor = c.opt("tintColor", ::decodeAnimatedString)
-    val isHidden = c.optScalar("isHidden")
+    val isHidden = c.optHidden()
     val model = when (type) {
         IconProperties.Type.symbol -> IconProperties.Model.Symbol(c.reqString("name"))
         IconProperties.Type.asset -> IconProperties.Model.AssetModel(c.reqString("name"))
@@ -111,7 +114,7 @@ internal fun decodeLabelProperties(c: Cursor): LabelProperties {
     return LabelProperties(
         text = c.opt("text", ::decodeLocalizedString) ?: LocalizedString.Literal(""),
         backgroundColor = c.opt("backgroundColor", ::decodeAnimatedString),
-        isHidden = c.optScalar("isHidden"),
+        isHidden = c.optHidden(),
         numberOfLines = c.optInt("numberOfLines"),
         spans = c.opt("spans") { a ->
             a.list { s ->

@@ -15,7 +15,7 @@ import dev.app8.engine.events.App8AnalyticsEvent
 /**
  * Runs the commerce sample app from the sample's
  * assets, or another bundle under `assets/` named by the `app` extra (`longlist`: the
- * benchmark's long list fixture).
+ * benchmark's long list fixture, `disclosure`: an animated disclosure list).
  */
 class MainActivity : ComponentActivity() {
     private var reportedDrawn = false

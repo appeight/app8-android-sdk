@@ -76,7 +76,10 @@ internal val LocalInteractionEnabled = compositionLocalOf { true }
 internal fun NodeView(node: RenderNode) {
     Recompositions.Count(node.key)
     val kind = ComponentRegistry.kind(node)
-    if (kind.isHidden(node)) {
+    // An animated `isHidden` keeps the component drawn while it fades out (LayoutTransition).
+    val transition = LocalLayoutTransition.current?.takeIf { node.hiddenAnimation != null }
+    val hidden = kind.isHidden(node)
+    if (hidden && transition?.keepsDrawn(node.key) != true) {
         Box(Modifier.layoutId(node.key))
         return
     }
@@ -100,7 +103,8 @@ internal fun NodeView(node: RenderNode) {
     val tx by animateFloatAsState(txTarget, props?.transformTranslateX?.animation.toSpec(node), label = "tx")
     val tyTarget = (props?.transformTranslateY?.let { node.number(it.value) } ?: 0.0).toFloat() + (style?.transform?.translateY ?: 0.0).toFloat()
     val ty by animateFloatAsState(tyTarget, props?.transformTranslateY?.animation.toSpec(node), label = "ty")
-    val rotation = (style?.transform?.rotation ?: 0.0).toFloat()
+    val rotationTarget = (props?.transformRotation?.let { node.number(it.value) } ?: 0.0).toFloat() + (style?.transform?.rotation ?: 0.0).toFloat()
+    val rotation by animateFloatAsState(rotationTarget, props?.transformRotation?.animation.toSpec(node), label = "rotation")
     val blend = style?.blendMode?.toCompose()
 
     val material = env.material(style?.material, node)
@@ -109,6 +113,15 @@ internal fun NodeView(node: RenderNode) {
     val bg by animateColorAsState(bgTarget, props?.backgroundColor?.animation.toSpecOf(node), label = "bg")
 
     var m: Modifier = Modifier.layoutId(node.key).testTag(node.id)
+    if (transition != null) {
+        // Fades on the transition's timing; in a stack, clipped to the animating bounds
+        // around content measured at its laid-out size.
+        val key = node.key
+        m = m.graphicsLayer {
+            this.alpha = transition.alpha(key)
+            clip = transition.clips(key)
+        }.revealLayout(transition, key)
+    }
     // `content.transition.key`: morphs with its counterpart during a `shared` transition.
     val element = (content as? dev.app8.engine.core.model.ComponentContent<*, *>)?.elementTransition
     m = m.elementTransition(element)
@@ -144,7 +157,8 @@ internal fun NodeView(node: RenderNode) {
     if (material != null && kind.clipsToMaterial) m = m.dslClip(material)
 
     val parentEnabled = LocalInteractionEnabled.current
-    val enabled = parentEnabled && enabledHere
+    // Touches stop the moment a component starts disappearing.
+    val enabled = parentEnabled && enabledHere && !hidden
     if (enabled && !kind.handlesTaps) m = m.then(tapModifier(node, content, indication = null))
 
     CompositionLocalProvider(LocalInteractionEnabled provides enabled) {
@@ -303,10 +317,12 @@ internal fun Frame.pxWidth(density: Float) = (width * density).roundToInt()
 /** DSL animation → Compose spec. Null keeps the change instantaneous (iOS without a descriptor). */
 internal fun Animation?.toSpec(node: RenderNode): AnimationSpec<Float> = toSpecOf(node)
 
-@Suppress("UNCHECKED_CAST")
-internal fun <T> Animation?.toSpecOf(node: RenderNode): AnimationSpec<T> {
-    val inline = this?.inline { id -> node.runtime.app?.animations?.firstNotNullOfOrNull { a -> (a as? Animation.Inline)?.takeIf { it.id == id } } }
-        ?: return snap()
+internal fun <T> Animation?.toSpecOf(node: RenderNode): AnimationSpec<T> = this?.toSpecOrNull(node.runtime) ?: snap()
+
+/** DSL animation → Compose spec; null when it does not resolve (a pointer to nothing). */
+internal fun <T> Animation.toSpecOrNull(runtime: dev.app8.engine.runtime.App8Runtime): AnimationSpec<T>? {
+    val inline = inline { id -> runtime.app?.animations?.firstNotNullOfOrNull { a -> (a as? Animation.Inline)?.takeIf { it.id == id } } }
+        ?: return null
     val ms = (inline.duration * 1000).roundToInt()
     val delayMs = (inline.delay * 1000).roundToInt()
     return when (val t = inline.timing) {

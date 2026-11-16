@@ -84,6 +84,11 @@ public data class ComponentEntity<C : EntityContent>(
      * component can be hidden, not only the types whose properties model it.
      */
     val isHidden: String? = null,
+    /**
+     * The `animation` of a wrapped `content.properties.isHidden` (`{ "value": …, "animation": … }`):
+     * a change of the value then animates (a stack collapses or expands, elsewhere a cross-fade).
+     */
+    val isHiddenAnimation: Animation? = null,
 ) : Component
 
 /** Shared surface of every component content. */
@@ -309,7 +314,9 @@ internal fun decodeComponent(input: Cursor): Component {
             null -> c.fail("unsupported custom component type with content: ${type.raw}")
         }
     }
-    return ComponentEntity(id = id, templateId = templateId, type = type, content = content, isHidden = rawIsHidden(c))
+    return ComponentEntity(id = id, templateId = templateId, type = type, content = content, isHidden = rawIsHidden(c),
+        isHiddenAnimation = c.child("content")?.let(::rawPropertiesHiddenAnimation),
+    )
 }
 
 /** `content.properties.isHidden` read leniently: a bool or a string, anything else ignored. */
@@ -318,10 +325,20 @@ private fun rawIsHidden(c: Cursor): String? {
     return rawPropertiesIsHidden(content["content"])
 }
 
-/** `properties.isHidden` of a content or state object, read leniently (bool or string). */
+/** `properties.isHidden` of a content or state object, read leniently (bool or string, bare or wrapped in `{ "value": … }`). */
 internal fun rawPropertiesIsHidden(element: kotlinx.serialization.json.JsonElement?): String? {
     val properties = (element as? JsonObject)?.get("properties") as? JsonObject ?: return null
-    val raw = properties["isHidden"] as? kotlinx.serialization.json.JsonPrimitive ?: return null
+    val value = properties["isHidden"].let { (it as? JsonObject)?.get("value") ?: it }
+    val raw = value as? kotlinx.serialization.json.JsonPrimitive ?: return null
     if (raw is kotlinx.serialization.json.JsonNull) return null
     return raw.content
+}
+
+/** The `animation` of a wrapped `properties.isHidden` on a content or state object; a bad descriptor is ignored. */
+internal fun rawPropertiesHiddenAnimation(c: Cursor): Animation? {
+    val properties = (c.element as? JsonObject)?.get("properties") as? JsonObject ?: return null
+    val wrapped = properties["isHidden"] as? JsonObject ?: return null
+    if (!wrapped.containsKey("value")) return null
+    val path = c.childPath("properties").let { if (it.isEmpty()) "isHidden" else "$it.isHidden" }
+    return c.with(wrapped, path).attempt { it.opt("animation", ::decodeAnimation) }
 }

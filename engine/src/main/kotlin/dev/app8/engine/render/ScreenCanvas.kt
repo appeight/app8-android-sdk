@@ -54,9 +54,12 @@ internal fun ScreenCanvas(session: ScreenSession, safeArea: EdgeInsets, modifier
         val solved = remember(session, env) {
             derivedStateOf(structuralEqualityPolicy()) {
                 try {
-                    val (tree, signature) = LayoutTree.build(session.root, env, isRoot = true)
+                    val animated = HashMap<String, dev.app8.engine.core.model.Animation>()
+                    val (tree, signature) = LayoutTree.build(session.root, env, isRoot = true, animated)
                     val kb = if (signature.contains("Keyboard")) keyboard.value else 0.0
-                    session.runtime.solveCache.solve(tree, signature, bounds.value, safe.value, env.density.density.toDouble(), kb)
+                    session.runtime.solveCache.solve(tree, signature, bounds.value, safe.value, env.density.density.toDouble(), kb) {
+                        if (animated.isEmpty()) null else LayoutStructure.of(tree, animated)
+                    }
                 } catch (e: Exception) {
                     session.runtime.diagnostics.warn("layout", "screen '${session.screenId}' failed to lay out: ${e.message}")
                     Solved.EMPTY
@@ -69,8 +72,18 @@ internal fun ScreenCanvas(session: ScreenSession, safeArea: EdgeInsets, modifier
                 androidx.compose.runtime.snapshotFlow { solved.value }.collect { callback.value(it) }
             }
         }
+        // Animated `isHidden` changes: the frames between two solves (see LayoutTransition).
+        val context = androidx.compose.ui.platform.LocalContext.current
+        val transition = remember(session, env) {
+            LayoutTransition(
+                resolve = { it.toSpecOrNull(session.runtime) },
+                reduceMotion = { reduceMotion(context) },
+            )
+        }
+        val displayed = remember(transition, solved) { transition.state(solved) }
+        androidx.compose.runtime.LaunchedEffect(transition) { transition.run() }
         Recompositions.Reporter()
-        CompositionLocalProvider(LocalSolved provides solved) {
+        CompositionLocalProvider(LocalSolved provides displayed, LocalLayoutTransition provides transition) {
             // The root fills the screen; its children are placed by ChildrenLayout.
             Layout(
                 content = { NodeView(session.root) },
