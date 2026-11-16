@@ -38,6 +38,7 @@ import dev.app8.engine.render.NodeView
 import dev.app8.engine.render.RenderEnv
 import dev.app8.engine.render.RenderNode
 import dev.app8.engine.render.px
+import dev.app8.engine.render.coveredBottom
 import kotlin.math.roundToInt
 
 /**
@@ -70,6 +71,9 @@ internal object ScrollKind : ComponentKind {
         if (vertical) {
             dev.app8.engine.navigation.RegisterScrollToTop(node.key, node.session.treeOrder[node.key] ?: Int.MAX_VALUE) {
                 state.animateScrollTo(0)
+            }
+            dev.app8.engine.render.ReportContentUnderBottomBar(node.key) {
+                solved.coveredBottom(node.key, node.session.screenId) > 0.5 && state.canScrollForward
             }
         }
         val auto = p.autoScroll

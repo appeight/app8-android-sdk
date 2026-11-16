@@ -1546,6 +1546,54 @@ public final class dev/app8/engine/core/model/BarAction {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class dev/app8/engine/core/model/BottomBar {
+	public static final field Companion Ldev/app8/engine/core/model/BottomBar$Companion;
+	public static final field DEFAULT_INSET_BOTTOM D
+	public static final field DEFAULT_INSET_SIDE D
+	public static final field DEFAULT_INSET_TOP D
+	public fun <init> (Ldev/app8/engine/core/model/Component;Ldev/app8/engine/core/model/EdgeInsets;Ldev/app8/engine/core/model/BottomBar$Style;Ldev/app8/engine/core/model/BottomBar$EdgeEffect;Ljava/lang/String;)V
+	public synthetic fun <init> (Ldev/app8/engine/core/model/Component;Ldev/app8/engine/core/model/EdgeInsets;Ldev/app8/engine/core/model/BottomBar$Style;Ldev/app8/engine/core/model/BottomBar$EdgeEffect;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ldev/app8/engine/core/model/Component;
+	public final fun component2 ()Ldev/app8/engine/core/model/EdgeInsets;
+	public final fun component3 ()Ldev/app8/engine/core/model/BottomBar$Style;
+	public final fun component4 ()Ldev/app8/engine/core/model/BottomBar$EdgeEffect;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun copy (Ldev/app8/engine/core/model/Component;Ldev/app8/engine/core/model/EdgeInsets;Ldev/app8/engine/core/model/BottomBar$Style;Ldev/app8/engine/core/model/BottomBar$EdgeEffect;Ljava/lang/String;)Ldev/app8/engine/core/model/BottomBar;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/BottomBar;Ldev/app8/engine/core/model/Component;Ldev/app8/engine/core/model/EdgeInsets;Ldev/app8/engine/core/model/BottomBar$Style;Ldev/app8/engine/core/model/BottomBar$EdgeEffect;Ljava/lang/String;ILjava/lang/Object;)Ldev/app8/engine/core/model/BottomBar;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getComponent ()Ldev/app8/engine/core/model/Component;
+	public final fun getEdgeEffect ()Ldev/app8/engine/core/model/BottomBar$EdgeEffect;
+	public final fun getHidden ()Ljava/lang/String;
+	public final fun getInsets ()Ldev/app8/engine/core/model/EdgeInsets;
+	public final fun getStyle ()Ldev/app8/engine/core/model/BottomBar$Style;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/app8/engine/core/model/BottomBar$Companion {
+}
+
+public final class dev/app8/engine/core/model/BottomBar$EdgeEffect : java/lang/Enum {
+	public static final field hard Ldev/app8/engine/core/model/BottomBar$EdgeEffect;
+	public static final field soft Ldev/app8/engine/core/model/BottomBar$EdgeEffect;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/app8/engine/core/model/BottomBar$EdgeEffect;
+	public static fun values ()[Ldev/app8/engine/core/model/BottomBar$EdgeEffect;
+}
+
+public final class dev/app8/engine/core/model/BottomBar$Style {
+	public fun <init> ()V
+	public fun <init> (Ldev/app8/engine/core/model/style/StyleAny;)V
+	public synthetic fun <init> (Ldev/app8/engine/core/model/style/StyleAny;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ldev/app8/engine/core/model/style/StyleAny;
+	public final fun copy (Ldev/app8/engine/core/model/style/StyleAny;)Ldev/app8/engine/core/model/BottomBar$Style;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/BottomBar$Style;Ldev/app8/engine/core/model/style/StyleAny;ILjava/lang/Object;)Ldev/app8/engine/core/model/BottomBar$Style;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBackground ()Ldev/app8/engine/core/model/style/StyleAny;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class dev/app8/engine/core/model/ButtonProperties {
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
@@ -1849,8 +1897,8 @@ public abstract interface class dev/app8/engine/core/model/Component {
 }
 
 public final class dev/app8/engine/core/model/ComponentContent : dev/app8/engine/core/model/StatefulContent {
-	public fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/Gestures;Ldev/app8/engine/core/model/Interaction;Ldev/app8/engine/core/model/Accessibility;Ljava/lang/String;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/NavigationBar;Ldev/app8/engine/core/model/ComponentTransition;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ldev/app8/engine/core/model/EdgeInsets;Ljava/util/List;Ljava/util/List;Ldev/app8/engine/core/model/ContextMenu;)V
-	public synthetic fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/Gestures;Ldev/app8/engine/core/model/Interaction;Ldev/app8/engine/core/model/Accessibility;Ljava/lang/String;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/NavigationBar;Ldev/app8/engine/core/model/ComponentTransition;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ldev/app8/engine/core/model/EdgeInsets;Ljava/util/List;Ljava/util/List;Ldev/app8/engine/core/model/ContextMenu;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/Gestures;Ldev/app8/engine/core/model/Interaction;Ldev/app8/engine/core/model/Accessibility;Ljava/lang/String;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/NavigationBar;Ldev/app8/engine/core/model/ComponentTransition;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ldev/app8/engine/core/model/EdgeInsets;Ldev/app8/engine/core/model/BottomBar;Ljava/util/List;Ljava/util/List;Ldev/app8/engine/core/model/ContextMenu;)V
+	public synthetic fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/Gestures;Ldev/app8/engine/core/model/Interaction;Ldev/app8/engine/core/model/Accessibility;Ljava/lang/String;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/NavigationBar;Ldev/app8/engine/core/model/ComponentTransition;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ldev/app8/engine/core/model/EdgeInsets;Ldev/app8/engine/core/model/BottomBar;Ljava/util/List;Ljava/util/List;Ldev/app8/engine/core/model/ContextMenu;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/Object;
 	public final fun component10 ()Ljava/util/Map;
 	public final fun component11 ()Ljava/util/Map;
@@ -1863,9 +1911,10 @@ public final class dev/app8/engine/core/model/ComponentContent : dev/app8/engine
 	public final fun component18 ()Ljava/lang/Boolean;
 	public final fun component19 ()Ldev/app8/engine/core/model/EdgeInsets;
 	public final fun component2 ()Ljava/lang/Object;
-	public final fun component20 ()Ljava/util/List;
+	public final fun component20 ()Ldev/app8/engine/core/model/BottomBar;
 	public final fun component21 ()Ljava/util/List;
-	public final fun component22 ()Ldev/app8/engine/core/model/ContextMenu;
+	public final fun component22 ()Ljava/util/List;
+	public final fun component23 ()Ldev/app8/engine/core/model/ContextMenu;
 	public final fun component3 ()Ldev/app8/engine/core/model/Layout;
 	public final fun component4 ()Ljava/util/Map;
 	public final fun component5 ()Ljava/util/Map;
@@ -1873,13 +1922,14 @@ public final class dev/app8/engine/core/model/ComponentContent : dev/app8/engine
 	public final fun component7 ()Ldev/app8/engine/core/model/Interaction;
 	public final fun component8 ()Ldev/app8/engine/core/model/Accessibility;
 	public final fun component9 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/Gestures;Ldev/app8/engine/core/model/Interaction;Ldev/app8/engine/core/model/Accessibility;Ljava/lang/String;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/NavigationBar;Ldev/app8/engine/core/model/ComponentTransition;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ldev/app8/engine/core/model/EdgeInsets;Ljava/util/List;Ljava/util/List;Ldev/app8/engine/core/model/ContextMenu;)Ldev/app8/engine/core/model/ComponentContent;
-	public static synthetic fun copy$default (Ldev/app8/engine/core/model/ComponentContent;Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/Gestures;Ldev/app8/engine/core/model/Interaction;Ldev/app8/engine/core/model/Accessibility;Ljava/lang/String;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/NavigationBar;Ldev/app8/engine/core/model/ComponentTransition;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ldev/app8/engine/core/model/EdgeInsets;Ljava/util/List;Ljava/util/List;Ldev/app8/engine/core/model/ContextMenu;ILjava/lang/Object;)Ldev/app8/engine/core/model/ComponentContent;
+	public final fun copy (Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/Gestures;Ldev/app8/engine/core/model/Interaction;Ldev/app8/engine/core/model/Accessibility;Ljava/lang/String;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/NavigationBar;Ldev/app8/engine/core/model/ComponentTransition;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ldev/app8/engine/core/model/EdgeInsets;Ldev/app8/engine/core/model/BottomBar;Ljava/util/List;Ljava/util/List;Ldev/app8/engine/core/model/ContextMenu;)Ldev/app8/engine/core/model/ComponentContent;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/ComponentContent;Ljava/lang/Object;Ljava/lang/Object;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/Gestures;Ldev/app8/engine/core/model/Interaction;Ldev/app8/engine/core/model/Accessibility;Ljava/lang/String;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ldev/app8/engine/core/model/NavigationBar;Ldev/app8/engine/core/model/ComponentTransition;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ldev/app8/engine/core/model/EdgeInsets;Ldev/app8/engine/core/model/BottomBar;Ljava/util/List;Ljava/util/List;Ldev/app8/engine/core/model/ContextMenu;ILjava/lang/Object;)Ldev/app8/engine/core/model/ComponentContent;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getAccessibility ()Ldev/app8/engine/core/model/Accessibility;
 	public fun getActions ()Ljava/util/Map;
 	public final fun getAdditionalSafeAreaInsets ()Ldev/app8/engine/core/model/EdgeInsets;
 	public fun getAnalytics ()Ljava/util/Map;
+	public final fun getBottomBar ()Ldev/app8/engine/core/model/BottomBar;
 	public fun getChildren ()Ljava/util/List;
 	public final fun getContextMenu ()Ldev/app8/engine/core/model/ContextMenu;
 	public fun getDefaultStateName ()Ljava/lang/String;
@@ -3083,6 +3133,9 @@ public final class dev/app8/engine/core/model/ModelLimits {
 }
 
 public final class dev/app8/engine/core/model/NativeContent : dev/app8/engine/core/model/EntityContent {
+	public static final field Companion Ldev/app8/engine/core/model/NativeContent$Companion;
+	public static final field EVENT_APPEAR Ljava/lang/String;
+	public static final field EVENT_DISAPPEAR Ljava/lang/String;
 	public fun <init> (Ldev/app8/engine/core/model/NativeProperties;Ldev/app8/engine/core/model/style/ViewStyle;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ldev/app8/engine/core/model/Component;Ldev/app8/engine/core/model/Accessibility;Ljava/util/Map;)V
 	public synthetic fun <init> (Ldev/app8/engine/core/model/NativeProperties;Ldev/app8/engine/core/model/style/ViewStyle;Ldev/app8/engine/core/model/Layout;Ljava/util/Map;Ldev/app8/engine/core/model/Component;Ldev/app8/engine/core/model/Accessibility;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ldev/app8/engine/core/model/NativeProperties;
@@ -3111,6 +3164,9 @@ public final class dev/app8/engine/core/model/NativeContent : dev/app8/engine/co
 	public synthetic fun getStyle ()Ljava/lang/Object;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/app8/engine/core/model/NativeContent$Companion {
 }
 
 public final class dev/app8/engine/core/model/NativeProperties {

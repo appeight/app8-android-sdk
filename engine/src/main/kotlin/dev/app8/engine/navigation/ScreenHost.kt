@@ -24,6 +24,9 @@ import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.pointerInput
+import dev.app8.engine.render.bool
+import dev.app8.engine.style.dslMaterial
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.layout.windowInsetsTopHeight
@@ -102,6 +105,8 @@ internal fun ScreenHost(route: Route, navigator: StackNavigator, flow: FlowContr
     val session = result?.getOrNull()
     DisposableEffect(session) { onDispose { session?.dispose() } }
     val background = IosSystemColors.of("systemBackground", env.appearance)
+    val visible = rememberScreenVisible(flow, layer, stack, route)
+    CompositionLocalProvider(LocalScreenVisible provides visible) {
     when {
         result == null -> Box(Modifier.fillMaxSize().background(background))
         session == null -> Box(Modifier.fillMaxSize().background(background), contentAlignment = Alignment.Center) {
@@ -122,6 +127,7 @@ internal fun ScreenHost(route: Route, navigator: StackNavigator, flow: FlowContr
                 Screen(session, screenChrome, canGoBack = stack.entries.size > 1 && stack.entries.lastOrNull() == route, background)
             }
         }
+    }
     }
 }
 
@@ -162,11 +168,14 @@ private fun Screen(session: ScreenSession, chrome: Chrome, canGoBack: Boolean, b
     val top = (chrome.top ?: window.calculateTopPadding().value.toDouble()) +
         barHeight + (if (searchRow) SEARCH_ROW_HEIGHT else 0.0)
     val bottom = chrome.bottom ?: window.calculateBottomPadding().value.toDouble()
-    val safe = EdgeInsets(
+    val windowLeft = window.calculateLeftPadding(ld).value.toDouble()
+    val windowRight = window.calculateRightPadding(ld).value.toDouble()
+    val bottomBar = (content as? dev.app8.engine.core.model.ComponentContent<*, *>)?.bottomBar
+    val baseSafe = EdgeInsets(
         top = top + (extra?.top ?: 0.0),
-        left = window.calculateLeftPadding(ld).value.toDouble() + (extra?.left ?: 0.0),
+        left = windowLeft + (extra?.left ?: 0.0),
         bottom = bottom + (extra?.bottom ?: 0.0),
-        right = window.calculateRightPadding(ld).value.toDouble() + (extra?.right ?: 0.0),
+        right = windowRight + (extra?.right ?: 0.0),
     )
     // Content under the bar (`topEdgeEffect: hidden`, e.g. a hero image): the bar stays
     // transparent until the hero has scrolled out from under it (Play Store app details).
@@ -183,11 +192,121 @@ private fun Screen(session: ScreenSession, chrome: Chrome, canGoBack: Boolean, b
     dev.app8.engine.style.App8ChromeTheme(accent, env.appearance.isDark) {
         var m = Modifier.fillMaxSize().background(background)
         if (bar != null) m = m.nestedScroll(behavior.nestedScrollConnection)
-        Box(m) {
-            App8BackdropSource(backdrop) { mm -> ScreenCanvas(session, safe, mm, onSolved = if (overContent) ({ heroScroll = heroScrollDistance(it, safe.top) }) else null) }
+        val body: @Composable androidx.compose.foundation.layout.BoxScope.(Double?) -> Unit = { width ->
+            // `bottomBar`: its height (animated while it hides or shows) adds to the bottom safe area.
+            val bottomBarState = if (bottomBar != null && width != null) {
+                rememberBottomBar(session, bottomBar, width, windowLeft, windowRight)
+            } else {
+                null
+            }
+            val safe = if (bottomBarState == null) baseSafe else baseSafe.copy(bottom = baseSafe.bottom + bottomBarState.safeAreaHeight)
+            CompositionLocalProvider(dev.app8.engine.render.LocalBottomEdge provides bottomBarState?.edge) {
+                App8BackdropSource(backdrop) { mm -> ScreenCanvas(session, safe, mm, onSolved = if (overContent) ({ heroScroll = heroScrollDistance(it, safe.top) }) else null) }
+            }
             if (bar != null) TopBar(session, bar, style, behavior, canGoBack, chrome.top == null, screenBackground(session, background), overContent, solid)
+            if (bottomBarState != null) {
+                BottomBarView(session, bottomBarState, bottom, screenBackground(session, background), Modifier.align(Alignment.BottomCenter))
+            }
+        }
+        if (bottomBar == null) {
+            Box(m) { body(null) }
+        } else {
+            androidx.compose.foundation.layout.BoxWithConstraints(m) { body(maxWidth.value.toDouble()) }
         }
     }
+}
+
+/** `bottomBar` hide / show: slide down by its height while fading, cubic ease-out (app8-dsl navigation.md). */
+internal const val BOTTOM_BAR_HIDE_MS = 330
+private val BottomBarEasing = androidx.compose.animation.core.CubicBezierEasing(0.33f, 1f, 0.68f, 1f)
+
+/** A laid-out `bottomBar`: its cell, content insets and how much of it is shown. */
+internal class BottomBarState(
+    val bar: dev.app8.engine.core.model.BottomBar,
+    val cell: dev.app8.engine.render.collection.Cell,
+    val solved: androidx.compose.runtime.State<dev.app8.engine.render.Solved>,
+    val insets: EdgeInsets,
+    /** From the bar's top edge to the bottom safe area, in points. */
+    val height: Double,
+    /** 1 shown, 0 hidden (animated). */
+    val shown: Float,
+    val edge: dev.app8.engine.render.BottomEdge,
+) {
+    /** What the bar adds to the bottom safe area: its height while shown, in whole dp while animating. */
+    val safeAreaHeight: Double get() = kotlin.math.round(height * shown)
+}
+
+@Composable
+private fun rememberBottomBar(
+    session: ScreenSession,
+    bar: dev.app8.engine.core.model.BottomBar,
+    width: Double,
+    windowLeft: Double,
+    windowRight: Double,
+): BottomBarState? {
+    val env = LocalRenderEnv.current
+    val cell = remember(session, bar) { dev.app8.engine.render.collection.Cell.inParentScope(session.root, bar.component) } ?: return null
+    DisposableEffect(cell) { onDispose { cell.dispose() } }
+    val edge = remember(session, bar) { dev.app8.engine.render.BottomEdge() }
+    val i = bar.insets
+    val insets = EdgeInsets(
+        top = i?.top ?: dev.app8.engine.core.model.BottomBar.DEFAULT_INSET_TOP,
+        left = (i?.left ?: dev.app8.engine.core.model.BottomBar.DEFAULT_INSET_SIDE) + windowLeft,
+        bottom = i?.bottom ?: dev.app8.engine.core.model.BottomBar.DEFAULT_INSET_BOTTOM,
+        right = (i?.right ?: dev.app8.engine.core.model.BottomBar.DEFAULT_INSET_SIDE) + windowRight,
+    )
+    val solved = cell.layout(env, width = (width - insets.left - insets.right).coerceAtLeast(0.0), height = null)
+    val height = insets.top + solved.value.contentHeight + insets.bottom
+    // A bar that starts hidden appears without animation the first time (the initial value).
+    val hidden = session.root.bool(bar.hidden) == true
+    val shown by androidx.compose.animation.core.animateFloatAsState(
+        if (hidden) 0f else 1f,
+        androidx.compose.animation.core.tween(BOTTOM_BAR_HIDE_MS, easing = BottomBarEasing),
+        label = "bottomBar",
+    )
+    return BottomBarState(bar, cell, solved, insets, height, shown, edge)
+}
+
+/**
+ * The `bottomBar` above [safeBottom] (the window's bottom inset or the tab bar). `"system"`
+ * background: the Material 3 bottom app bar surface, transparent at rest and
+ * `surfaceContainer` once content scrolls under it, animated like the top app bar, no shadow.
+ * A `material` / `fill` style fills the bar down to the screen's bottom edge (or the tab bar).
+ * The bar takes the touches over it, so nothing under it is tapped through.
+ */
+@Composable
+private fun BottomBarView(session: ScreenSession, state: BottomBarState, safeBottom: Double, under: Color, modifier: Modifier) {
+    val env = LocalRenderEnv.current
+    val custom = state.bar.style?.background
+    val material = custom?.let { bottomBarMaterial(it, env, session.root) }
+    val dark = env.appearance.isDark
+    val scrolled = remember(under, dark) { dev.app8.engine.style.systemColorScheme(null, dark, under).surfaceContainer }
+    val surface by androidx.compose.animation.animateColorAsState(
+        if (custom == null && state.edge.contentUnder) scrolled else Color.Transparent,
+        androidx.compose.animation.core.tween(dev.app8.engine.navigation.transitions.MaterialTransitions.COLOR_MS),
+        label = "bottomBarSurface",
+    )
+    val density = androidx.compose.ui.platform.LocalDensity.current.density
+    val shown = state.shown
+    var m = modifier.fillMaxWidth()
+        .graphicsLayer {
+            translationY = ((1f - shown) * (state.height + safeBottom) * density).toFloat()
+            alpha = shown
+        }
+        .pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent() } }
+    m = if (material != null) m.dslMaterial(material) else m.background(surface)
+    Box(m.padding(start = state.insets.left.dp, end = state.insets.right.dp, top = state.insets.top.dp, bottom = (state.insets.bottom + safeBottom).dp)) {
+        dev.app8.engine.render.collection.CellView(state.cell, state.solved, Modifier.fillMaxWidth())
+    }
+}
+
+/** A bar background style entity as a material: a `material` as is, a `fill` (entity or pointer) as its only layer. */
+private fun bottomBarMaterial(style: dev.app8.engine.core.model.style.StyleAny, env: dev.app8.engine.render.RenderEnv, node: dev.app8.engine.render.RenderNode): dev.app8.engine.core.model.style.Material? {
+    val material = when (style) {
+        is dev.app8.engine.core.model.style.StyleEntity<*> -> style.content as? dev.app8.engine.core.model.style.Material
+        is dev.app8.engine.core.model.style.StylePointer -> env.runtime.styles.content(style.id) as? dev.app8.engine.core.model.style.Material
+    } ?: dev.app8.engine.core.model.style.Material(listOf(style))
+    return env.material(dev.app8.engine.core.model.style.Wrapped.of(material), node)
 }
 
 /**

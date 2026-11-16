@@ -121,6 +121,11 @@ internal class ActionDispatcher(
      */
     fun dispatchNativeEvent(node: RenderNode, event: String, payload: Map<String, Any?>) {
         val content = node.content as? NativeContent ?: return
+        if (event == NativeContent.EVENT_APPEAR || event == NativeContent.EVENT_DISAPPEAR) {
+            // DSL 0.6.1: reserved for the engine's visibility events.
+            runtime.diagnostics.warn("native.event.reserved", "'${content.properties.module}' emitted '$event', a name reserved for visibility; ignored")
+            return
+        }
         val value: Map<String, Any?> = try {
             @Suppress("UNCHECKED_CAST")
             Values.fromJson(Values.toJson(payload)) as Map<String, Any?>
@@ -139,6 +144,19 @@ internal class ActionDispatcher(
             ),
         )
         val context = node.scope.untracked.overlaying("event", value)
+        content.eventAnalytics[event]?.let { binding -> fireBinding(node, binding, context) }
+        run(node, content.events[event].orEmpty(), context)
+    }
+
+    /**
+     * A native component came on screen or left it (DSL 0.6.1): runs its `actions.appear` /
+     * `actions.disappear` and the matching `analytics` binding with an empty `event`. Not a
+     * module event, so nothing is posted to the event bus.
+     */
+    fun dispatchNativeVisibility(node: RenderNode, visible: Boolean) {
+        val content = node.content as? NativeContent ?: return
+        val event = if (visible) NativeContent.EVENT_APPEAR else NativeContent.EVENT_DISAPPEAR
+        val context = node.scope.untracked.overlaying("event", emptyMap<String, Any?>())
         content.eventAnalytics[event]?.let { binding -> fireBinding(node, binding, context) }
         run(node, content.events[event].orEmpty(), context)
     }

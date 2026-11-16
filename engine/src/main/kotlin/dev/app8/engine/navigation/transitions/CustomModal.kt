@@ -69,6 +69,8 @@ internal fun CustomModal(
     onDismissRequest: () -> Unit,
     onRemoved: () -> Unit,
     backEnabled: Boolean,
+    /** The present animation has finished (native visibility). */
+    onPresented: () -> Unit = {},
     content: @Composable (sized: Boolean) -> Unit,
 ) {
     val density = LocalDensity.current
@@ -88,7 +90,10 @@ internal fun CustomModal(
     val sign = if (edge == ScreenTransition.Edge.bottom || edge == ScreenTransition.Edge.trailing) 1f else -1f
     val sized = transition.presentation
 
-    LaunchedEffect(Unit) { progress.animateTo(1f, spec) }
+    LaunchedEffect(Unit) {
+        progress.animateTo(1f, spec)
+        onPresented()
+    }
     LaunchedEffect(dismissing) {
         if (!dismissing) return@LaunchedEffect
         // A non-gesture dismissal settles with one monotonic ease-in-out (iOS).

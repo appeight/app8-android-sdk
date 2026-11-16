@@ -297,6 +297,10 @@ internal object CollectionKind : ComponentKind {
                 state.animateScrollToItem(0)
             }
         }
+        val coveredBottom = androidx.compose.runtime.rememberUpdatedState(auto.second)
+        dev.app8.engine.render.ReportContentUnderBottomBar(node.key) {
+            coveredBottom.value > 0.5 && (if (inverted) state.canScrollBackward else state.canScrollForward)
+        }
 
         val list: @Composable () -> Unit = {
             LazyColumn(

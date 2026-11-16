@@ -37,6 +37,14 @@ public data class NativeContent(
     override val actions: Map<ActionTrigger, List<Action>>? get() = null
     override val analytics: Map<ActionTrigger, AnalyticsBinding>? get() = null
     override val children: List<Component> get() = listOfNotNull(fallback)
+
+    public companion object {
+        /** `actions` / `analytics` key run when the component comes on screen (DSL 0.6.1). */
+        public const val EVENT_APPEAR: String = "appear"
+
+        /** `actions` / `analytics` key run when the component leaves the screen (DSL 0.6.1). */
+        public const val EVENT_DISAPPEAR: String = "disappear"
+    }
 }
 
 internal fun decodeNativeProperties(c: Cursor): NativeProperties {
