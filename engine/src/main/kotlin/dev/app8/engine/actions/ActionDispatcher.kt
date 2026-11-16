@@ -325,6 +325,10 @@ internal class ActionDispatcher(
     private fun navigation(node: RenderNode, action: Action, context: VariableContext, navigator: Navigator) {
         var posted = false
         val next = action.nextScreen
+        // Leaving the screen ends editing, as on iOS: a field focused on it (the search
+        // screen's) would keep the keyboard up over the next screen, and the first back
+        // press would only close it.
+        node.session.focus.dismissKeyboard()
         if (action.isBack == true) {
             navigator.pop(toRoot = action.toRoot == true)
             posted = true

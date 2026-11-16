@@ -95,6 +95,11 @@ internal fun NavSearchField(
         if (bound != null && bound != query) query = bound
     }
     var expanded by remember { mutableStateOf(false) }
+    val button = search.isButton
+    // Like iOS, `autoFocus` raises the keyboard on the first appearance only:
+    // back from a result, the results stay without the keyboard.
+    var autoFocused by rememberSaveable(session.screenId) { mutableStateOf(false) }
+    val cancel = search.onCancel
     val focus = LocalFocusManager.current
     val requester = remember { FocusRequester() }
     // Colors from the app's scheme (app8-dsl platforms.md, "Android system colors"):
@@ -123,6 +128,31 @@ internal fun NavSearchField(
         focusedContainerColor = Color.Transparent,
         unfocusedContainerColor = Color.Transparent,
     )
+    if (button) {
+        // `mode: "button"`: the collapsed Material 3 search bar, drawn like the field; a tap
+        // runs `onTap` (the search screen) instead of focusing.
+        Surface(
+            onClick = { search.onTap?.forEach { dispatcher.execute(root, it) } },
+            modifier = modifier,
+            shape = SearchBarDefaults.inputFieldShape,
+            color = fill,
+        ) {
+            androidx.compose.foundation.layout.Row(
+                Modifier.fillMaxWidth().height(SEARCH_FIELD_HEIGHT.dp).padding(horizontal = 16.dp),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            ) {
+                Symbol("magnifyingglass", secondary)
+                androidx.compose.foundation.layout.Spacer(Modifier.padding(start = 12.dp))
+                Text(
+                    query.ifEmpty { search.placeholder?.let { root.string(it) }.orEmpty() },
+                    color = if (query.isEmpty()) secondary else label,
+                    style = MaterialTheme.typography.bodyLarge,
+                    maxLines = 1,
+                )
+            }
+        }
+        return
+    }
     Surface(modifier, shape = SearchBarDefaults.inputFieldShape, color = fill) {
         SearchBarDefaults.InputField(
             query = query,
@@ -136,20 +166,36 @@ internal fun NavSearchField(
             modifier = Modifier.fillMaxWidth().height(SEARCH_FIELD_HEIGHT.dp).focusRequester(requester),
             placeholder = search.placeholder?.let { p -> { Text(root.string(p).orEmpty(), maxLines = 1) } },
             leadingIcon = { Symbol("magnifyingglass", secondary) },
-            trailingIcon = if (expanded || onClose != null) {
+            trailingIcon = if (expanded || onClose != null || cancel != null) {
                 {
                     IconButton(onClick = {
                         write("")
                         focus.clearFocus()
                         expanded = false
                         onClose?.invoke()
+                        cancel?.forEach { dispatcher.execute(root, it) }
                     }) { Symbol("xmark", tint) }
                 }
             } else null,
             colors = colors,
         )
     }
-    if (autoFocus) LaunchedEffect(Unit) { runCatching { requester.requestFocus() } }
+    // Registered with the screen's focus manager so `dismissKeyboard` and leaving the
+    // screen (ActionDispatcher.navigation) release the field and its keyboard.
+    val keyboard = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
+    androidx.compose.runtime.DisposableEffect(session) {
+        val key = "navigationBar.search"
+        session.focus.register(
+            dev.app8.engine.render.controls.FocusManager.Entry(key, key, -1,
+                request = { runCatching { requester.requestFocus() } },
+                release = { keyboard?.hide(); focus.clearFocus(force = true) }),
+        )
+        onDispose { session.focus.unregister(key) }
+    }
+    if (autoFocus || (search.autoFocus == true && !autoFocused)) LaunchedEffect(Unit) {
+        autoFocused = true
+        runCatching { requester.requestFocus() }
+    }
 }
 
 /** [NavSearchField] in its own row under the top app bar. */

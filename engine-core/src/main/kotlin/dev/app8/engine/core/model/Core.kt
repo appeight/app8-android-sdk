@@ -78,6 +78,8 @@ public data class NavigationBar(
     val rightAction: BarAction? = null,
     val rightActions: List<BarAction>? = null,
     val hidden: Boolean? = null,
+    /** Hide the back button on a pushed screen (a search screen whose field takes its place). */
+    val hidesBackButton: Boolean? = null,
     val titleColor: String? = null,
     val tintColor: String? = null,
     val topEdgeEffect: EdgeEffect? = null,
@@ -105,7 +107,19 @@ public data class SearchBar(
     val tintColor: String? = null,
     val fillsBar: Boolean? = null,
     val onSubmit: List<Action>? = null,
+    /** `field` (default) or `button`: the same field drawn as a button that runs [onTap]. */
+    val mode: Mode? = null,
+    val onTap: List<Action>? = null,
+    /** Focus the field (keyboard up) when the screen appears. */
+    val autoFocus: Boolean? = null,
+    /** Runs when the user taps the ✕ (after the field clears and unfocuses). */
+    val onCancel: List<Action>? = null,
 ) {
+    val isButton: Boolean get() = mode == Mode.button
+
+    @Suppress("EnumEntryName")
+    public enum class Mode { field, button }
+
     @Suppress("EnumEntryName")
     public enum class Placement { automatic, stacked, inline, integrated, integratedButton, integratedCentered }
 }
@@ -130,6 +144,7 @@ internal fun decodeNavigationBar(c: Cursor): NavigationBar {
         rightAction = c.opt("rightAction", ::decodeBarAction),
         rightActions = c.opt("rightActions") { a -> a.list(::decodeBarAction) },
         hidden = c.optBool("hidden"),
+        hidesBackButton = c.optBool("hidesBackButton"),
         titleColor = c.optString("titleColor"),
         tintColor = c.optString("tintColor"),
         topEdgeEffect = c.optSafeEnum("topEdgeEffect", NavigationBar.EdgeEffect.automatic),
@@ -146,8 +161,8 @@ private fun decodeBarAction(c: Cursor): BarAction {
 internal fun decodeSearchBar(c: Cursor): SearchBar {
     c.obj()
     // A single action or an array; anything undecodable is dropped (never fails the bar).
-    val onSubmit = c.attempt { it.opt("onSubmit") { a -> a.list(::decodeAction) } }
-        ?: c.attempt { it.opt("onSubmit", ::decodeAction) }?.let { listOf(it) }
+    fun actions(key: String) = c.attempt { it.opt(key) { a -> a.list(::decodeAction) } }
+        ?: c.attempt { it.opt(key, ::decodeAction) }?.let { listOf(it) }
     return SearchBar(
         placeholder = c.optString("placeholder"),
         bindVariable = c.optString("bindVariable"),
@@ -155,6 +170,10 @@ internal fun decodeSearchBar(c: Cursor): SearchBar {
         hidesWhenScrolling = c.optBool("hidesWhenScrolling"),
         tintColor = c.optString("tintColor"),
         fillsBar = c.optBool("fillsBar"),
-        onSubmit = onSubmit,
+        onSubmit = actions("onSubmit"),
+        mode = c.optSafeEnum("mode", SearchBar.Mode.field),
+        onTap = actions("onTap"),
+        autoFocus = c.optBool("autoFocus"),
+        onCancel = actions("onCancel"),
     )
 }
