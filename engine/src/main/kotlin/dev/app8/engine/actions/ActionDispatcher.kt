@@ -212,6 +212,10 @@ internal class ActionDispatcher(
             Action.Type.focusNext -> node.session.focus.focusNext()
             Action.Type.focusPrevious -> node.session.focus.focusPrevious()
             Action.Type.dismissKeyboard -> node.session.focus.dismissKeyboard()
+            // The rest of the list has already run (like iOS); the answer picks onGranted / onDenied.
+            Action.Type.requestNotificationPermission -> host.requestNotificationPermission { granted ->
+                for (next in (if (granted) action.onGranted else action.onDenied).orEmpty()) execute(node, next, context, store)
+            }
             Action.Type.executeFunction, Action.Type.complete -> Unit
         }
     }

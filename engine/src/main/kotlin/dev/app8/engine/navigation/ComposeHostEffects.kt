@@ -1,6 +1,13 @@
 package dev.app8.engine.navigation
 
+import android.Manifest
+import android.app.NotificationManager
 import android.content.ActivityNotFoundException
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.LaunchedEffect
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -21,7 +28,7 @@ import dev.app8.engine.actions.HostEffects
 import dev.app8.engine.core.model.Action
 import dev.app8.engine.runtime.Diagnostics
 
-/** [HostEffects] on Android: Custom Tabs / ACTION_VIEW, view haptics, a Material 3 alert. */
+/** [HostEffects] on Android: Custom Tabs / ACTION_VIEW, view haptics, a Material 3 alert, the notification permission. */
 internal class ComposeHostEffects(
     private val context: Context,
     private val view: View,
@@ -59,6 +66,40 @@ internal class ComposeHostEffects(
 
     override fun alert(request: AlertRequest) {
         alert.value = request
+    }
+
+    /** A pending `requestNotificationPermission`: [NotificationPermissionHost] launches the system dialog. */
+    val notificationRequest: MutableState<((Boolean) -> Unit)?> = mutableStateOf(null)
+
+    /**
+     * Android 13+: POST_NOTIFICATIONS (declared in the engine's manifest). Granted answers at
+     * once; otherwise the system dialog, which itself answers "denied" without showing once the
+     * user has declined twice. Before 13: whether the app's notifications are enabled.
+     */
+    override fun requestNotificationPermission(onResult: (Boolean) -> Unit) {
+        if (Build.VERSION.SDK_INT < 33) {
+            onResult(context.getSystemService(NotificationManager::class.java)?.areNotificationsEnabled() ?: false)
+            return
+        }
+        if (context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+            onResult(true)
+            return
+        }
+        notificationRequest.value = onResult
+    }
+}
+
+/** Runs the POST_NOTIFICATIONS request a `requestNotificationPermission` action left pending. */
+@Composable
+internal fun NotificationPermissionHost(effects: ComposeHostEffects) {
+    val pending by effects.notificationRequest
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        val callback = effects.notificationRequest.value
+        effects.notificationRequest.value = null
+        callback?.invoke(granted)
+    }
+    LaunchedEffect(pending) {
+        if (pending != null && Build.VERSION.SDK_INT >= 33) launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
     }
 }
 

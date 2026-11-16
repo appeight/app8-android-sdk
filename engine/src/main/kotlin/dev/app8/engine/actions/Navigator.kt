@@ -43,6 +43,8 @@ internal interface HostEffects {
     fun openUrl(url: String, presentation: Action.URLPresentation)
     fun haptic(style: Action.HapticStyle)
     fun alert(request: AlertRequest)
+    /** `requestNotificationPermission`: the system prompt once, else the stored answer. */
+    fun requestNotificationPermission(onResult: (Boolean) -> Unit)
 }
 
 internal data class AlertRequest(

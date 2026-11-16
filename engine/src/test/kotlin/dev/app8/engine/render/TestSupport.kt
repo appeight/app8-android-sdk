@@ -45,6 +45,8 @@ internal class RecordingHost : HostEffects {
     override fun openUrl(url: String, presentation: Action.URLPresentation) { calls += "url:$url:$presentation" }
     override fun haptic(style: Action.HapticStyle) { calls += "haptic:$style" }
     override fun alert(request: AlertRequest) { calls += "alert:${request.title}"; lastAlert = request }
+    var notificationAnswer = true
+    override fun requestNotificationPermission(onResult: (Boolean) -> Unit) { calls += "notificationPermission"; onResult(notificationAnswer) }
 }
 
 internal const val APP_JSON = """{"title":"T","navigation":{"startFlow":"f","flows":[{"id":"f","startScreen":"s"}]},
