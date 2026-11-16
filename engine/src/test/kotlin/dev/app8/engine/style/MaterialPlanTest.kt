@@ -32,12 +32,12 @@ class MaterialPlanTest {
     )
 
     @Test
-    fun `layers stack like MaterialView, effects above CALayers, first corner wins`() {
+    fun `layers stack like MaterialView, shadows under fills, effects above CALayers, first corner wins`() {
         val plan = card.resolve(App8Appearance.Light)
         assertEquals(Corner.Curve.continuous, plan.corner?.curve)
         assertEquals(Corner.Radius.Fixed(16.0), plan.corner?.radius)
         assertEquals(
-            listOf("FillLayer", "ShadowLayer", "OutlineLayer", "EffectLayer"),
+            listOf("ShadowLayer", "FillLayer", "OutlineLayer", "EffectLayer"),
             plan.layers.map { it::class.simpleName },
         )
         assertTrue(plan.hasEffects)
@@ -45,18 +45,38 @@ class MaterialPlanTest {
 
     @Test
     fun `fill resolves for the appearance`() {
-        val light = card.resolve(App8Appearance.Light).layers[0] as MaterialLayer.FillLayer
-        val dark = card.resolve(App8Appearance.Dark).layers[0] as MaterialLayer.FillLayer
+        val light = card.resolve(App8Appearance.Light).layers[1] as MaterialLayer.FillLayer
+        val dark = card.resolve(App8Appearance.Dark).layers[1] as MaterialLayer.FillLayer
         assertEquals(DslPaint.Solid(Color.White), light.paint)
         assertEquals(0xFF1C1C1E.toInt(), (dark.paint as DslPaint.Solid).color.toArgb())
     }
 
     @Test
     fun `shadow layers keep CALayer semantics`() {
-        val shadows = (card.resolve(App8Appearance.Light).layers[1] as MaterialLayer.ShadowLayer).shadows
+        val shadows = (card.resolve(App8Appearance.Light).layers[0] as MaterialLayer.ShadowLayer).shadows
         assertEquals(ShadowSpec(Color.Black, 8f, 0f, 4f, 0.25f, spread = 0f, hollow = true), shadows[0])
         assertEquals(false, shadows[1].hollow)
         assertEquals(1f, shadows[1].offsetX)
+    }
+
+    @Test
+    fun `a shadow listed after a translucent fill stacks under it`() {
+        // A white capsule label with a soft shadow, the shadow listed last: the fill must
+        // stay on top, or the shadow covers it (the capsule rendered dark).
+        val pill = TestStyles.material(
+            """
+            [
+              { "id": "c", "type": "corner", "content": { "radius": "capsule" } },
+              { "id": "f", "type": "fill", "content": { "solid": "#FFFFFFF2" } },
+              { "id": "s", "type": "shadow", "content": { "layers": [
+                  { "color": "#000000", "opacity": 0.08, "radius": 10, "offset": { "x": 0, "y": 4 } }
+              ] } }
+            ]
+            """,
+        )
+        val layers = pill.resolve(App8Appearance.Light).layers
+        assertEquals(listOf("ShadowLayer", "FillLayer"), layers.map { it::class.simpleName })
+        assertEquals(false, (layers[0] as MaterialLayer.ShadowLayer).shadows[0].hollow)
     }
 
     @Test
