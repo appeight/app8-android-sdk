@@ -89,6 +89,11 @@ public data class ComponentEntity<C : EntityContent>(
      * a change of the value then animates (a stack collapses or expands, elsewhere a cross-fade).
      */
     val isHiddenAnimation: Animation? = null,
+    /**
+     * `defer` on the envelope (DSL "Deferred sections"): built after the screen is shown when the
+     * component is a direct `stackView` child (see [DeferPlacement]).
+     */
+    val defer: Defer? = null,
 ) : Component
 
 /** Shared surface of every component content. */
@@ -316,6 +321,8 @@ internal fun decodeComponent(input: Cursor): Component {
     }
     return ComponentEntity(id = id, templateId = templateId, type = type, content = content, isHidden = rawIsHidden(c),
         isHiddenAnimation = c.child("content")?.let(::rawPropertiesHiddenAnimation),
+        // Deferred sections: decoded leniently so a malformed value never rejects the component.
+        defer = c.attempt { it.opt("defer", ::decodeDefer) },
     )
 }
 

@@ -1954,18 +1954,20 @@ public final class dev/app8/engine/core/model/ComponentContent : dev/app8/engine
 }
 
 public final class dev/app8/engine/core/model/ComponentEntity : dev/app8/engine/core/model/Component {
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/ComponentType;Ldev/app8/engine/core/model/EntityContent;Ljava/lang/String;Ldev/app8/engine/core/model/Animation;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/ComponentType;Ldev/app8/engine/core/model/EntityContent;Ljava/lang/String;Ldev/app8/engine/core/model/Animation;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/ComponentType;Ldev/app8/engine/core/model/EntityContent;Ljava/lang/String;Ldev/app8/engine/core/model/Animation;Ldev/app8/engine/core/model/Defer;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/ComponentType;Ldev/app8/engine/core/model/EntityContent;Ljava/lang/String;Ldev/app8/engine/core/model/Animation;Ldev/app8/engine/core/model/Defer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/lang/String;
 	public final fun component3 ()Ldev/app8/engine/core/model/ComponentType;
 	public final fun component4 ()Ldev/app8/engine/core/model/EntityContent;
 	public final fun component5 ()Ljava/lang/String;
 	public final fun component6 ()Ldev/app8/engine/core/model/Animation;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/ComponentType;Ldev/app8/engine/core/model/EntityContent;Ljava/lang/String;Ldev/app8/engine/core/model/Animation;)Ldev/app8/engine/core/model/ComponentEntity;
-	public static synthetic fun copy$default (Ldev/app8/engine/core/model/ComponentEntity;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/ComponentType;Ldev/app8/engine/core/model/EntityContent;Ljava/lang/String;Ldev/app8/engine/core/model/Animation;ILjava/lang/Object;)Ldev/app8/engine/core/model/ComponentEntity;
+	public final fun component7 ()Ldev/app8/engine/core/model/Defer;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/ComponentType;Ldev/app8/engine/core/model/EntityContent;Ljava/lang/String;Ldev/app8/engine/core/model/Animation;Ldev/app8/engine/core/model/Defer;)Ldev/app8/engine/core/model/ComponentEntity;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/ComponentEntity;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/ComponentType;Ldev/app8/engine/core/model/EntityContent;Ljava/lang/String;Ldev/app8/engine/core/model/Animation;Ldev/app8/engine/core/model/Defer;ILjava/lang/Object;)Ldev/app8/engine/core/model/ComponentEntity;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getContent ()Ldev/app8/engine/core/model/EntityContent;
+	public final fun getDefer ()Ldev/app8/engine/core/model/Defer;
 	public fun getId ()Ljava/lang/String;
 	public fun getTemplateId ()Ljava/lang/String;
 	public fun getType ()Ldev/app8/engine/core/model/ComponentType;
@@ -2294,6 +2296,47 @@ public final class dev/app8/engine/core/model/DeepMerge {
 	public final fun merge (Lkotlinx/serialization/json/JsonObject;Lkotlinx/serialization/json/JsonElement;I)Ljava/util/Map;
 	public static synthetic fun merge$default (Ldev/app8/engine/core/model/DeepMerge;Lkotlinx/serialization/json/JsonElement;Lkotlinx/serialization/json/JsonElement;IILjava/lang/Object;)Lkotlinx/serialization/json/JsonElement;
 	public static synthetic fun merge$default (Ldev/app8/engine/core/model/DeepMerge;Lkotlinx/serialization/json/JsonObject;Lkotlinx/serialization/json/JsonElement;IILjava/lang/Object;)Ljava/util/Map;
+}
+
+public final class dev/app8/engine/core/model/Defer {
+	public fun <init> ()V
+	public fun <init> (Ldev/app8/engine/core/model/Defer$Placeholder;DD)V
+	public synthetic fun <init> (Ldev/app8/engine/core/model/Defer$Placeholder;DDILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ldev/app8/engine/core/model/Defer$Placeholder;
+	public final fun component2 ()D
+	public final fun component3 ()D
+	public final fun copy (Ldev/app8/engine/core/model/Defer$Placeholder;DD)Ldev/app8/engine/core/model/Defer;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/Defer;Ldev/app8/engine/core/model/Defer$Placeholder;DDILjava/lang/Object;)Ldev/app8/engine/core/model/Defer;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEstimatedHeight ()D
+	public final fun getEstimatedWidth ()D
+	public final fun getPlaceholder ()Ldev/app8/engine/core/model/Defer$Placeholder;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/app8/engine/core/model/Defer$Placeholder : java/lang/Enum {
+	public static final field none Ldev/app8/engine/core/model/Defer$Placeholder;
+	public static final field shimmer Ldev/app8/engine/core/model/Defer$Placeholder;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/app8/engine/core/model/Defer$Placeholder;
+	public static fun values ()[Ldev/app8/engine/core/model/Defer$Placeholder;
+}
+
+public final class dev/app8/engine/core/model/DeferPlacement : java/lang/Enum {
+	public static final field Companion Ldev/app8/engine/core/model/DeferPlacement$Companion;
+	public static final field DEFERRED Ldev/app8/engine/core/model/DeferPlacement;
+	public static final field IGNORED Ldev/app8/engine/core/model/DeferPlacement;
+	public static final field NONE Ldev/app8/engine/core/model/DeferPlacement;
+	public static final field NOT_IN_STACK Ldev/app8/engine/core/model/DeferPlacement;
+	public static final field NOT_IN_STACK_WARNING Ljava/lang/String;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/app8/engine/core/model/DeferPlacement;
+	public static fun values ()[Ldev/app8/engine/core/model/DeferPlacement;
+}
+
+public final class dev/app8/engine/core/model/DeferPlacement$Companion {
+	public final fun of (Ldev/app8/engine/core/model/Defer;Ldev/app8/engine/core/model/ComponentType;ZZ)Ldev/app8/engine/core/model/DeferPlacement;
 }
 
 public final class dev/app8/engine/core/model/DslDecoder {

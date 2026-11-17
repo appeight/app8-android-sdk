@@ -8,6 +8,7 @@ import dev.app8.engine.core.model.Component
 import dev.app8.engine.core.model.ComponentContent
 import dev.app8.engine.core.model.ComponentEntity
 import dev.app8.engine.core.model.ComponentType
+import dev.app8.engine.core.model.DeferPlacement
 import dev.app8.engine.core.model.EntityContent
 import dev.app8.engine.core.model.NativeContent
 import dev.app8.engine.core.model.StatefulContent
@@ -39,8 +40,20 @@ internal class RenderNode(
     val inVerticalScroll: Boolean = false,
     /** Base `animation` of a wrapped `properties.isHidden` (see [ComponentEntity.isHiddenAnimation]). */
     private val baseHiddenAnimation: dev.app8.engine.core.model.Animation? = null,
+    /** The enclosing node; null for a screen or cell root. */
+    val parent: RenderNode? = null,
+    /** Set on the placeholder of a deferred component (see [DeferredSlot]). */
+    val deferredSlot: DeferredSlot? = null,
 ) {
-    lateinit var children: List<RenderNode>
+    /**
+     * Snapshot state: a deferred component replaces its placeholder here after the screen is
+     * shown, and layout and composition that read the list follow.
+     */
+    var children: List<RenderNode> by mutableStateOf(emptyList())
+        internal set
+
+    /** Built from a deferred slot: fades in when first drawn. */
+    var fadesIn: Boolean = false
         internal set
 
     /** True when [scope] is this node's own store: the screen root, or a component declaring variables. */
@@ -139,12 +152,16 @@ internal class RenderNode(
             )
         }
 
-        /** The initial state's `childStates` (as `setState` applies them later). */
+        /**
+         * The initial state's `childStates` (as `setState` applies them later). With [within],
+         * only components inside that subtree (a deferred component that just arrived) change.
+         */
         @Suppress("UNCHECKED_CAST")
-        private fun applyChildStates(node: RenderNode, name: String) {
+        internal fun applyChildStates(node: RenderNode, name: String, within: RenderNode? = null) {
             val state = (node.baseContent as? ComponentContent<Any, Any>)?.states?.get(name) ?: return
             state.childStates?.forEach { (childId, childState) ->
-                node.children.firstNotNullOfOrNull { it.find(childId) }?.let {
+                val target = if (within != null) within.find(childId) else node.children.firstNotNullOfOrNull { it.find(childId) }
+                target?.let {
                     it.stateName = childState
                     applyChildStates(it, childState)
                 }
@@ -163,10 +180,25 @@ internal class RenderNode(
             parentType: ComponentType?,
             scopes: MutableList<Scope>,
             inVerticalScroll: Boolean = false,
+            parent: RenderNode? = null,
+            /** In a deferred component's subtree: `defer` is ignored. */
+            insideDeferred: Boolean = false,
+            /** In a collection item or a per-item template: `defer` is ignored. */
+            insidePerItem: Boolean = false,
         ): RenderNode? {
             val entity = component as? ComponentEntity<*> ?: run {
                 session.runtime.diagnostics.warn("component.pointer", "'${component.id}' (${component.type.raw}) has no content and no template")
                 return null
+            }
+            when (DeferPlacement.of(entity.defer, parentType, insideDeferred, insidePerItem)) {
+                DeferPlacement.DEFERRED -> if (parent != null) {
+                    return DeferredSlot.placeholder(session, entity, key, parentScope, parent, scopes, inVerticalScroll)
+                }
+                DeferPlacement.NOT_IN_STACK -> session.runtime.diagnostics.warn(
+                    DeferPlacement.NOT_IN_STACK_WARNING,
+                    "'${entity.id}' is not a direct stackView child; built with its screen",
+                )
+                DeferPlacement.NONE, DeferPlacement.IGNORED -> Unit
             }
             val content = entity.content
             // The screen's own variables live in the session scope (defined with datasources and params).
@@ -176,7 +208,7 @@ internal class RenderNode(
                 store.defineVariables(App8Runtime.decodeVariableDefinitions(raw, session.runtime.diagnostics))
                 Scope(store, parentScope).also { scopes += it }
             } ?: parentScope
-            val node = RenderNode(key, entity.id, entity.type, content, scope, session, parentType, entity.isHidden, inVerticalScroll, entity.isHiddenAnimation)
+            val node = RenderNode(key, entity.id, entity.type, content, scope, session, parentType, entity.isHidden, inVerticalScroll, entity.isHiddenAnimation, parent)
             val scrollsVertically = (entity.type as? ComponentType.Known)?.key == ComponentType.Key.scrollView &&
                 (content.properties as? dev.app8.engine.core.model.ScrollViewProperties)?.direction != dev.app8.engine.core.model.ScrollViewProperties.Direction.horizontal
             val childrenInScroll = inVerticalScroll || scrollsVertically
@@ -186,7 +218,7 @@ internal class RenderNode(
             node.children = children.mapIndexedNotNull { i, child ->
                 // Keys must be unique among siblings even when ids repeat.
                 val childKey = "$key.${child.id}".let { if (seen.add(it)) it else "$it#$i" }
-                build(session, child, childKey, scope, entity.type, scopes, childrenInScroll)
+                build(session, child, childKey, scope, entity.type, scopes, childrenInScroll, node, insideDeferred, insidePerItem)
             }
             node.stateName?.let { applyChildStates(node, it) }
             return node

@@ -279,7 +279,7 @@ internal class Cell private constructor(
         fun create(parent: RenderNode, template: Component, store: ScopedVariableStore, variable: String?, value: Any?): Cell? = traced("App8.cell") {
             val scope = Scope(store, parent.scope)
             val scopes = ArrayList<Scope>()
-            val root = RenderNode.build(parent.session, template, template.id, scope, parent.type, scopes, inVerticalScroll = rowsInVerticalScroll(parent))
+            val root = RenderNode.build(parent.session, template, template.id, scope, parent.type, scopes, inVerticalScroll = rowsInVerticalScroll(parent), insidePerItem = true)
             if (root == null) {
                 scope.dispose()
                 store.detach()
@@ -305,7 +305,7 @@ internal class Cell private constructor(
         /** A cell rendered in [parent]'s own scope (table rows): the scope is not the cell's to dispose. */
         fun inParentScope(parent: RenderNode, template: Component, inVerticalScroll: Boolean = false): Cell? {
             val scopes = ArrayList<Scope>()
-            val root = RenderNode.build(parent.session, template, template.id, parent.scope, parent.type, scopes, inVerticalScroll = inVerticalScroll) ?: return null
+            val root = RenderNode.build(parent.session, template, template.id, parent.scope, parent.type, scopes, inVerticalScroll = inVerticalScroll, insidePerItem = true) ?: return null
             return Cell(template, parent.scope, root, scopes, null, null, ownsScope = false)
         }
 
