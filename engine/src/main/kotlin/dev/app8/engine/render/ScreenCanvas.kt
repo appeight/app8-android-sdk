@@ -83,6 +83,8 @@ internal fun ScreenCanvas(session: ScreenSession, safeArea: EdgeInsets, modifier
         val displayed = remember(transition, solved) { transition.state(solved) }
         androidx.compose.runtime.LaunchedEffect(transition) { transition.run() }
         Recompositions.Reporter()
+        // `defer`: build the deferred components a few per frame, now that the screen is shown.
+        DeferredBuilds(session)
         CompositionLocalProvider(LocalSolved provides displayed, LocalLayoutTransition provides transition) {
             // The root fills the screen; its children are placed by ChildrenLayout.
             Layout(

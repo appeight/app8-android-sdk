@@ -34,13 +34,26 @@ internal class ScreenSession private constructor(
     /** Text-input focus for this presentation (focus actions, return-key chaining). */
     val focus = dev.app8.engine.render.controls.FocusManager()
 
-    /** Pre-order index of each node key: the focus order of text inputs. */
-    val treeOrder: Map<String, Int> by lazy {
-        val out = HashMap<String, Int>()
-        fun walk(n: RenderNode) { out[n.key] = out.size; n.children.forEach(::walk) }
-        walk(root)
-        out
+    /** Pre-order index of each node key: the focus order of text inputs. Recomputed after a deferred build. */
+    val treeOrder: Map<String, Int>
+        get() = cachedTreeOrder ?: HashMap<String, Int>().also { out ->
+            fun walk(n: RenderNode) { out[n.key] = out.size; n.children.forEach(::walk) }
+            walk(root)
+            cachedTreeOrder = out
+        }
+    private var cachedTreeOrder: Map<String, Int>? = null
+
+    /** Components with `defer` still to build, in document order (see [DeferredBuilds]). */
+    val deferred = DeferredQueue()
+
+    /** Builds queued deferred components for up to [budgetNanos] (at least one). */
+    fun buildDeferred(budgetNanos: Long): Int {
+        if (!isAlive) return 0
+        return deferred.drain(budgetNanos) { cachedTreeOrder = null }
     }
+
+    /** Builds every queued deferred component now (tooling, tests). */
+    fun buildAllDeferred(): Int = if (isAlive) deferred.drainAll { cachedTreeOrder = null } else 0
 
     lateinit var root: RenderNode
         private set
@@ -62,6 +75,7 @@ internal class ScreenSession private constructor(
 
     fun dispose() {
         isAlive = false
+        deferred.clear()
         runtime.unregisterDatasources(scope.store)
         scopes.forEach { it.dispose() }
         scope.dispose()

@@ -96,7 +96,10 @@ internal object ComponentRegistry {
         ComponentType.Key.native to NativeKind,
     )
 
-    fun kind(node: RenderNode): ComponentKind = node.typeKey?.let { kinds[it] } ?: PlaceholderKind
+    fun kind(node: RenderNode): ComponentKind {
+        if (node.deferredSlot != null) return dev.app8.engine.render.DeferredPlaceholderKind
+        return node.typeKey?.let { kinds[it] } ?: PlaceholderKind
+    }
 
     /** Types rendered natively (others are placeholders). */
     val supported: Set<ComponentType.Key> get() = kinds.keys

@@ -112,7 +112,8 @@ internal fun NodeView(node: RenderNode) {
     val bgTarget = bgColor ?: Color.Transparent
     val bg by animateColorAsState(bgTarget, props?.backgroundColor?.animation.toSpecOf(node), label = "bg")
 
-    var m: Modifier = Modifier.layoutId(node.key).testTag(node.id)
+    // A deferred component that just arrived fades in over its placeholder's slot.
+    var m: Modifier = Modifier.layoutId(node.key).testTag(node.id).deferredFadeIn(node)
     if (transition != null) {
         // Fades on the transition's timing; in a stack, clipped to the animating bounds
         // around content measured at its laid-out size.
