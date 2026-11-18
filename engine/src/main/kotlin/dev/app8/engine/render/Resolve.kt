@@ -68,6 +68,21 @@ internal fun RenderNode.bool(raw: String?, ctx: VariableContext = scope.tracked)
     return Coerce.bool(v)
 }
 
+/**
+ * `button` `isEnabled` (button.md): exactly iOS `resolvePropertyToBool`, where a string other than
+ * `"true"` / `"1"` is false; `null` (missing or unresolved) keeps the default.
+ */
+internal fun RenderNode.enabledFlag(raw: String?, ctx: VariableContext = scope.tracked): Boolean? {
+    raw ?: return null
+    val v: Any? = if (runtime.propertyResolver.containsExpression(raw)) resolve(raw, ctx) else raw
+    return when (v) {
+        is Boolean -> v
+        is Number -> v.toDouble() != 0.0
+        is String -> v.lowercase() == "true" || v == "1"
+        else -> null
+    }
+}
+
 internal fun RenderNode.number(raw: String?, ctx: VariableContext = scope.tracked): Double? {
     raw ?: return null
     val v: Any? = if (runtime.propertyResolver.containsExpression(raw)) resolve(raw, ctx) else raw
