@@ -56,7 +56,7 @@ internal fun ContentMode?.toScale(default: ContentMode): Pair<ContentScale, Alig
 /** `image` (UIImageView, clipsToBounds, aspect fill by default), loaded with Coil. */
 /** An `image` node's picture (asset or remote URL), or null for other nodes / no model. */
 internal fun imageRef(node: RenderNode): AssetRef? = when (val m = (node.content.properties as? ImageProperties)?.model) {
-    is ImageProperties.Model.LocalAsset -> AssetRef(null, node.string(m.name), null)
+    is ImageProperties.Model.LocalAsset -> AssetRef(null, node.string(m.name), null, local = true)
     is ImageProperties.Model.RemoteAsset -> {
         val url = m.asset.url?.let { node.string(it) }?.takeIf { it.isNotEmpty() }
         val name = m.asset.name?.let { node.string(it) }?.takeIf { it.isNotEmpty() }

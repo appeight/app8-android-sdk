@@ -17,9 +17,11 @@ import okio.Buffer
 
 /**
  * An image the DSL names: the data source is asked first (it owns bundled and prefetched
- * assets), then [url] is fetched over the network (iOS `CImageView.applyImageContent`).
+ * assets, the app's asset map), then [url] is fetched over the network (iOS
+ * `CImageView.applyImageContent`). A [local] asset name not in the data source falls back
+ * to a drawable compiled into the host app (image.md, Image source).
  */
-internal data class AssetRef(val id: String?, val name: String?, val url: String?)
+internal data class AssetRef(val id: String?, val name: String?, val url: String?, val local: Boolean = false)
 
 private class AssetFetcher(
     private val ref: AssetRef,
@@ -34,6 +36,14 @@ private class AssetFetcher(
         if (bytes != null) {
             return SourceFetchResult(ImageSource(Buffer().write(bytes), options.fileSystem), null, DataSource.DISK)
         }
+        if (ref.local && ref.url == null) {
+            val res = ref.name?.let { hostDrawable(options.context, it) } ?: 0
+            if (res != 0) {
+                val uri = "android.resource://${options.context.packageName}/$res".toUri()
+                val (fetcher, _) = loader.components.newFetcher(uri, options, loader) ?: return null
+                return fetcher.fetch()
+            }
+        }
         val url = ref.url ?: ref.name?.takeIf { it.startsWith("http://") || it.startsWith("https://") }
             // Say what is missing instead of Coil's "Unable to create a fetcher".
             ?: throw IllegalStateException("asset '${ref.name ?: ref.id}' not found in the data source and no url")
@@ -47,8 +57,22 @@ private class AssetFetcher(
     }
 }
 
+/**
+ * The host app's drawable for an asset name ("logo-black.png" -> R.drawable.logo_black),
+ * or 0. Resource names are lowercase with underscores and no extension.
+ */
+@android.annotation.SuppressLint("DiscouragedApi")
+internal fun hostDrawable(context: android.content.Context, name: String): Int {
+    val resName = drawableName(name) ?: return 0
+    return context.resources.getIdentifier(resName, "drawable", context.packageName)
+}
+
+/** A drawable resource name for an asset name, or null when nothing is left. */
+internal fun drawableName(name: String): String? =
+    name.substringAfterLast('/').substringBeforeLast('.').lowercase().replace(Regex("[^a-z0-9_]"), "_").takeIf { it.isNotEmpty() }
+
 private object AssetKeyer : Keyer<AssetRef> {
-    override fun key(data: AssetRef, options: Options): String = "a8:${data.id}:${data.name}:${data.url}"
+    override fun key(data: AssetRef, options: Options): String = "a8:${data.id}:${data.name}:${data.url}:${data.local}"
 }
 
 /** The instance's image loader: data-source assets, network, and a pending-request count for idle detection. */
