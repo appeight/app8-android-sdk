@@ -26,7 +26,7 @@ public class ExpressionParser {
                 val textBefore = remaining.substring(0, open)
                 if (textBefore.isNotEmpty()) parts.add(ExpressionNode.Literal(LiteralValue.StringValue(textBefore)))
                 remaining = remaining.substring(open + 2)
-                val close = remaining.indexOf("}}")
+                val close = ExpressionText.closingBraces(remaining)
                 if (close < 0) throw ExpressionException.ParseError("Unmatched {{ in expression: $str")
                 val inner = SwiftCompat.trimWhitespaces(remaining.substring(0, close))
                 remaining = remaining.substring(close + 2)
@@ -70,6 +70,8 @@ public class ExpressionParser {
                 '('.code -> { tokens.add(Token(TokenType.LeftParen, position)); index++ }
                 ')'.code -> { tokens.add(Token(TokenType.RightParen, position)); index++ }
                 '['.code -> { tokens.add(Token(TokenType.LeftBracket, position)); index++ }
+                '{'.code -> { tokens.add(Token(TokenType.LeftBrace, position)); index++ }
+                '}'.code -> { tokens.add(Token(TokenType.RightBrace, position)); index++ }
                 ']'.code -> { tokens.add(Token(TokenType.RightBracket, position)); index++ }
                 ','.code -> { tokens.add(Token(TokenType.Comma, position)); index++ }
                 '.'.code -> { tokens.add(Token(TokenType.Dot, position)); index++ }
@@ -214,6 +216,8 @@ private sealed interface TokenType {
     data object RightParen : TokenType
     data object LeftBracket : TokenType
     data object RightBracket : TokenType
+    data object LeftBrace : TokenType
+    data object RightBrace : TokenType
     data object Comma : TokenType
     data object Dot : TokenType
     data object Question : TokenType
@@ -340,6 +344,24 @@ private class ParserState(private val tokens: List<Token>) {
             }
             return ExpressionNode.ArrayLiteral(elements)
         }
+        // Object literal: `{ key: value, 'quoted key': value }`.
+        if (match(TokenType.LeftBrace)) {
+            val entries = ArrayList<Pair<String, ExpressionNode>>()
+            if (!check(TokenType.RightBrace)) {
+                do {
+                    val key = when (val t = current().type) {
+                        is TokenType.Identifier -> t.name
+                        is TokenType.Literal -> (t.value as? LiteralValue.StringValue)?.value
+                        else -> null
+                    } ?: throw ExpressionException.ParseError("Expected a string or a name as an object key")
+                    advance()
+                    consume(TokenType.Colon, "Expected ':' after an object key")
+                    entries.add(key to parseTernary())
+                } while (match(TokenType.Comma))
+            }
+            consume(TokenType.RightBrace, "Expected '}' after object entries")
+            return ExpressionNode.ObjectLiteral(entries)
+        }
         throw ExpressionException.UnexpectedToken(current().position)
     }
 
@@ -393,4 +415,32 @@ private class ParserState(private val tokens: List<Token>) {
     fun current(): Token = tokens[currentIndex]
 
     // endregion
+}
+
+/** Expression boundaries in text. */
+public object ExpressionText {
+    /**
+     * Where the `}}` that closes an expression starts in [text] (the text after its `{{`), or -1:
+     * the first `}}` outside quoted strings and outside the braces the expression opened itself,
+     * so `{{ {'a': {'b': 1}} }}` is one expression.
+     */
+    public fun closingBraces(text: String, from: Int = 0): Int {
+        var depth = 0
+        var quote: Char? = null
+        var i = from
+        while (i < text.length) {
+            val c = text[i]
+            if (quote != null) {
+                if (c == '\\') i++ else if (c == quote) quote = null
+            } else if (c == '\'' || c == '"') {
+                quote = c
+            } else if (c == '{') {
+                depth++
+            } else if (c == '}') {
+                if (depth > 0) depth-- else if (i + 1 < text.length && text[i + 1] == '}') return i
+            }
+            i++
+        }
+        return -1
+    }
 }

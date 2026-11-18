@@ -141,6 +141,17 @@ public final class dev/app8/engine/core/expr/ExpressionNode$MemberAccess : dev/a
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class dev/app8/engine/core/expr/ExpressionNode$ObjectLiteral : dev/app8/engine/core/expr/ExpressionNode {
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Ldev/app8/engine/core/expr/ExpressionNode$ObjectLiteral;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/expr/ExpressionNode$ObjectLiteral;Ljava/util/List;ILjava/lang/Object;)Ldev/app8/engine/core/expr/ExpressionNode$ObjectLiteral;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEntries ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class dev/app8/engine/core/expr/ExpressionNode$Ternary : dev/app8/engine/core/expr/ExpressionNode {
 	public fun <init> (Ldev/app8/engine/core/expr/ExpressionNode;Ldev/app8/engine/core/expr/ExpressionNode;Ldev/app8/engine/core/expr/ExpressionNode;)V
 	public final fun component1 ()Ldev/app8/engine/core/expr/ExpressionNode;
@@ -183,6 +194,12 @@ public final class dev/app8/engine/core/expr/ExpressionNode$Variable : dev/app8/
 public final class dev/app8/engine/core/expr/ExpressionParser {
 	public fun <init> ()V
 	public final fun parse (Ljava/lang/String;)Ldev/app8/engine/core/expr/ExpressionNode;
+}
+
+public final class dev/app8/engine/core/expr/ExpressionText {
+	public static final field INSTANCE Ldev/app8/engine/core/expr/ExpressionText;
+	public final fun closingBraces (Ljava/lang/String;I)I
+	public static synthetic fun closingBraces$default (Ldev/app8/engine/core/expr/ExpressionText;Ljava/lang/String;IILjava/lang/Object;)I
 }
 
 public abstract interface class dev/app8/engine/core/expr/LiteralValue {
@@ -685,20 +702,46 @@ public final class dev/app8/engine/core/layout/StackDistribution$Companion {
 	public final fun parse (Ljava/lang/String;)Ldev/app8/engine/core/layout/StackDistribution;
 }
 
+public final class dev/app8/engine/core/layout/StackMargins {
+	public static final field Companion Ldev/app8/engine/core/layout/StackMargins$Companion;
+	public fun <init> ()V
+	public fun <init> (DDDD)V
+	public synthetic fun <init> (DDDDILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()D
+	public final fun component2 ()D
+	public final fun component3 ()D
+	public final fun component4 ()D
+	public final fun copy (DDDD)Ldev/app8/engine/core/layout/StackMargins;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/layout/StackMargins;DDDDILjava/lang/Object;)Ldev/app8/engine/core/layout/StackMargins;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBottom ()D
+	public final fun getLeading ()D
+	public final fun getTop ()D
+	public final fun getTrailing ()D
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/app8/engine/core/layout/StackMargins$Companion {
+	public final fun getZERO ()Ldev/app8/engine/core/layout/StackMargins;
+}
+
 public final class dev/app8/engine/core/layout/StackSpec {
 	public fun <init> ()V
-	public fun <init> (Ldev/app8/engine/core/layout/StackAxis;DLdev/app8/engine/core/layout/StackAlignment;Ldev/app8/engine/core/layout/StackDistribution;)V
-	public synthetic fun <init> (Ldev/app8/engine/core/layout/StackAxis;DLdev/app8/engine/core/layout/StackAlignment;Ldev/app8/engine/core/layout/StackDistribution;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ldev/app8/engine/core/layout/StackAxis;DLdev/app8/engine/core/layout/StackAlignment;Ldev/app8/engine/core/layout/StackDistribution;Ldev/app8/engine/core/layout/StackMargins;)V
+	public synthetic fun <init> (Ldev/app8/engine/core/layout/StackAxis;DLdev/app8/engine/core/layout/StackAlignment;Ldev/app8/engine/core/layout/StackDistribution;Ldev/app8/engine/core/layout/StackMargins;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ldev/app8/engine/core/layout/StackAxis;
 	public final fun component2 ()D
 	public final fun component3 ()Ldev/app8/engine/core/layout/StackAlignment;
 	public final fun component4 ()Ldev/app8/engine/core/layout/StackDistribution;
-	public final fun copy (Ldev/app8/engine/core/layout/StackAxis;DLdev/app8/engine/core/layout/StackAlignment;Ldev/app8/engine/core/layout/StackDistribution;)Ldev/app8/engine/core/layout/StackSpec;
-	public static synthetic fun copy$default (Ldev/app8/engine/core/layout/StackSpec;Ldev/app8/engine/core/layout/StackAxis;DLdev/app8/engine/core/layout/StackAlignment;Ldev/app8/engine/core/layout/StackDistribution;ILjava/lang/Object;)Ldev/app8/engine/core/layout/StackSpec;
+	public final fun component5 ()Ldev/app8/engine/core/layout/StackMargins;
+	public final fun copy (Ldev/app8/engine/core/layout/StackAxis;DLdev/app8/engine/core/layout/StackAlignment;Ldev/app8/engine/core/layout/StackDistribution;Ldev/app8/engine/core/layout/StackMargins;)Ldev/app8/engine/core/layout/StackSpec;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/layout/StackSpec;Ldev/app8/engine/core/layout/StackAxis;DLdev/app8/engine/core/layout/StackAlignment;Ldev/app8/engine/core/layout/StackDistribution;Ldev/app8/engine/core/layout/StackMargins;ILjava/lang/Object;)Ldev/app8/engine/core/layout/StackSpec;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAlignment ()Ldev/app8/engine/core/layout/StackAlignment;
 	public final fun getAxis ()Ldev/app8/engine/core/layout/StackAxis;
 	public final fun getDistribution ()Ldev/app8/engine/core/layout/StackDistribution;
+	public final fun getMargins ()Ldev/app8/engine/core/layout/StackMargins;
 	public final fun getSpacing ()D
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -5270,6 +5313,25 @@ public final class dev/app8/engine/core/model/style/LabelStyle : dev/app8/engine
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class dev/app8/engine/core/model/style/LayoutMargins {
+	public fun <init> ()V
+	public fun <init> (DDDD)V
+	public synthetic fun <init> (DDDDILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()D
+	public final fun component2 ()D
+	public final fun component3 ()D
+	public final fun component4 ()D
+	public final fun copy (DDDD)Ldev/app8/engine/core/model/style/LayoutMargins;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/style/LayoutMargins;DDDDILjava/lang/Object;)Ldev/app8/engine/core/model/style/LayoutMargins;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBottom ()D
+	public final fun getLeading ()D
+	public final fun getTop ()D
+	public final fun getTrailing ()D
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class dev/app8/engine/core/model/style/MapStyle : dev/app8/engine/core/model/style/BaseStyle {
 	public fun <init> ()V
 	public fun <init> (Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/Corner;Ljava/lang/String;Ljava/lang/Double;Ljava/lang/String;)V
@@ -5934,19 +5996,21 @@ public final class dev/app8/engine/core/model/style/VideoStyle : dev/app8/engine
 
 public final class dev/app8/engine/core/model/style/ViewStyle : dev/app8/engine/core/model/style/BaseStyle {
 	public fun <init> ()V
-	public fun <init> (Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/BlendMode;)V
-	public synthetic fun <init> (Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/BlendMode;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/BlendMode;Ldev/app8/engine/core/model/style/LayoutMargins;)V
+	public synthetic fun <init> (Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/BlendMode;Ldev/app8/engine/core/model/style/LayoutMargins;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ldev/app8/engine/core/model/style/ContentMode;
 	public final fun component2 ()Ldev/app8/engine/core/model/style/Wrapped;
 	public final fun component3 ()Ljava/lang/Double;
 	public final fun component4 ()Ldev/app8/engine/core/model/style/Transform;
 	public final fun component5 ()Ldev/app8/engine/core/model/style/BlendMode;
-	public final fun copy (Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/BlendMode;)Ldev/app8/engine/core/model/style/ViewStyle;
-	public static synthetic fun copy$default (Ldev/app8/engine/core/model/style/ViewStyle;Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/BlendMode;ILjava/lang/Object;)Ldev/app8/engine/core/model/style/ViewStyle;
+	public final fun component6 ()Ldev/app8/engine/core/model/style/LayoutMargins;
+	public final fun copy (Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/BlendMode;Ldev/app8/engine/core/model/style/LayoutMargins;)Ldev/app8/engine/core/model/style/ViewStyle;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/style/ViewStyle;Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/BlendMode;Ldev/app8/engine/core/model/style/LayoutMargins;ILjava/lang/Object;)Ldev/app8/engine/core/model/style/ViewStyle;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getAlpha ()Ljava/lang/Double;
 	public fun getBlendMode ()Ldev/app8/engine/core/model/style/BlendMode;
 	public fun getContentMode ()Ldev/app8/engine/core/model/style/ContentMode;
+	public final fun getLayoutMargins ()Ldev/app8/engine/core/model/style/LayoutMargins;
 	public fun getMaterial ()Ldev/app8/engine/core/model/style/Wrapped;
 	public fun getTransform ()Ldev/app8/engine/core/model/style/Transform;
 	public fun hashCode ()I

@@ -2,6 +2,7 @@ package dev.app8.engine.core.vars
 
 import dev.app8.engine.core.expr.ExpressionEvaluator
 import dev.app8.engine.core.expr.ExpressionParser
+import dev.app8.engine.core.expr.ExpressionText
 import dev.app8.engine.core.expr.SwiftCompat
 import java.util.Locale
 
@@ -60,7 +61,8 @@ public class PropertyResolver(private val translationProvider: TranslationProvid
         val trimmed = SwiftCompat.trimWhitespaces(value)
         if (trimmed.length >= 4 && trimmed.startsWith("{{") && trimmed.endsWith("}}")) {
             val inner = trimmed.substring(2, trimmed.length - 2)
-            if (!inner.contains("{{") && !inner.contains("}}")) {
+            // One expression when its closing `}}` (outside quotes and braces) ends the string.
+            if (!inner.contains("{{") && ExpressionText.closingBraces(trimmed, 2) == trimmed.length - 2) {
                 val node = parser.parse(value)
                 return evaluator.evaluate(node, context) ?: Values.Null
             }
@@ -102,7 +104,7 @@ public class PropertyResolver(private val translationProvider: TranslationProvid
             if (start < 0) break
             result.append(remaining, 0, start)
             val afterStart = remaining.substring(start + 2)
-            val end = afterStart.indexOf("}}")
+            val end = ExpressionText.closingBraces(afterStart)
             if (end < 0) {
                 // No closing }} — keep the rest literally.
                 result.append(remaining, start, remaining.length)

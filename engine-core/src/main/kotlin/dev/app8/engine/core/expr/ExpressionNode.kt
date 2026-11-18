@@ -22,6 +22,9 @@ public sealed interface ExpressionNode {
      * element-wise at runtime. All-literal arrays stay [Literal] of [LiteralValue.ArrayValue].
      */
     public data class ArrayLiteral(val elements: List<ExpressionNode>) : ExpressionNode
+
+    /** Object literal (`{title: 'A', 'count': n}`): keys in order, values evaluated at runtime. */
+    public data class ObjectLiteral(val entries: List<Pair<String, ExpressionNode>>) : ExpressionNode
 }
 
 /** Literal values in the AST (Swift `LiteralValue`). */
