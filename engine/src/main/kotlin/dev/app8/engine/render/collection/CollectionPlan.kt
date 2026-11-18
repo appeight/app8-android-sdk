@@ -132,7 +132,8 @@ internal object CollectionPlan {
                 columns = (config.columns ?: 2).coerceAtLeast(1),
                 itemHeight = config.itemHeight,
                 aspectRatio = config.aspectRatio?.takeIf { it > 0 },
-                // createGridLayout adds no header.
+                // Section headers (groupBy / sectionDefinitions) above each section's rows.
+                hasHeader = hasHeader,
             )
             CollectionLayout.LayoutType.horizontal -> SectionStyle(
                 kind = SectionKind.HORIZONTAL,

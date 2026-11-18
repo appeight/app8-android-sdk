@@ -56,6 +56,8 @@ internal class CollectionModel(val node: RenderNode) {
 
     private val cells = HashMap<String, Cell>()
     private val headers = HashMap<String, Cell>()
+    /** The `section.items` each cached header was built with. */
+    private val headerItems = HashMap<String, List<Any?>>()
     private val templates = HashMap<String, Component?>()
 
     /** The sections (iOS `sectionsSubject`), structurally compared so equal data does not recompose. */
@@ -162,10 +164,12 @@ internal class CollectionModel(val node: RenderNode) {
         return Cell.create(node, template, store, "item", item.value)?.also { cells[key] = it }
     }
 
-    fun header(section: Int, key: String, template: Component): Cell? {
+    fun header(section: Int, key: String, template: Component, items: List<Any?> = emptyList()): Cell? {
         val hk = "$section:$key"
-        headers[hk]?.let { if (it.template === template) return it else { it.dispose(); headers.remove(hk) } }
-        val value = linkedMapOf<String, Any?>("key" to key, "\$index" to section.toLong())
+        // `section.items` (collections.md, Section Variables): a new list rebuilds the header.
+        headers[hk]?.let { if (it.template === template && headerItems[hk] == items) return it else { it.dispose(); headers.remove(hk) } }
+        headerItems[hk] = items
+        val value = linkedMapOf<String, Any?>("key" to key, "items" to items, "\$index" to section.toLong())
         val store = ScopedVariableStore(node.scope.store)
         store.defineVariable("section", VariableDefinition(VariableType.OBJECT, value))
         return Cell.create(node, template, store, "section", value)?.also { headers[hk] = it }

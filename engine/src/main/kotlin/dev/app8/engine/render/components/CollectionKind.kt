@@ -159,7 +159,7 @@ internal object CollectionKind : ComponentKind {
         val st = styles[row.section]
         val s = sections[row.section]
         return when (row) {
-            is RowSpec.Header -> model.headerTemplate(s.key)?.let { t -> model.header(row.section, s.key, t)?.layout(env, width - st.insets.left - st.insets.right, null)?.value?.contentHeight } ?: 0.0
+            is RowSpec.Header -> model.headerTemplate(s.key)?.let { t -> model.header(row.section, s.key, t, s.items.map { it.value })?.layout(env, width - st.insets.left - st.insets.right, null)?.value?.contentHeight } ?: 0.0
             is RowSpec.Strip -> st.rows * (st.itemHeight ?: 0.0) + (st.rows - 1) * st.lineSpacing
             is RowSpec.Items -> {
                 val (w, fixed) = itemSize(st, width)
@@ -190,8 +190,8 @@ internal object CollectionKind : ComponentKind {
                 CollectionPlan.mixedStyle(cfg, p.layout, hasHeader, model.templateSize(s.items.firstOrNull()))
             }
         }
-        val st = CollectionPlan.topLevelStyle(p.layout, c.defaultSectionHeader != null)
-        return sections.map { st }
+        // A section has a header when there is a default header or one for its key.
+        return sections.map { s -> CollectionPlan.topLevelStyle(p.layout, c.defaultSectionHeader != null || c.sectionHeaders?.get(s.key) != null) }
     }
 
     private fun rows(model: CollectionModel, sections: List<CollectionSection>, styles: List<SectionStyle>): List<RowSpec> =
@@ -362,7 +362,7 @@ internal object CollectionKind : ComponentKind {
         when (row) {
             is RowSpec.Header -> {
                 val template = model.headerTemplate(s.key) ?: return
-                val cell = model.header(row.section, s.key, template) ?: return
+                val cell = model.header(row.section, s.key, template, s.items.map { it.value }) ?: return
                 val w = (width - st.insets.left - st.insets.right).coerceAtLeast(0.0)
                 Box(pad.padding(start = st.insets.left.dp)) { CellView(cell, cell.layout(env, w, null)) }
             }
