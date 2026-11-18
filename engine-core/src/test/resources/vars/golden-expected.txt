@@ -485,4 +485,13 @@ S:"[null,null,true]"
 ERR:Undefined variable: 'missingVar'
 S:"n=[3,1,4,1,5,9,2,6]"
 S:"[3,1,4,1,5,9,2,6]!"
-ERR:Invalid character '{' at position 9
+S:"{}"
+S:"{\"a\":1,\"b\":[1,{\"c\":2}]}"
+S:"{\"a\":\"x\",\"b\":null}"
+S:"}}"
+S:"{\"a\":1,\"b\":3}"
+S:"[1,2,3]"
+I:5
+S:"[{\"p\":1},{\"p\":2},{\"p\":3},{\"p\":\"x\"},{}]"
+S:"[{\"p\":\"x\"},{\"p\":3},{\"p\":2},{\"p\":1},{}]"
+ERR:Expected a string or a name as an object key

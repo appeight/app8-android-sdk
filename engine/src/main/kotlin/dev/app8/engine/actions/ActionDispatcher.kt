@@ -1,6 +1,7 @@
 package dev.app8.engine.actions
 
 import dev.app8.engine.core.model.Action
+import dev.app8.engine.core.model.ActionCondition
 import dev.app8.engine.core.model.ActionTrigger
 import dev.app8.engine.core.model.AnalyticsBinding
 import dev.app8.engine.core.model.ComponentContent
@@ -200,6 +201,11 @@ internal class ActionDispatcher(
                 for ((name, raw) in action.values.orEmpty()) scoped = scoped.overlaying(name, resolveDeep(raw, context))
                 runList(node, action.actions.orEmpty(), scoped, store, exec)
             }
+            // The condition once, then exactly one branch in the current scope.
+            Action.Type.`if` -> {
+                val holds = ActionCondition.holds(action.condition?.let { resolveDeep(it, context) })
+                runList(node, (if (holds) action.thenActions else action.elseActions).orEmpty(), context, store, exec)
+            }
             Action.Type.request -> request(node, action, context, store, exec)
             Action.Type.reloadDatasource -> reloadDatasource(node, action, context, store, exec)
 
@@ -235,6 +241,8 @@ internal class ActionDispatcher(
                 for (next in (if (granted) action.onGranted else action.onDenied).orEmpty()) execute(node, next, context, store)
             }
             Action.Type.executeFunction, Action.Type.complete -> Unit
+            // A newer DSL's action: reported once by name, runs nothing.
+            Action.Type.unknown -> runtime.diagnostics.warn("action.unknown", "unknown action type '${action.unknownType}' in ${node.key}: skipped")
         }
     }
 

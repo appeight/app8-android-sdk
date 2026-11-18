@@ -141,6 +141,17 @@ public final class dev/app8/engine/core/expr/ExpressionNode$MemberAccess : dev/a
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class dev/app8/engine/core/expr/ExpressionNode$ObjectLiteral : dev/app8/engine/core/expr/ExpressionNode {
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Ldev/app8/engine/core/expr/ExpressionNode$ObjectLiteral;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/expr/ExpressionNode$ObjectLiteral;Ljava/util/List;ILjava/lang/Object;)Ldev/app8/engine/core/expr/ExpressionNode$ObjectLiteral;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEntries ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class dev/app8/engine/core/expr/ExpressionNode$Ternary : dev/app8/engine/core/expr/ExpressionNode {
 	public fun <init> (Ldev/app8/engine/core/expr/ExpressionNode;Ldev/app8/engine/core/expr/ExpressionNode;Ldev/app8/engine/core/expr/ExpressionNode;)V
 	public final fun component1 ()Ldev/app8/engine/core/expr/ExpressionNode;
@@ -183,6 +194,12 @@ public final class dev/app8/engine/core/expr/ExpressionNode$Variable : dev/app8/
 public final class dev/app8/engine/core/expr/ExpressionParser {
 	public fun <init> ()V
 	public final fun parse (Ljava/lang/String;)Ldev/app8/engine/core/expr/ExpressionNode;
+}
+
+public final class dev/app8/engine/core/expr/ExpressionText {
+	public static final field INSTANCE Ldev/app8/engine/core/expr/ExpressionText;
+	public final fun closingBraces (Ljava/lang/String;I)I
+	public static synthetic fun closingBraces$default (Ldev/app8/engine/core/expr/ExpressionText;Ljava/lang/String;IILjava/lang/Object;)I
 }
 
 public abstract interface class dev/app8/engine/core/expr/LiteralValue {
@@ -685,20 +702,46 @@ public final class dev/app8/engine/core/layout/StackDistribution$Companion {
 	public final fun parse (Ljava/lang/String;)Ldev/app8/engine/core/layout/StackDistribution;
 }
 
+public final class dev/app8/engine/core/layout/StackMargins {
+	public static final field Companion Ldev/app8/engine/core/layout/StackMargins$Companion;
+	public fun <init> ()V
+	public fun <init> (DDDD)V
+	public synthetic fun <init> (DDDDILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()D
+	public final fun component2 ()D
+	public final fun component3 ()D
+	public final fun component4 ()D
+	public final fun copy (DDDD)Ldev/app8/engine/core/layout/StackMargins;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/layout/StackMargins;DDDDILjava/lang/Object;)Ldev/app8/engine/core/layout/StackMargins;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBottom ()D
+	public final fun getLeading ()D
+	public final fun getTop ()D
+	public final fun getTrailing ()D
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/app8/engine/core/layout/StackMargins$Companion {
+	public final fun getZERO ()Ldev/app8/engine/core/layout/StackMargins;
+}
+
 public final class dev/app8/engine/core/layout/StackSpec {
 	public fun <init> ()V
-	public fun <init> (Ldev/app8/engine/core/layout/StackAxis;DLdev/app8/engine/core/layout/StackAlignment;Ldev/app8/engine/core/layout/StackDistribution;)V
-	public synthetic fun <init> (Ldev/app8/engine/core/layout/StackAxis;DLdev/app8/engine/core/layout/StackAlignment;Ldev/app8/engine/core/layout/StackDistribution;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ldev/app8/engine/core/layout/StackAxis;DLdev/app8/engine/core/layout/StackAlignment;Ldev/app8/engine/core/layout/StackDistribution;Ldev/app8/engine/core/layout/StackMargins;)V
+	public synthetic fun <init> (Ldev/app8/engine/core/layout/StackAxis;DLdev/app8/engine/core/layout/StackAlignment;Ldev/app8/engine/core/layout/StackDistribution;Ldev/app8/engine/core/layout/StackMargins;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ldev/app8/engine/core/layout/StackAxis;
 	public final fun component2 ()D
 	public final fun component3 ()Ldev/app8/engine/core/layout/StackAlignment;
 	public final fun component4 ()Ldev/app8/engine/core/layout/StackDistribution;
-	public final fun copy (Ldev/app8/engine/core/layout/StackAxis;DLdev/app8/engine/core/layout/StackAlignment;Ldev/app8/engine/core/layout/StackDistribution;)Ldev/app8/engine/core/layout/StackSpec;
-	public static synthetic fun copy$default (Ldev/app8/engine/core/layout/StackSpec;Ldev/app8/engine/core/layout/StackAxis;DLdev/app8/engine/core/layout/StackAlignment;Ldev/app8/engine/core/layout/StackDistribution;ILjava/lang/Object;)Ldev/app8/engine/core/layout/StackSpec;
+	public final fun component5 ()Ldev/app8/engine/core/layout/StackMargins;
+	public final fun copy (Ldev/app8/engine/core/layout/StackAxis;DLdev/app8/engine/core/layout/StackAlignment;Ldev/app8/engine/core/layout/StackDistribution;Ldev/app8/engine/core/layout/StackMargins;)Ldev/app8/engine/core/layout/StackSpec;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/layout/StackSpec;Ldev/app8/engine/core/layout/StackAxis;DLdev/app8/engine/core/layout/StackAlignment;Ldev/app8/engine/core/layout/StackDistribution;Ldev/app8/engine/core/layout/StackMargins;ILjava/lang/Object;)Ldev/app8/engine/core/layout/StackSpec;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAlignment ()Ldev/app8/engine/core/layout/StackAlignment;
 	public final fun getAxis ()Ldev/app8/engine/core/layout/StackAxis;
 	public final fun getDistribution ()Ldev/app8/engine/core/layout/StackDistribution;
+	public final fun getMargins ()Ldev/app8/engine/core/layout/StackMargins;
 	public final fun getSpacing ()D
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -919,8 +962,8 @@ public final class dev/app8/engine/core/model/Accessibility$Trait : java/lang/En
 }
 
 public final class dev/app8/engine/core/model/Action {
-	public fun <init> (Ldev/app8/engine/core/model/Action$Type;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/util/Map;Ldev/app8/engine/core/model/Action$PresentationStyle;Ljava/util/List;Ljava/lang/Boolean;Ldev/app8/engine/core/model/ScreenTransition;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/Double;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ldev/app8/engine/core/model/Action$VariableScope;Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ldev/app8/engine/core/model/Action$HapticStyle;Ljava/lang/String;Ldev/app8/engine/core/model/Action$URLPresentation;Ljava/lang/String;Ljava/util/Map;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/util/List;Ljava/util/Map;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;)V
-	public synthetic fun <init> (Ldev/app8/engine/core/model/Action$Type;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/util/Map;Ldev/app8/engine/core/model/Action$PresentationStyle;Ljava/util/List;Ljava/lang/Boolean;Ldev/app8/engine/core/model/ScreenTransition;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/Double;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ldev/app8/engine/core/model/Action$VariableScope;Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ldev/app8/engine/core/model/Action$HapticStyle;Ljava/lang/String;Ldev/app8/engine/core/model/Action$URLPresentation;Ljava/lang/String;Ljava/util/Map;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/util/List;Ljava/util/Map;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ldev/app8/engine/core/model/Action$Type;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/util/Map;Ldev/app8/engine/core/model/Action$PresentationStyle;Ljava/util/List;Ljava/lang/Boolean;Ldev/app8/engine/core/model/ScreenTransition;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/Double;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ldev/app8/engine/core/model/Action$VariableScope;Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ldev/app8/engine/core/model/Action$HapticStyle;Ljava/lang/String;Ldev/app8/engine/core/model/Action$URLPresentation;Ljava/lang/String;Ljava/util/Map;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/util/List;Ljava/util/Map;Lkotlinx/serialization/json/JsonElement;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;)V
+	public synthetic fun <init> (Ldev/app8/engine/core/model/Action$Type;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/util/Map;Ldev/app8/engine/core/model/Action$PresentationStyle;Ljava/util/List;Ljava/lang/Boolean;Ldev/app8/engine/core/model/ScreenTransition;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/Double;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ldev/app8/engine/core/model/Action$VariableScope;Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ldev/app8/engine/core/model/Action$HapticStyle;Ljava/lang/String;Ldev/app8/engine/core/model/Action$URLPresentation;Ljava/lang/String;Ljava/util/Map;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/util/List;Ljava/util/Map;Lkotlinx/serialization/json/JsonElement;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ldev/app8/engine/core/model/Action$Type;
 	public final fun component10 ()Ldev/app8/engine/core/model/Action$PresentationStyle;
 	public final fun component11 ()Ljava/util/List;
@@ -953,25 +996,29 @@ public final class dev/app8/engine/core/model/Action {
 	public final fun component36 ()Lkotlinx/serialization/json/JsonElement;
 	public final fun component37 ()Ljava/util/List;
 	public final fun component38 ()Ljava/util/Map;
-	public final fun component39 ()Ljava/lang/String;
+	public final fun component39 ()Lkotlinx/serialization/json/JsonElement;
 	public final fun component4 ()Ljava/lang/String;
-	public final fun component40 ()Ljava/lang/String;
-	public final fun component41 ()Ljava/util/Map;
-	public final fun component42 ()Lkotlinx/serialization/json/JsonElement;
+	public final fun component40 ()Ljava/util/List;
+	public final fun component41 ()Ljava/util/List;
+	public final fun component42 ()Ljava/lang/String;
 	public final fun component43 ()Ljava/lang/String;
-	public final fun component44 ()Ljava/util/List;
-	public final fun component45 ()Ljava/util/List;
-	public final fun component46 ()Ljava/lang/String;
+	public final fun component44 ()Ljava/lang/String;
+	public final fun component45 ()Ljava/util/Map;
+	public final fun component46 ()Lkotlinx/serialization/json/JsonElement;
 	public final fun component47 ()Ljava/lang/String;
 	public final fun component48 ()Ljava/util/List;
 	public final fun component49 ()Ljava/util/List;
 	public final fun component5 ()Ljava/lang/String;
+	public final fun component50 ()Ljava/lang/String;
+	public final fun component51 ()Ljava/lang/String;
+	public final fun component52 ()Ljava/util/List;
+	public final fun component53 ()Ljava/util/List;
 	public final fun component6 ()Ljava/lang/Boolean;
 	public final fun component7 ()Ljava/lang/Boolean;
 	public final fun component8 ()Ljava/lang/Boolean;
 	public final fun component9 ()Ljava/util/Map;
-	public final fun copy (Ldev/app8/engine/core/model/Action$Type;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/util/Map;Ldev/app8/engine/core/model/Action$PresentationStyle;Ljava/util/List;Ljava/lang/Boolean;Ldev/app8/engine/core/model/ScreenTransition;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/Double;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ldev/app8/engine/core/model/Action$VariableScope;Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ldev/app8/engine/core/model/Action$HapticStyle;Ljava/lang/String;Ldev/app8/engine/core/model/Action$URLPresentation;Ljava/lang/String;Ljava/util/Map;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/util/List;Ljava/util/Map;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;)Ldev/app8/engine/core/model/Action;
-	public static synthetic fun copy$default (Ldev/app8/engine/core/model/Action;Ldev/app8/engine/core/model/Action$Type;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/util/Map;Ldev/app8/engine/core/model/Action$PresentationStyle;Ljava/util/List;Ljava/lang/Boolean;Ldev/app8/engine/core/model/ScreenTransition;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/Double;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ldev/app8/engine/core/model/Action$VariableScope;Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ldev/app8/engine/core/model/Action$HapticStyle;Ljava/lang/String;Ldev/app8/engine/core/model/Action$URLPresentation;Ljava/lang/String;Ljava/util/Map;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/util/List;Ljava/util/Map;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;IILjava/lang/Object;)Ldev/app8/engine/core/model/Action;
+	public final fun copy (Ldev/app8/engine/core/model/Action$Type;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/util/Map;Ldev/app8/engine/core/model/Action$PresentationStyle;Ljava/util/List;Ljava/lang/Boolean;Ldev/app8/engine/core/model/ScreenTransition;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/Double;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ldev/app8/engine/core/model/Action$VariableScope;Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ldev/app8/engine/core/model/Action$HapticStyle;Ljava/lang/String;Ldev/app8/engine/core/model/Action$URLPresentation;Ljava/lang/String;Ljava/util/Map;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/util/List;Ljava/util/Map;Lkotlinx/serialization/json/JsonElement;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;)Ldev/app8/engine/core/model/Action;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/Action;Ldev/app8/engine/core/model/Action$Type;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/lang/Boolean;Ljava/util/Map;Ldev/app8/engine/core/model/Action$PresentationStyle;Ljava/util/List;Ljava/lang/Boolean;Ldev/app8/engine/core/model/ScreenTransition;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/lang/Double;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ldev/app8/engine/core/model/Action$VariableScope;Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ldev/app8/engine/core/model/Action$HapticStyle;Ljava/lang/String;Ldev/app8/engine/core/model/Action$URLPresentation;Ljava/lang/String;Ljava/util/Map;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;Ljava/util/List;Ljava/util/Map;Lkotlinx/serialization/json/JsonElement;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Lkotlinx/serialization/json/JsonElement;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;IILjava/lang/Object;)Ldev/app8/engine/core/model/Action;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getActions ()Ljava/util/List;
 	public final fun getAlertActions ()Ljava/util/List;
@@ -981,8 +1028,10 @@ public final class dev/app8/engine/core/model/Action {
 	public final fun getBody ()Lkotlinx/serialization/json/JsonElement;
 	public final fun getBy ()Ljava/lang/Double;
 	public final fun getByExpression ()Ljava/lang/String;
+	public final fun getCondition ()Lkotlinx/serialization/json/JsonElement;
 	public final fun getDestination ()Ljava/lang/String;
 	public final fun getDetents ()Ljava/util/List;
+	public final fun getElseActions ()Ljava/util/List;
 	public final fun getField ()Ljava/lang/String;
 	public final fun getFunction ()Ljava/lang/String;
 	public final fun getGrabber ()Ljava/lang/Boolean;
@@ -1011,9 +1060,11 @@ public final class dev/app8/engine/core/model/Action {
 	public final fun getTabId ()Ljava/lang/String;
 	public final fun getTabIndex ()Ljava/lang/Integer;
 	public final fun getTarget ()Ljava/lang/String;
+	public final fun getThenActions ()Ljava/util/List;
 	public final fun getToRoot ()Ljava/lang/Boolean;
 	public final fun getTransition ()Ldev/app8/engine/core/model/ScreenTransition;
 	public final fun getType ()Ldev/app8/engine/core/model/Action$Type;
+	public final fun getUnknownType ()Ljava/lang/String;
 	public final fun getUpdates ()Ljava/util/Map;
 	public final fun getUrl ()Ljava/lang/String;
 	public final fun getUrlPresentation ()Ldev/app8/engine/core/model/Action$URLPresentation;
@@ -1128,6 +1179,7 @@ public final class dev/app8/engine/core/model/Action$Type : java/lang/Enum {
 	public static final field focusPrevious Ldev/app8/engine/core/model/Action$Type;
 	public static final field forEach Ldev/app8/engine/core/model/Action$Type;
 	public static final field haptic Ldev/app8/engine/core/model/Action$Type;
+	public static final field if Ldev/app8/engine/core/model/Action$Type;
 	public static final field incrementArrayItem Ldev/app8/engine/core/model/Action$Type;
 	public static final field incrementVariable Ldev/app8/engine/core/model/Action$Type;
 	public static final field insertArrayItem Ldev/app8/engine/core/model/Action$Type;
@@ -1142,6 +1194,7 @@ public final class dev/app8/engine/core/model/Action$Type : java/lang/Enum {
 	public static final field setState Ldev/app8/engine/core/model/Action$Type;
 	public static final field showAlert Ldev/app8/engine/core/model/Action$Type;
 	public static final field toggleArrayValue Ldev/app8/engine/core/model/Action$Type;
+	public static final field unknown Ldev/app8/engine/core/model/Action$Type;
 	public static final field updateMultipleVariables Ldev/app8/engine/core/model/Action$Type;
 	public static final field updateVariable Ldev/app8/engine/core/model/Action$Type;
 	public static final field upsertArrayItem Ldev/app8/engine/core/model/Action$Type;
@@ -1168,6 +1221,11 @@ public final class dev/app8/engine/core/model/Action$VariableScope : java/lang/E
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Ldev/app8/engine/core/model/Action$VariableScope;
 	public static fun values ()[Ldev/app8/engine/core/model/Action$VariableScope;
+}
+
+public final class dev/app8/engine/core/model/ActionCondition {
+	public static final field INSTANCE Ldev/app8/engine/core/model/ActionCondition;
+	public final fun holds (Ljava/lang/Object;)Z
 }
 
 public final class dev/app8/engine/core/model/ActionTrigger : java/lang/Enum {
@@ -1544,6 +1602,11 @@ public final class dev/app8/engine/core/model/BarAction {
 	public final fun getStyle ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/app8/engine/core/model/BoolCoercion {
+	public static final field INSTANCE Ldev/app8/engine/core/model/BoolCoercion;
+	public final fun coerce (Ljava/lang/Object;)Ljava/lang/Boolean;
 }
 
 public final class dev/app8/engine/core/model/BottomBar {
@@ -5255,6 +5318,25 @@ public final class dev/app8/engine/core/model/style/LabelStyle : dev/app8/engine
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class dev/app8/engine/core/model/style/LayoutMargins {
+	public fun <init> ()V
+	public fun <init> (DDDD)V
+	public synthetic fun <init> (DDDDILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()D
+	public final fun component2 ()D
+	public final fun component3 ()D
+	public final fun component4 ()D
+	public final fun copy (DDDD)Ldev/app8/engine/core/model/style/LayoutMargins;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/style/LayoutMargins;DDDDILjava/lang/Object;)Ldev/app8/engine/core/model/style/LayoutMargins;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBottom ()D
+	public final fun getLeading ()D
+	public final fun getTop ()D
+	public final fun getTrailing ()D
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class dev/app8/engine/core/model/style/MapStyle : dev/app8/engine/core/model/style/BaseStyle {
 	public fun <init> ()V
 	public fun <init> (Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/Corner;Ljava/lang/String;Ljava/lang/Double;Ljava/lang/String;)V
@@ -5919,19 +6001,21 @@ public final class dev/app8/engine/core/model/style/VideoStyle : dev/app8/engine
 
 public final class dev/app8/engine/core/model/style/ViewStyle : dev/app8/engine/core/model/style/BaseStyle {
 	public fun <init> ()V
-	public fun <init> (Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/BlendMode;)V
-	public synthetic fun <init> (Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/BlendMode;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/BlendMode;Ldev/app8/engine/core/model/style/LayoutMargins;)V
+	public synthetic fun <init> (Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/BlendMode;Ldev/app8/engine/core/model/style/LayoutMargins;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ldev/app8/engine/core/model/style/ContentMode;
 	public final fun component2 ()Ldev/app8/engine/core/model/style/Wrapped;
 	public final fun component3 ()Ljava/lang/Double;
 	public final fun component4 ()Ldev/app8/engine/core/model/style/Transform;
 	public final fun component5 ()Ldev/app8/engine/core/model/style/BlendMode;
-	public final fun copy (Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/BlendMode;)Ldev/app8/engine/core/model/style/ViewStyle;
-	public static synthetic fun copy$default (Ldev/app8/engine/core/model/style/ViewStyle;Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/BlendMode;ILjava/lang/Object;)Ldev/app8/engine/core/model/style/ViewStyle;
+	public final fun component6 ()Ldev/app8/engine/core/model/style/LayoutMargins;
+	public final fun copy (Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/BlendMode;Ldev/app8/engine/core/model/style/LayoutMargins;)Ldev/app8/engine/core/model/style/ViewStyle;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/style/ViewStyle;Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/BlendMode;Ldev/app8/engine/core/model/style/LayoutMargins;ILjava/lang/Object;)Ldev/app8/engine/core/model/style/ViewStyle;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getAlpha ()Ljava/lang/Double;
 	public fun getBlendMode ()Ldev/app8/engine/core/model/style/BlendMode;
 	public fun getContentMode ()Ldev/app8/engine/core/model/style/ContentMode;
+	public final fun getLayoutMargins ()Ldev/app8/engine/core/model/style/LayoutMargins;
 	public fun getMaterial ()Ldev/app8/engine/core/model/style/Wrapped;
 	public fun getTransform ()Ldev/app8/engine/core/model/style/Transform;
 	public fun hashCode ()I

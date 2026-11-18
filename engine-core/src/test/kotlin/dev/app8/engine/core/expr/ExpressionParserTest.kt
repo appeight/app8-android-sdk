@@ -198,6 +198,7 @@ class ExpressionParserTest {
         is ExpressionNode.MemberAccess -> ".memberAccess(${node.member})"
         is ExpressionNode.ArrayAccess -> ".arrayAccess"
         is ExpressionNode.Ternary -> ".ternary"
+        is ExpressionNode.ObjectLiteral -> ".objectLiteral"
         is ExpressionNode.ArrayLiteral -> ".arrayLiteral"
     }
 }

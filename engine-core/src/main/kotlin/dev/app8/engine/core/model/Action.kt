@@ -64,6 +64,14 @@ public data class Action(
     val actions: List<Action>? = null,
     /** with: names bound for [actions], evaluated once. */
     val values: Map<String, JsonElement>? = null,
+    /** if: the condition (usually an expression), evaluated once when the action runs. */
+    val condition: JsonElement? = null,
+    /** if: actions run when [condition] holds (JSON `then`). */
+    val thenActions: List<Action>? = null,
+    /** if: actions run when [condition] does not hold (JSON `else`, optional). */
+    val elseActions: List<Action>? = null,
+    /** The JSON `type` when this engine does not know it ([type] is [Type.unknown]). */
+    val unknownType: String? = null,
     /** upsertArrayItem: `start` or `end` (default) for a new element. */
     val position: String? = null,
     /** request: `GET` (default), `POST`, `PUT`, `PATCH` or `DELETE`. */
@@ -93,10 +101,12 @@ public data class Action(
         updateVariable, incrementVariable, toggleArrayValue, appendToArray, incrementArrayItem,
         insertArrayItem, upsertArrayItem, removeArrayItem,
         updateMultipleVariables, resetVariables,
-        forEach, with, request, reloadDatasource,
+        forEach, with, `if`, request, reloadDatasource,
         focus, focusNext, focusPrevious, dismissKeyboard,
         showAlert, haptic, openURL, emit,
         requestNotificationPermission,
+        /** A type this engine does not know (a newer DSL): runs nothing; the list and screen go on. */
+        unknown,
     }
 
     @Suppress("EnumEntryName")
@@ -127,8 +137,14 @@ public data class Action(
 
 internal fun decodeAction(c: Cursor): Action {
     c.obj()
+    val rawType = c.req("type") { it.string() }
+    val type = Action.Type.entries.firstOrNull { it.name == rawType && it != Action.Type.unknown }
+    if (type == null) {
+        c.options.errorCollector?.record("Action", "${c.path}.type", DslDecodingException("${c.path}.type", "unknown action type '$rawType': skipped"))
+    }
     return Action(
-        type = c.req("type") { it.strictEnum<Action.Type>() },
+        type = type ?: Action.Type.unknown,
+        unknownType = if (type == null) rawType else null,
         target = c.optString("target"),
         function = c.optString("function"),
         destination = c.optString("destination"),
@@ -168,6 +184,9 @@ internal fun decodeAction(c: Cursor): Action {
         index = c.opt("index") { it.element },
         actions = c.opt("actions", ::decodeActionList),
         values = c.opt("values", ::decodeAnyMap),
+        condition = c.opt("condition") { it.element },
+        thenActions = c.opt("then", ::decodeActionList),
+        elseActions = c.opt("else", ::decodeActionList),
         position = c.optString("position"),
         method = c.optString("method"),
         headers = c.opt("headers", ::decodeAnyMap),

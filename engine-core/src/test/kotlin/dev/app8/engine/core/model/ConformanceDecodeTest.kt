@@ -78,10 +78,14 @@ class ConformanceDecodeTest {
     fun `a bad action in a list reports the element's path`() {
         val e = assertFailsWith<DslDecodingException> {
             DslDecoder().decode(
-                """{"type":"with","values":{},"actions":[{"type":"dismiss"},{"type":"noSuchAction"}]}""",
+                """{"type":"with","values":{},"actions":[{"type":"dismiss"},{"type":"appendToArray","variableName":5}]}""",
                 ::decodeAction,
             )
         }
-        assertTrue(e.path.endsWith("actions[1].type"), "path was ${e.path}")
+        assertTrue(e.path.endsWith("actions[1].variableName"), "path was ${e.path}")
+        // An unknown type is not an error: it decodes as an inert action (actions.md, Unknown action types).
+        val inert = DslDecoder().decode("""{"type":"with","values":{},"actions":[{"type":"noSuchAction"}]}""", ::decodeAction)
+        assertEquals(Action.Type.unknown, inert.actions!!.single().type)
+        assertEquals("noSuchAction", inert.actions!!.single().unknownType)
     }
 }

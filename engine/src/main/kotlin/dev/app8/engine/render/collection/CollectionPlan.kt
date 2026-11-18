@@ -105,6 +105,19 @@ internal object CollectionPlan {
             config.pagingStyle == CollectionLayout.PagingStyle.paging &&
             config.itemWidth == null && config.estimatedItemWidth == null && (config.rows ?: 1) <= 1
 
+    /** A plain vertical list (no per-section layouts or headers, no swipe actions). */
+    private fun plainVertical(config: CollectionLayout?, mixed: Boolean, swipe: Boolean): Boolean =
+        (config?.type == null || config.type == CollectionLayout.LayoutType.vertical) && !mixed && !swipe
+
+    /** A vertical feed: `pagingStyle: paging` on a plain vertical list (iOS `usesVerticalPaging`). */
+    fun usesVerticalPaging(config: CollectionLayout?, mixed: Boolean, swipe: Boolean): Boolean =
+        plainVertical(config, mixed, swipe) && config?.pagingStyle == CollectionLayout.PagingStyle.paging
+
+    /** Pages or `itemHeight: "fill"` items: the collection's frame is the page, no safe-area insets. */
+    fun verticalFullFrame(config: CollectionLayout?, mixed: Boolean, swipe: Boolean): Boolean =
+        plainVertical(config, mixed, swipe) &&
+            (config?.pagingStyle == CollectionLayout.PagingStyle.paging || config?.itemHeightFill == true)
+
     /** `createVerticalListLayout` / `createGridLayout` for the single (or groupBy) section layout. */
     fun topLevelStyle(config: CollectionLayout?, hasHeader: Boolean): SectionStyle {
         val i = Insets.of(config?.contentInsets)
@@ -119,7 +132,8 @@ internal object CollectionPlan {
                 columns = (config.columns ?: 2).coerceAtLeast(1),
                 itemHeight = config.itemHeight,
                 aspectRatio = config.aspectRatio?.takeIf { it > 0 },
-                // createGridLayout adds no header.
+                // Section headers (groupBy / sectionDefinitions) above each section's rows.
+                hasHeader = hasHeader,
             )
             CollectionLayout.LayoutType.horizontal -> SectionStyle(
                 kind = SectionKind.HORIZONTAL,
@@ -135,7 +149,9 @@ internal object CollectionPlan {
                 kind = SectionKind.VERTICAL,
                 insets = sectionInsets,
                 itemSpacing = config?.itemSpacing ?: 0.0,
-                itemHeight = null,
+                // A fixed item height (vertical lists honor it as grids do; "fill" is
+                // resolved against the frame by the renderer).
+                itemHeight = config?.itemHeight,
                 hasHeader = hasHeader,
             )
         }

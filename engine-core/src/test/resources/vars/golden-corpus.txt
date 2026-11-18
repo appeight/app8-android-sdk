@@ -486,3 +486,12 @@ toString([nilComputed, null, isActive])
 'n=' + nums
 nums + '!'
 toString({})
+toString({'a': 1, 'b': [1, {'c': 2}]})
+toString({a: 'x', "b": null})
+{'k': '}}'}.k
+toString(merge({'a': 1, 'b': 2}, {'b': 3}))
+toString(merge([1, 2], [3]))
+merge(5, {'a': 1})
+toString(sortBy([{'p': 3}, {'p': 1}, {}, {'p': 'x'}, {'p': 2}], 'p'))
+toString(sortBy([{'p': 3}, {'p': 1}, {}, {'p': 'x'}, {'p': 2}], 'p', false))
+toString({'a': 1,})

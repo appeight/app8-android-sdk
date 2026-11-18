@@ -77,17 +77,8 @@ internal fun RenderNode.number(raw: String?, ctx: VariableContext = scope.tracke
 /** A JSON value from an action/payload with `{{…}}` strings resolved (iOS `resolvePayload`). */
 
 internal object Coerce {
-    fun bool(v: Any?): Boolean? = when (v) {
-        null -> null
-        is Boolean -> v
-        is Number -> v.toDouble() != 0.0
-        is String -> when (v.trim().lowercase()) {
-            "true", "yes", "1" -> true
-            "false", "no", "0", "" -> false
-            else -> null
-        }
-        else -> null
-    }
+    /** The DSL's boolean coercion (variables.md, "Boolean coercion"); null: missing or unresolved. */
+    fun bool(v: Any?): Boolean? = dev.app8.engine.core.model.BoolCoercion.coerce(v)
 
     /** Scalar → string (whole numbers without ".0"); collections and null → null. */
     fun string(v: Any?): String? = when (v) {

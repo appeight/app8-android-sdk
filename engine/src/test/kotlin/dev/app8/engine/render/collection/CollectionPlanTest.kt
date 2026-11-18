@@ -195,4 +195,26 @@ class CollectionPlanTest {
         assertEquals(120.0, tall.absolute["card"]!!.height)
         assertEquals(solved, solved.stretchedRoot("card", 60.0), "never shrinks")
     }
+
+    @Test
+    fun verticalPagingIsAPlainVerticalListWithPagingStyle() {
+        val paging = CollectionLayout(type = CollectionLayout.LayoutType.vertical, pagingStyle = CollectionLayout.PagingStyle.paging, itemHeightFill = true)
+        assertTrue(CollectionPlan.usesVerticalPaging(paging, mixed = false, swipe = false))
+        assertTrue(CollectionPlan.usesVerticalPaging(paging.copy(type = null), mixed = false, swipe = false))
+        assertFalse(CollectionPlan.usesVerticalPaging(paging, mixed = true, swipe = false))
+        assertFalse(CollectionPlan.usesVerticalPaging(paging, mixed = false, swipe = true))
+        assertFalse(CollectionPlan.usesVerticalPaging(paging.copy(type = CollectionLayout.LayoutType.grid), mixed = false, swipe = false))
+        assertFalse(CollectionPlan.usesVerticalPaging(paging.copy(pagingStyle = CollectionLayout.PagingStyle.continuous), mixed = false, swipe = false))
+        // "fill" without paging: still full-frame (no safe-area insets), but no pager.
+        val fill = CollectionLayout(type = CollectionLayout.LayoutType.vertical, itemHeightFill = true)
+        assertTrue(CollectionPlan.verticalFullFrame(fill, mixed = false, swipe = false))
+        assertFalse(CollectionPlan.usesVerticalPaging(fill, mixed = false, swipe = false))
+        assertFalse(CollectionPlan.verticalFullFrame(CollectionLayout(type = CollectionLayout.LayoutType.vertical), mixed = false, swipe = false))
+    }
+
+    @Test
+    fun verticalListKeepsAFixedItemHeight() {
+        val st = CollectionPlan.topLevelStyle(CollectionLayout(type = CollectionLayout.LayoutType.vertical, itemHeight = 300.0), hasHeader = false)
+        assertEquals(300.0, st.itemHeight)
+    }
 }

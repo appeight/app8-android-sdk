@@ -26,6 +26,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.PagerSnapDistance
+import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -158,7 +159,7 @@ internal object CollectionKind : ComponentKind {
         val st = styles[row.section]
         val s = sections[row.section]
         return when (row) {
-            is RowSpec.Header -> model.headerTemplate(s.key)?.let { t -> model.header(row.section, s.key, t)?.layout(env, width - st.insets.left - st.insets.right, null)?.value?.contentHeight } ?: 0.0
+            is RowSpec.Header -> model.headerTemplate(s.key)?.let { t -> model.header(row.section, s.key, t, s.items.map { it.value })?.layout(env, width - st.insets.left - st.insets.right, null)?.value?.contentHeight } ?: 0.0
             is RowSpec.Strip -> st.rows * (st.itemHeight ?: 0.0) + (st.rows - 1) * st.lineSpacing
             is RowSpec.Items -> {
                 val (w, fixed) = itemSize(st, width)
@@ -189,8 +190,8 @@ internal object CollectionKind : ComponentKind {
                 CollectionPlan.mixedStyle(cfg, p.layout, hasHeader, model.templateSize(s.items.firstOrNull()))
             }
         }
-        val st = CollectionPlan.topLevelStyle(p.layout, c.defaultSectionHeader != null)
-        return sections.map { st }
+        // A section has a header when there is a default header or one for its key.
+        return sections.map { s -> CollectionPlan.topLevelStyle(p.layout, c.defaultSectionHeader != null || c.sectionHeaders?.get(s.key) != null) }
     }
 
     private fun rows(model: CollectionModel, sections: List<CollectionSection>, styles: List<SectionStyle>): List<RowSpec> =
@@ -230,8 +231,10 @@ internal object CollectionKind : ComponentKind {
             }
             if (p.layout?.type == CollectionLayout.LayoutType.horizontal) {
                 TopLevelHorizontal(model, sections, p, width)
+            } else if (CollectionPlan.usesVerticalPaging(p.layout, isMixed(c), p.swipeActions != null)) {
+                VerticalFeed(model, sections, p, width, height)
             } else {
-                Vertical(model, sections, p, width)
+                Vertical(model, sections, p, width, height)
             }
         }
     }
@@ -253,13 +256,21 @@ internal object CollectionKind : ComponentKind {
 
     @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
     @Composable
-    private fun Vertical(model: CollectionModel, sections: List<CollectionSection>, p: CollectionProperties, width: Double) {
+    private fun Vertical(model: CollectionModel, sections: List<CollectionSection>, p: CollectionProperties, width: Double, height: Double) {
         val node = model.node
         Recompositions.Count("${node.key}#vertical")
         val env = LocalRenderEnv.current
         val c = content(node)
         val config = p.layout
-        val styles = remember(sections, p) { styles(model, sections, p) }
+        // `itemHeight: "fill"` on a plain vertical list: every item is the frame minus the
+        // vertical insets, and the list adds no safe-area insets (templates handle them).
+        val fullFrame = CollectionPlan.verticalFullFrame(config, isMixed(c), p.swipeActions != null)
+        val fillHeight = if (fullFrame && config?.itemHeightFill == true && height.isFinite()) {
+            (height - (config.contentInsets?.top ?: 0.0) - (config.contentInsets?.bottom ?: 0.0)).coerceAtLeast(1.0)
+        } else null
+        val styles = remember(sections, p, fillHeight) {
+            styles(model, sections, p).let { all -> if (fillHeight == null) all else all.map { it.copy(itemHeight = fillHeight) } }
+        }
         val rows = remember(sections, styles) { rows(model, sections, styles) }
         val insets = config?.contentInsets
         // adjustedContentInset: contentInset + the part of the safe area the collection covers.
@@ -277,8 +288,8 @@ internal object CollectionKind : ComponentKind {
         val inverted = p.inverted == true
         var top = (insets?.top ?: 0.0)
         var bottom = (insets?.bottom ?: 0.0)
-        var autoTop = auto.first
-        var autoBottom = auto.second
+        var autoTop = if (fullFrame) 0.0 else auto.first
+        var autoBottom = if (fullFrame) 0.0 else auto.second
         // iOS flips the whole collection view (transform scaleY -1), so both contentInset and
         // the safe-area adjustment swap ends: the bottom safe area pads the visual top.
         if (inverted) {
@@ -351,7 +362,7 @@ internal object CollectionKind : ComponentKind {
         when (row) {
             is RowSpec.Header -> {
                 val template = model.headerTemplate(s.key) ?: return
-                val cell = model.header(row.section, s.key, template) ?: return
+                val cell = model.header(row.section, s.key, template, s.items.map { it.value }) ?: return
                 val w = (width - st.insets.left - st.insets.right).coerceAtLeast(0.0)
                 Box(pad.padding(start = st.insets.left.dp)) { CellView(cell, cell.layout(env, w, null)) }
             }
@@ -491,6 +502,63 @@ internal object CollectionKind : ComponentKind {
                     if (near && armed) dispatcher.dispatchTrigger(node, ActionTrigger.onLoadMore)
                     armed = !near
                 }
+            }
+        }
+    }
+
+    // endregion
+
+    // region vertical paging
+
+    /**
+     * A vertical feed (`pagingStyle: paging` on a plain vertical list): one item per page, a
+     * fling turns at most one page. Pages are the item height (the frame minus the vertical
+     * insets for `"fill"`, the frame for self-sizing items) plus spacing, and the collection
+     * adds no safe-area insets. `currentPageVariable` is two-way, as for horizontal pagers.
+     */
+    @Composable
+    private fun VerticalFeed(model: CollectionModel, sections: List<CollectionSection>, p: CollectionProperties, width: Double, height: Double) {
+        val env = LocalRenderEnv.current
+        val config = p.layout
+        val items = remember(sections) { sections.flatMap { it.items } }
+        val keys = remember(sections) { sections.flatMap { it.keys } }
+        val insets = config?.contentInsets
+        val top = insets?.top ?: 0.0
+        val bottom = insets?.bottom ?: 0.0
+        val left = insets?.left ?: 0.0
+        val right = insets?.right ?: 0.0
+        val spacing = config?.itemSpacing ?: 0.0
+        val frame = if (height.isFinite()) height else 0.0
+        val itemH = when {
+            config?.itemHeightFill == true -> (frame - top - bottom).coerceAtLeast(1.0)
+            config?.itemHeight != null -> config.itemHeight!!
+            else -> frame.coerceAtLeast(1.0)
+        }
+        val pageVariable = config?.currentPageVariable
+        val state = rememberPagerState(initialPage = initialPage(model, pageVariable, items.size)) { items.size }
+        PageVariable(
+            model, pageVariable,
+            pageCount = { state.pageCount },
+            scrollTo = { target, animate ->
+                val t = target.coerceIn(0, (state.pageCount - 1).coerceAtLeast(0))
+                if (animate) state.animateScrollToPage(t) else state.scrollToPage(t)
+            },
+        ) { CollectionPlan.pageIndex(state.currentPage + state.currentPageOffsetFraction.toDouble(), 1.0) }
+        val w = (width - left - right).coerceAtLeast(0.0)
+        VerticalPager(
+            state = state,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(top = top.dp, bottom = bottom.dp),
+            pageSize = PageSize.Fixed(itemH.dp),
+            pageSpacing = spacing.dp,
+            beyondViewportPageCount = 1,
+            userScrollEnabled = config?.scrollEnabled != false,
+            flingBehavior = PagerDefaults.flingBehavior(state, pagerSnapDistance = PagerSnapDistance.atMost(1)),
+            key = { keys.getOrElse(it) { "$it" } },
+        ) { page ->
+            val item = items.getOrNull(page) ?: return@VerticalPager
+            Box(Modifier.fillMaxWidth().padding(start = left.dp)) {
+                ItemCell(model, env, item, keys[page], w, itemH, Modifier)
             }
         }
     }

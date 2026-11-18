@@ -81,6 +81,7 @@ public class ExpressionEvaluator {
                 }
                 // A nil element becomes null so positions are preserved.
                 is ExpressionNode.ArrayLiteral -> node.elements.map { evaluate(it, context) ?: Values.Null }
+                is ExpressionNode.ObjectLiteral -> node.entries.associateTo(LinkedHashMap<String, Any?>()) { (k, v) -> k to (evaluate(v, context) ?: Values.Null) }
             }
         } finally {
             evalDepth--
@@ -321,6 +322,26 @@ public class ExpressionEvaluator {
                     val cmp = compareForSort(a, b)
                     if (ascending) cmp < 0 else cmp > 0
                 }
+            }
+            "sortBy" -> {
+                between(2..3, "sortBy() expects 2 or 3 arguments (array, key, ascending?)")
+                val source = arg(0)
+                val arr = Values.asList(source) ?: return source
+                val key = arg(1)?.let { if (it is String) it else it.toString() } ?: ""
+                val ascending = if (args.size == 3) arg(2) != false else true
+                return sortBy(arr, key, ascending)
+            }
+            "merge" -> {
+                exactly(2, "merge() expects 2 arguments")
+                val a = arg(0)
+                val b = arg(1)
+                val ma = Values.asMap(a)
+                val mb = Values.asMap(b)
+                if (ma != null && mb != null) return LinkedHashMap<String, Any?>(ma).apply { putAll(mb) }
+                val la = Values.asList(a)
+                val lb = Values.asList(b)
+                if (la != null && lb != null) return ArrayList<Any?>(la).apply { addAll(lb) }
+                return a
             }
             "reverse" -> {
                 exactly(1, "reverse() expects 1 argument")
@@ -740,6 +761,7 @@ public class ExpressionEvaluator {
             "substring", "startsWith", "endsWith",
             "sort", "reverse", "join", "concat", "slice", "sum",
             "prepend", "append", "uniqueBy", "remove",
+            "sortBy", "merge",
             "now", "today", "addDays", "addHours", "startOfDay",
         )
 

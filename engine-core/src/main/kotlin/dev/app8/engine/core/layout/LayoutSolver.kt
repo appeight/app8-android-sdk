@@ -589,20 +589,26 @@ private class LayoutPass(
         val crossCenter = if (vertical) LayoutAttribute.CENTER_X else LayoutAttribute.CENTER_Y
         val mainCenter = if (vertical) LayoutAttribute.CENTER_Y else LayoutAttribute.CENTER_X
         val eq = LayoutRelation.EQUAL
+        // Layout margins: the arranged area is the stack's frame inset by them.
+        val m = s.margins
+        val mLead = if (vertical) m.top else m.leading
+        val mTrail = if (vertical) m.bottom else m.trailing
+        val mCrossLead = if (vertical) m.leading else m.top
+        val mCrossTrail = if (vertical) m.trailing else m.bottom
 
         // Hidden arranged subviews collapse to zero along the axis and take no spacing.
         for (c in info.children) if (c.node.hidden) add(c.box.attr(main), eq, 0.0, 1000.0)
 
         val items = info.children.filter { !it.node.hidden }
         if (items.isEmpty()) {
-            add(sv.attr(main), eq, 0.0, LayoutPriority.DEFAULT_LOW.toDouble())
+            add(sv.attr(main), eq, mLead + mTrail, LayoutPriority.DEFAULT_LOW.toDouble())
             return
         }
 
         items.forEachIndexed { i, c ->
             val cv = c.box
             if (i == 0) {
-                add(cv.attr(lead), eq, sv.attr(lead), 1000.0)
+                add(cv.attr(lead), eq, sv.attr(lead) + mLead, 1000.0)
             } else {
                 val pv = items[i - 1].box
                 val spaced = pv.attr(trail) + s.spacing
@@ -612,7 +618,7 @@ private class LayoutPass(
                     else -> add(cv.attr(lead), eq, spaced, 1000.0)
                 }
             }
-            if (i == items.size - 1) add(cv.attr(trail), eq, sv.attr(trail), 1000.0)
+            if (i == items.size - 1) add(cv.attr(trail), eq, sv.attr(trail) + (-mTrail), 1000.0)
             if (s.distribution == StackDistribution.FILL_EQUALLY && i > 0) {
                 add(cv.attr(main), eq, items[0].box.attr(main), 1000.0)
             }
@@ -620,18 +626,18 @@ private class LayoutPass(
 
             when (s.alignment) {
                 StackAlignment.FILL -> {
-                    add(cv.attr(crossLead), eq, sv.attr(crossLead), 1000.0)
-                    add(cv.attr(crossTrail), eq, sv.attr(crossTrail), 1000.0)
+                    add(cv.attr(crossLead), eq, sv.attr(crossLead) + mCrossLead, 1000.0)
+                    add(cv.attr(crossTrail), eq, sv.attr(crossTrail) + (-mCrossTrail), 1000.0)
                 }
                 else -> {
-                    add(cv.attr(crossLead), LayoutRelation.GREATER_OR_EQUAL, sv.attr(crossLead), 1000.0)
-                    add(cv.attr(crossTrail), LayoutRelation.LESS_OR_EQUAL, sv.attr(crossTrail), 1000.0)
-                    val a = when (s.alignment) {
-                        StackAlignment.LEADING -> crossLead
-                        StackAlignment.CENTER -> crossCenter
-                        else -> crossTrail
+                    add(cv.attr(crossLead), LayoutRelation.GREATER_OR_EQUAL, sv.attr(crossLead) + mCrossLead, 1000.0)
+                    add(cv.attr(crossTrail), LayoutRelation.LESS_OR_EQUAL, sv.attr(crossTrail) + (-mCrossTrail), 1000.0)
+                    val (a, offset) = when (s.alignment) {
+                        StackAlignment.LEADING -> crossLead to mCrossLead
+                        StackAlignment.CENTER -> crossCenter to (mCrossLead - mCrossTrail) / 2
+                        else -> crossTrail to -mCrossTrail
                     }
-                    add(cv.attr(a), eq, sv.attr(a), 1000.0)
+                    add(cv.attr(a), eq, sv.attr(a) + offset, 1000.0)
                 }
             }
         }

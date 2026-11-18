@@ -133,6 +133,43 @@ class StackViewLayoutTest {
     }
 
     @Test
+    fun layoutMarginsInsetTheArrangedSubviews() {
+        val stack = LayoutNode(
+            "s", stack = StackSpec(StackAxis.VERTICAL, 10.0, margins = StackMargins(top = 12.0, leading = 16.0, bottom = 8.0, trailing = 16.0)),
+            layout = Layout(leading = fixed(0), trailing = fixed(0), top = fixed(100)),
+            children = listOf(
+                LayoutNode("a", layout = Layout(height = fixed(20))),
+                LayoutNode("gone", layout = Layout(height = fixed(300)), hidden = true),
+                LayoutNode("b", layout = Layout(height = fixed(44))),
+            ),
+        )
+        val sibling = LayoutNode("x", layout = Layout(leading = fixed(16), trailing = fixed(-16), top = fixed(300), height = fixed(20)))
+        val r = solveLayout(screen(stack, sibling), PHONE)
+        assertEquals(frame(0, 100, 402, 12 + 20 + 10 + 44 + 8), r["s"])
+        assertEquals(frame(16, 112, 370, 20), r["a"])
+        assertEquals(frame(16, 142, 370, 44), r["b"])
+        assertEquals(r["x"]!!.x, r["a"]!!.x, "lines up with a 16 pt inset sibling")
+    }
+
+    @Test
+    fun layoutMarginsCenterHugAndEmpty() {
+        val row = LayoutNode(
+            "r", stack = StackSpec(StackAxis.HORIZONTAL, 0.0, StackAlignment.CENTER, margins = StackMargins(top = 4.0, leading = 10.0, bottom = 8.0, trailing = 30.0)),
+            layout = Layout(leading = fixed(0), top = fixed(100)),
+            children = listOf(LayoutNode("a", layout = Layout(width = fixed(50), height = fixed(20)))),
+        )
+        val empty = LayoutNode(
+            "e", stack = StackSpec(StackAxis.VERTICAL, 8.0, margins = StackMargins(top = 6.0, bottom = 6.0)),
+            layout = Layout(leading = fixed(0), trailing = fixed(0), top = fixed(300)),
+            children = listOf(LayoutNode("gone", layout = Layout(height = fixed(40)), hidden = true)),
+        )
+        val r = solveLayout(screen(row, empty), PHONE)
+        assertEquals(frame(0, 100, 90, 32), r["r"])
+        assertEquals(frame(10, 104, 50, 20), r["a"])
+        assertEquals(12.0, r["e"]!!.height)
+    }
+
+    @Test
     fun emptyStackCollapses() {
         val stack = LayoutNode(
             "s", stack = StackSpec(StackAxis.VERTICAL),

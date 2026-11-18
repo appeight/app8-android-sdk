@@ -59,7 +59,10 @@ internal fun imageRef(node: RenderNode): AssetRef? = when (val m = (node.content
     is ImageProperties.Model.LocalAsset -> AssetRef(null, node.string(m.name), null)
     is ImageProperties.Model.RemoteAsset -> {
         val url = m.asset.url?.let { node.string(it) }?.takeIf { it.isNotEmpty() }
-        AssetRef(m.asset.id, m.asset.name?.let { node.string(it) }?.takeIf { it.isNotEmpty() }, url)
+        val name = m.asset.name?.let { node.string(it) }?.takeIf { it.isNotEmpty() }
+        // A `url` that is not an absolute URL names a file in the bundle's assets (image.md).
+        val relative = url != null && !url.contains("://") && !url.startsWith("data:")
+        AssetRef(m.asset.id, name ?: url.takeIf { relative }, url.takeUnless { relative })
     }
     else -> null
 }?.takeIf { it.id != null || it.name != null || it.url != null }
