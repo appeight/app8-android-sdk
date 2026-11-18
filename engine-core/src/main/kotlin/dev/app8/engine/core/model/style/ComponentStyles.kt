@@ -14,7 +14,13 @@ public interface BaseStyle {
     public val alpha: Double?
     public val transform: Transform?
     public val blendMode: BlendMode? get() = null
+    /** Adaptive glass (styles.md): `auto` follows the content behind, `light` / `dark` pin it. View styles only. */
+    public val glassAppearance: GlassAppearance? get() = null
 }
+
+/** `style.glassAppearance`. An unknown value is `auto`. */
+@Suppress("EnumEntryName")
+public enum class GlassAppearance { auto, light, dark }
 
 @Suppress("EnumEntryName")
 public enum class ContentMode {
@@ -57,6 +63,7 @@ public data class ViewStyle(
     override val blendMode: BlendMode? = null,
     /** stackView only: insets of the arranged subviews. */
     val layoutMargins: LayoutMargins? = null,
+    override val glassAppearance: GlassAppearance? = null,
 ) : BaseStyle
 
 /** `style.layoutMargins` of a stack view, in points (missing keys are 0). */
@@ -69,7 +76,7 @@ public data class LayoutMargins(
 
 internal fun decodeViewStyle(c: Cursor): ViewStyle {
     val b = decodeBase(c)
-    return ViewStyle(b.contentMode, b.material, b.alpha, b.transform, c.optSafeEnum("blendMode", BlendMode.normal), decodeLayoutMargins(c))
+    return ViewStyle(b.contentMode, b.material, b.alpha, b.transform, c.optSafeEnum("blendMode", BlendMode.normal), decodeLayoutMargins(c), c.optSafeEnum("glassAppearance", GlassAppearance.auto))
 }
 
 /** Lenient: a malformed `layoutMargins` is ignored, like an unknown key. */
