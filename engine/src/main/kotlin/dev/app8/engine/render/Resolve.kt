@@ -68,21 +68,6 @@ internal fun RenderNode.bool(raw: String?, ctx: VariableContext = scope.tracked)
     return Coerce.bool(v)
 }
 
-/**
- * `button` `isEnabled` (button.md): exactly iOS `resolvePropertyToBool`, where a string other than
- * `"true"` / `"1"` is false; `null` (missing or unresolved) keeps the default.
- */
-internal fun RenderNode.enabledFlag(raw: String?, ctx: VariableContext = scope.tracked): Boolean? {
-    raw ?: return null
-    val v: Any? = if (runtime.propertyResolver.containsExpression(raw)) resolve(raw, ctx) else raw
-    return when (v) {
-        is Boolean -> v
-        is Number -> v.toDouble() != 0.0
-        is String -> v.lowercase() == "true" || v == "1"
-        else -> null
-    }
-}
-
 internal fun RenderNode.number(raw: String?, ctx: VariableContext = scope.tracked): Double? {
     raw ?: return null
     val v: Any? = if (runtime.propertyResolver.containsExpression(raw)) resolve(raw, ctx) else raw
@@ -92,17 +77,8 @@ internal fun RenderNode.number(raw: String?, ctx: VariableContext = scope.tracke
 /** A JSON value from an action/payload with `{{…}}` strings resolved (iOS `resolvePayload`). */
 
 internal object Coerce {
-    fun bool(v: Any?): Boolean? = when (v) {
-        null -> null
-        is Boolean -> v
-        is Number -> v.toDouble() != 0.0
-        is String -> when (v.trim().lowercase()) {
-            "true", "yes", "1" -> true
-            "false", "no", "0", "" -> false
-            else -> null
-        }
-        else -> null
-    }
+    /** The DSL's boolean coercion (variables.md, "Boolean coercion"); null: missing or unresolved. */
+    fun bool(v: Any?): Boolean? = dev.app8.engine.core.model.BoolCoercion.coerce(v)
 
     /** Scalar → string (whole numbers without ".0"); collections and null → null. */
     fun string(v: Any?): String? = when (v) {

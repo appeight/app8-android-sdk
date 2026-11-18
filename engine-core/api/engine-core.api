@@ -1604,6 +1604,11 @@ public final class dev/app8/engine/core/model/BarAction {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class dev/app8/engine/core/model/BoolCoercion {
+	public static final field INSTANCE Ldev/app8/engine/core/model/BoolCoercion;
+	public final fun coerce (Ljava/lang/Object;)Ljava/lang/Boolean;
+}
+
 public final class dev/app8/engine/core/model/BottomBar {
 	public static final field Companion Ldev/app8/engine/core/model/BottomBar$Companion;
 	public static final field DEFAULT_INSET_BOTTOM D

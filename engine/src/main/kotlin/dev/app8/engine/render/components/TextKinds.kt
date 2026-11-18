@@ -33,7 +33,6 @@ import dev.app8.engine.core.model.style.SystemButtonStyle
 import dev.app8.engine.render.ChildrenLayout
 import dev.app8.engine.render.LayoutTraits
 import dev.app8.engine.render.LocalInteractionEnabled
-import dev.app8.engine.render.enabledFlag
 import dev.app8.engine.render.LocalRenderEnv
 import dev.app8.engine.render.RenderEnv
 import dev.app8.engine.render.RenderNode
@@ -196,7 +195,7 @@ internal object ButtonKind : ComponentKind {
         val env = LocalRenderEnv.current
         val r = resolve(node, env)
         val props = node.content.properties as? ButtonProperties
-        val enabled = (props?.isEnabled?.let { node.enabledFlag(it) } ?: true) && LocalInteractionEnabled.current
+        val enabled = (props?.isEnabled?.let { node.bool(it) } ?: true) && LocalInteractionEnabled.current
         val system = r.system
         var m = modifier
         val shape: Shape

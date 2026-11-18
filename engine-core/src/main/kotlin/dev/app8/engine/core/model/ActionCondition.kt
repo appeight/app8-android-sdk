@@ -2,20 +2,29 @@ package dev.app8.engine.core.model
 
 import dev.app8.engine.core.vars.Values
 
-/** The `if` action's condition (app8-dsl docs/actions.md, `if`). */
-public object ActionCondition {
+/**
+ * The DSL's one boolean coercion (app8-dsl docs/variables.md, "Boolean coercion"), for every
+ * boolean: `if` conditions, `isHidden`, `isEnabled`, toggles.
+ */
+public object BoolCoercion {
     /**
-     * Whether a resolved condition holds: `true`, a non-zero number, a non-empty string other
-     * than `"false"`, a non-empty array or object. `null` and a condition that could not be
-     * evaluated (its `{{…}}` text comes back) do not.
+     * `true`, non-zero numbers, `"true"` / `"1"`, non-empty lists and maps; any other string, `0`
+     * and JSON null are false. `null`: missing, or an expression that did not resolve (its `{{…}}`
+     * text): the property keeps its default.
      */
-    public fun holds(value: Any?): Boolean = when (value) {
-        null, Values.Null -> false
+    public fun coerce(value: Any?): Boolean? = when (value) {
+        null -> null
+        Values.Null -> false
         is Boolean -> value
         is Number -> value.toDouble() != 0.0
-        is String -> value.trim().let { it.isNotEmpty() && it != "false" && !it.contains("{{") }
+        is String -> if (value.contains("{{")) null else value.lowercase() == "true" || value == "1"
         is Collection<*> -> value.isNotEmpty()
         is Map<*, *> -> value.isNotEmpty()
-        else -> true
+        else -> false
     }
+}
+
+/** The `if` action's condition (actions.md, `if`): the boolean coercion; unevaluable runs `else`. */
+public object ActionCondition {
+    public fun holds(value: Any?): Boolean = BoolCoercion.coerce(value) ?: false
 }

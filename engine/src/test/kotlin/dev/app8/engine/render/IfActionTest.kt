@@ -2,6 +2,7 @@ package dev.app8.engine.render
 
 import dev.app8.engine.actions.ActionDispatcher
 import dev.app8.engine.core.model.ActionCondition
+import dev.app8.engine.core.model.BoolCoercion
 import dev.app8.engine.core.model.ActionTrigger
 import dev.app8.engine.core.vars.Values
 import org.junit.Test
@@ -76,16 +77,26 @@ class IfActionTest {
         assertEquals(listOf("one", "small 2", "big 3"), value("log"))
     }
 
+    /** The one boolean coercion (variables.md, "Boolean coercion"); null: missing or unresolved. */
+    private val table = listOf<Pair<Any?, Boolean?>>(
+        true to true, false to false, 1L to true, 0L to false, -2.5 to true,
+        "true" to true, "TRUE" to true, "1" to true,
+        "yes" to false, "M" to false, "" to false, "false" to false, "0" to false,
+        listOf(1L) to true, emptyList<Any?>() to false, mapOf("a" to 1L) to true, emptyMap<String, Any?>() to false,
+        Values.Null to false, null to null, "{{missing." to null,
+    )
+
     @Test
-    fun `condition truthiness`() {
-        val cases = listOf<Pair<Any?, Boolean>>(
-            true to true, false to false, 1L to true, 0L to false, -2.5 to true,
-            "yes" to true, "" to false, "false" to false, "0" to true,
-            listOf(1L) to true, emptyList<Any?>() to false, mapOf("a" to 1L) to true, emptyMap<String, Any?>() to false,
-            null to false, Values.Null to false,
-            "{{missing." to false,
-        )
-        for ((input, expected) in cases) assertEquals(expected, ActionCondition.holds(input), "$input")
+    fun `boolean coercion is one table for every boolean`() {
+        for ((input, expected) in table) {
+            assertEquals(expected, BoolCoercion.coerce(input), "$input")
+            assertEquals(expected, Coerce.bool(input), "Coerce.bool $input")
+        }
+    }
+
+    @Test
+    fun `if uses the boolean coercion and an unevaluable condition runs else`() {
+        for ((input, expected) in table) assertEquals(expected ?: false, ActionCondition.holds(input), "$input")
     }
 
     @Test
