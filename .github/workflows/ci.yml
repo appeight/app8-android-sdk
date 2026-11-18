@@ -14,18 +14,10 @@ permissions:
 
 jobs:
   build:
-    runs-on: [self-hosted, macOS, ARM64]
+    runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
-
-      # Self-hosted Mac (moonlander): the Android SDK lives in the runner
-      # user's home, and the work folder persists between runs, so sibling
-      # checkouts from an earlier run are removed before they are fetched.
-      - name: Prepare the Mac runner
-        run: |
-          echo "ANDROID_HOME=$HOME/Library/Android/sdk" >> "$GITHUB_ENV"
-          rm -rf "$GITHUB_WORKSPACE/../app8-dsl"
 
       - name: Version consistency
         run: scripts/check-version.sh
@@ -42,9 +34,6 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v6
         with:
-          # Self-hosted Mac: ~/.gradle persists between runs, and uploading it to the
-          # Actions cache over the slow uplink stalled jobs for half an hour.
-          cache-disabled: true
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
       - name: Test, lint, API check, build sample
