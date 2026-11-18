@@ -112,7 +112,9 @@ internal class CollectionModel(val node: RenderNode) {
     private fun groupKey(expr: String, item: CollectionItem): String {
         val store = itemStore(item.value, null)
         return try {
-            node.runtime.propertyResolver.resolveToString(expr, VariableContext(store))
+            // A bare path (`item.category`, as collections.md writes it) is an expression too.
+            val e = if (expr.contains("{{")) expr else "{{$expr}}"
+            node.runtime.propertyResolver.resolveToString(e, VariableContext(store))
         } catch (e: Exception) {
             node.runtime.diagnostics.warn("collection.groupBy", "'$expr' in ${node.key}: ${e.message}")
             "unknown"
