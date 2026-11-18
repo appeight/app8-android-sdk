@@ -6,6 +6,7 @@ import dev.app8.engine.core.model.ActionTrigger
 import dev.app8.engine.core.vars.Values
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /** The `if` control-flow action (app8-dsl docs/actions.md, Control Flow Actions). */
 class IfActionTest {
@@ -30,6 +31,10 @@ class IfActionTest {
           {"type":"if","condition":"{{on}}",
             "then":[{"type":"updateVariable","variableName":"on","value":false},${log("then")}],
             "else":[${log("else")}]}}}},
+        {"type":"view","id":"unknown","content":{"actions":{"tap":[
+          {"type":"teleport","to":"moon"},
+          ${log("after")}
+        ]}}},
         {"type":"view","id":"nested","content":{"actions":{"tap":
           {"type":"with","values":{"limit":2},"actions":
             {"type":"forEach","items":"{{[1, 2, 3]}}","as":"n","actions":
@@ -81,5 +86,12 @@ class IfActionTest {
             "{{missing." to false,
         )
         for ((input, expected) in cases) assertEquals(expected, ActionCondition.holds(input), "$input")
+    }
+
+    @Test
+    fun `an unknown action type is skipped and the list goes on`() {
+        tap("unknown")
+        assertEquals(listOf("after"), value("log"))
+        assertTrue(rt.diagnostics.snapshot().any { "teleport" in it }, "one diagnostic names the type")
     }
 }

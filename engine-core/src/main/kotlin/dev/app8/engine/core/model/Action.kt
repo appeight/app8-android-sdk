@@ -70,6 +70,8 @@ public data class Action(
     val thenActions: List<Action>? = null,
     /** if: actions run when [condition] does not hold (JSON `else`, optional). */
     val elseActions: List<Action>? = null,
+    /** The JSON `type` when this engine does not know it ([type] is [Type.unknown]). */
+    val unknownType: String? = null,
     /** upsertArrayItem: `start` or `end` (default) for a new element. */
     val position: String? = null,
     /** request: `GET` (default), `POST`, `PUT`, `PATCH` or `DELETE`. */
@@ -103,6 +105,8 @@ public data class Action(
         focus, focusNext, focusPrevious, dismissKeyboard,
         showAlert, haptic, openURL, emit,
         requestNotificationPermission,
+        /** A type this engine does not know (a newer DSL): runs nothing; the list and screen go on. */
+        unknown,
     }
 
     @Suppress("EnumEntryName")
@@ -133,8 +137,14 @@ public data class Action(
 
 internal fun decodeAction(c: Cursor): Action {
     c.obj()
+    val rawType = c.req("type") { it.string() }
+    val type = Action.Type.entries.firstOrNull { it.name == rawType && it != Action.Type.unknown }
+    if (type == null) {
+        c.options.errorCollector?.record("Action", "${c.path}.type", DslDecodingException("${c.path}.type", "unknown action type '$rawType': skipped"))
+    }
     return Action(
-        type = c.req("type") { it.strictEnum<Action.Type>() },
+        type = type ?: Action.Type.unknown,
+        unknownType = if (type == null) rawType else null,
         target = c.optString("target"),
         function = c.optString("function"),
         destination = c.optString("destination"),
