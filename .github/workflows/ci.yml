@@ -34,6 +34,7 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v6
         with:
+          # Only main writes the Gradle cache; pull requests read it.
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
       - name: Test, lint, API check, build sample
