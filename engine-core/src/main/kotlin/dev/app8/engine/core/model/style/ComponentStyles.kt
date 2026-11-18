@@ -55,12 +55,30 @@ public data class ViewStyle(
     override val alpha: Double? = null,
     override val transform: Transform? = null,
     override val blendMode: BlendMode? = null,
+    /** stackView only: insets of the arranged subviews. */
+    val layoutMargins: LayoutMargins? = null,
 ) : BaseStyle
+
+/** `style.layoutMargins` of a stack view, in points (missing keys are 0). */
+public data class LayoutMargins(
+    val top: Double = 0.0,
+    val leading: Double = 0.0,
+    val bottom: Double = 0.0,
+    val trailing: Double = 0.0,
+)
 
 internal fun decodeViewStyle(c: Cursor): ViewStyle {
     val b = decodeBase(c)
-    return ViewStyle(b.contentMode, b.material, b.alpha, b.transform, c.optSafeEnum("blendMode", BlendMode.normal))
+    return ViewStyle(b.contentMode, b.material, b.alpha, b.transform, c.optSafeEnum("blendMode", BlendMode.normal), decodeLayoutMargins(c))
 }
+
+/** Lenient: a malformed `layoutMargins` is ignored, like an unknown key. */
+private fun decodeLayoutMargins(c: Cursor): LayoutMargins? = runCatching {
+    c.opt("layoutMargins") { m ->
+        m.obj()
+        LayoutMargins(m.optDouble("top") ?: 0.0, m.optDouble("leading") ?: 0.0, m.optDouble("bottom") ?: 0.0, m.optDouble("trailing") ?: 0.0)
+    }
+}.getOrNull()
 
 public data class ImageStyle(
     override val contentMode: ContentMode? = null,

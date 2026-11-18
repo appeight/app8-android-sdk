@@ -79,7 +79,21 @@ public data class StackSpec(
     val spacing: Double = 0.0,
     val alignment: StackAlignment = StackAlignment.FILL,
     val distribution: StackDistribution = StackDistribution.FILL,
+    /** `style.layoutMargins`: the arranged subviews sit inside these (UIKit `isLayoutMarginsRelativeArrangement`). */
+    val margins: StackMargins = StackMargins.ZERO,
 )
+
+/** A stack's layout margins in points; `leading` / `trailing` follow the layout direction. */
+public data class StackMargins(
+    val top: Double = 0.0,
+    val leading: Double = 0.0,
+    val bottom: Double = 0.0,
+    val trailing: Double = 0.0,
+) {
+    public companion object {
+        public val ZERO: StackMargins = StackMargins()
+    }
+}
 
 public enum class ScrollDirection { VERTICAL, HORIZONTAL }
 

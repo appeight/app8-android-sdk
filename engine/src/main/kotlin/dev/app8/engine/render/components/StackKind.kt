@@ -13,9 +13,11 @@ import androidx.compose.ui.unit.dp
 import dev.app8.engine.core.layout.StackAlignment
 import dev.app8.engine.core.layout.StackAxis
 import dev.app8.engine.core.layout.StackDistribution
+import dev.app8.engine.core.layout.StackMargins
 import dev.app8.engine.core.layout.StackSpec
 import dev.app8.engine.core.model.StackViewProperties
 import dev.app8.engine.core.model.style.ColorHex
+import dev.app8.engine.core.model.style.ViewStyle
 import dev.app8.engine.render.ChildrenLayout
 import dev.app8.engine.render.LayoutTraits
 import dev.app8.engine.render.RenderEnv
@@ -32,6 +34,8 @@ internal object StackKind : ComponentKind {
                 spacing = p.spacing ?: 0.0,
                 alignment = StackAlignment.parse(p.alignment),
                 distribution = StackDistribution.parse(p.distribution),
+                margins = (node.content.style as? ViewStyle)?.layoutMargins
+                    ?.let { StackMargins(it.top, it.leading, it.bottom, it.trailing) } ?: StackMargins.ZERO,
             ),
         )
     }
