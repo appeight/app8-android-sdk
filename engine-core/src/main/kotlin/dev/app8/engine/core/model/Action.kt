@@ -94,6 +94,20 @@ public data class Action(
     val onGranted: List<Action>? = null,
     /** requestNotificationPermission: runs once the user declines (now or earlier). */
     val onDenied: List<Action>? = null,
+    /** capturePhoto (photos.md): `back` (default) or `front`. `source` is camera | library | cameraOrLibrary. */
+    val camera: String? = null,
+    /** capturePhoto: width ÷ height center crop (number or expression). */
+    val aspectRatio: JsonElement? = null,
+    /** capturePhoto: longest side in pixels (default 1600, clamped 256…4096). */
+    val maxDimension: JsonElement? = null,
+    /** capturePhoto: JPEG quality (default 0.8, clamped 0.1…1). */
+    val quality: JsonElement? = null,
+    /** capturePhoto: chooser texts `camera`, `library`, `cancel` (expressions). */
+    val labels: Map<String, JsonElement>? = null,
+    /** capturePhoto: runs when the user closes the camera, the library or the chooser. */
+    val onCancel: List<Action>? = null,
+    /** deletePhoto: the `photo://` reference (expression). */
+    val ref: String? = null,
 ) {
     @Suppress("EnumEntryName")
     public enum class Type {
@@ -105,6 +119,8 @@ public data class Action(
         focus, focusNext, focusPrevious, dismissKeyboard,
         showAlert, haptic, openURL, emit,
         requestNotificationPermission,
+        /** Photos (photos.md): camera / library into a stored `photo://` reference; delete one. */
+        capturePhoto, deletePhoto,
         /** A type this engine does not know (a newer DSL): runs nothing; the list and screen go on. */
         unknown,
     }
@@ -197,6 +213,13 @@ internal fun decodeAction(c: Cursor): Action {
         source = c.optString("source"),
         onGranted = c.opt("onGranted", ::decodeActionList),
         onDenied = c.opt("onDenied", ::decodeActionList),
+        camera = c.optString("camera"),
+        aspectRatio = c.opt("aspectRatio") { it.element },
+        maxDimension = c.opt("maxDimension") { it.element },
+        quality = c.opt("quality") { it.element },
+        labels = c.opt("labels", ::decodeAnyMap),
+        onCancel = c.opt("onCancel", ::decodeActionList),
+        ref = c.optString("ref"),
     )
 }
 

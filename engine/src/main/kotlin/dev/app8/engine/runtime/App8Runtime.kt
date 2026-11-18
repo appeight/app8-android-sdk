@@ -201,6 +201,10 @@ internal class App8Runtime(
 
     val imageLoader: coil3.ImageLoader by lazy { buildImageLoader(this) }
 
+    /** Where persisted variables and photos of this app live: `app.id`, `bundleId`, title, package. */
+    var persistenceId: String = "default"
+        private set
+
     /** Loads app, styles, translations and templates once (iOS `ensureInfrastructureReady`). */
     suspend fun ensureReady(): App = loadLock.withLock {
         app?.let { return it }
@@ -212,12 +216,18 @@ internal class App8Runtime(
         } catch (e: Exception) {
             throw App8Error.AppDecodeFailed(e)
         }
+        persistenceId = model.id ?: model.bundleId ?: model.title ?: appContext.packageName
+        var storedValues: Collection<String> = emptyList()
         if (model.variables?.values?.any { persistFlag(it) } == true) {
             // Stored values load before the first screen renders.
-            val persistence = DataStoreVariablePersistence(appContext, model.id ?: model.bundleId ?: model.title ?: appContext.packageName)
+            val persistence = DataStoreVariablePersistence(appContext, persistenceId)
             persistence.preload()
             appStore.persistence = persistence
+            storedValues = persistence.storedValues()
         }
+        // Photos no persisted variable mentions any more (photos.md, Cleanup).
+        val photoAppId = persistenceId
+        actionScope.launch(Dispatchers.IO) { runCatching { PhotoStore.sweep(appContext, photoAppId, storedValues) } }
         model.variables?.let { defineAppVariables(it) }
 
         val styleDocs = withContext(Dispatchers.IO) { dataSource.getStyles() }

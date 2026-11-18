@@ -64,6 +64,9 @@ internal class DataStoreVariablePersistence(
 
     override fun stored(name: String): String? = snapshot[name]
 
+    /** Every stored value as loaded (JSON strings), for the photo cleanup. */
+    fun storedValues(): Collection<String> = snapshot.values
+
     override fun save(name: String, json: String) = enqueue(name, json)
 
     override fun remove(name: String) = enqueue(name, null)

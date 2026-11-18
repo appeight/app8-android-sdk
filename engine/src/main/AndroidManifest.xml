@@ -3,4 +3,25 @@
      A host that never wants it can drop it with tools:node="remove". -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- capturePhoto (photos.md): the system camera app writes the photo through this provider
+         into cacheDir/app8-photos/; the engine stores it and deletes the file. -->
+    <application>
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.app8.photos"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/app8_photo_paths" />
+        </provider>
+    </application>
+
+    <!-- Package visibility for the system camera app (ACTION_IMAGE_CAPTURE). -->
+    <queries>
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE" />
+        </intent>
+    </queries>
 </manifest>

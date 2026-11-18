@@ -45,6 +45,29 @@ internal interface HostEffects {
     fun alert(request: AlertRequest)
     /** `requestNotificationPermission`: the system prompt once, else the stored answer. */
     fun requestNotificationPermission(onResult: (Boolean) -> Unit)
+    /** `capturePhoto` (photos.md): the chooser, camera or library; answers once. */
+    fun capturePhoto(request: PhotoCaptureRequest, onResult: (PhotoPick) -> Unit) {
+        onResult(PhotoPick.Error("unavailable", "no photo UI"))
+    }
+}
+
+/** What `capturePhoto` asks the host for. */
+internal data class PhotoCaptureRequest(
+    val source: Source = Source.cameraOrLibrary,
+    val front: Boolean = false,
+    val cameraLabel: String = "Take Photo",
+    val libraryLabel: String = "Choose from Library",
+    val cancelLabel: String = "Cancel",
+) {
+    @Suppress("EnumEntryName")
+    enum class Source { camera, library, cameraOrLibrary }
+}
+
+/** The host's answer: an image to store (its [uri] readable once), a cancel, or an error code. */
+internal sealed interface PhotoPick {
+    data class Image(val uri: android.net.Uri, val source: String, val cleanup: () -> Unit = {}) : PhotoPick
+    data object Cancel : PhotoPick
+    data class Error(val code: String, val message: String) : PhotoPick
 }
 
 internal data class AlertRequest(
