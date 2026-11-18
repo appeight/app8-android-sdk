@@ -64,6 +64,12 @@ public data class Action(
     val actions: List<Action>? = null,
     /** with: names bound for [actions], evaluated once. */
     val values: Map<String, JsonElement>? = null,
+    /** if: the condition (usually an expression), evaluated once when the action runs. */
+    val condition: JsonElement? = null,
+    /** if: actions run when [condition] holds (JSON `then`). */
+    val thenActions: List<Action>? = null,
+    /** if: actions run when [condition] does not hold (JSON `else`, optional). */
+    val elseActions: List<Action>? = null,
     /** upsertArrayItem: `start` or `end` (default) for a new element. */
     val position: String? = null,
     /** request: `GET` (default), `POST`, `PUT`, `PATCH` or `DELETE`. */
@@ -93,7 +99,7 @@ public data class Action(
         updateVariable, incrementVariable, toggleArrayValue, appendToArray, incrementArrayItem,
         insertArrayItem, upsertArrayItem, removeArrayItem,
         updateMultipleVariables, resetVariables,
-        forEach, with, request, reloadDatasource,
+        forEach, with, `if`, request, reloadDatasource,
         focus, focusNext, focusPrevious, dismissKeyboard,
         showAlert, haptic, openURL, emit,
         requestNotificationPermission,
@@ -168,6 +174,9 @@ internal fun decodeAction(c: Cursor): Action {
         index = c.opt("index") { it.element },
         actions = c.opt("actions", ::decodeActionList),
         values = c.opt("values", ::decodeAnyMap),
+        condition = c.opt("condition") { it.element },
+        thenActions = c.opt("then", ::decodeActionList),
+        elseActions = c.opt("else", ::decodeActionList),
         position = c.optString("position"),
         method = c.optString("method"),
         headers = c.opt("headers", ::decodeAnyMap),
