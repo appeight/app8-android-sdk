@@ -28,7 +28,6 @@ import dev.app8.engine.render.LocalRenderEnv
 import dev.app8.engine.render.ScreenSession
 import dev.app8.engine.render.string
 import dev.app8.engine.style.App8ChromeTheme
-import dev.app8.engine.style.IosSystemColors
 
 /**
  * Material 3 Expressive short navigation bar height (without the system navigation bar
@@ -66,13 +65,18 @@ internal fun TabBarHost(session: ScreenSession, flow: FlowController, layer: Lay
     val navInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding().value.toDouble()
     fun hex(s: String?) = session.root.hexColor(s)
     val accent = hex(content.tintColor)
-    val tint = accent ?: IosSystemColors.of("systemBlue", env.appearance)
-    val unselected = hex(content.unselectedColor) ?: IosSystemColors.of("systemGray", env.appearance)
+    val authoredUnselected = hex(content.unselectedColor)
     val badgeColor = hex(content.badgeColor)
     val badgeTextColor = hex(content.badgeTextColor)
     // The tab bar tint is the app's accent for chrome outside the tabs too (sheets, dialogs).
     androidx.compose.runtime.SideEffect { env.runtime.chromeAccent = accent }
     App8ChromeTheme(accent, env.appearance.isDark) {
+    // Chrome colors from the app's Material roles: the selected tint is `tintColor`, else
+    // `primary`; unselected items are `unselectedColor` while it reaches 4.5:1 on the bar,
+    // else `onSurfaceVariant` (the iOS gray defaults read at 2.3–3:1 on `surfaceContainer`).
+    val scheme = MaterialTheme.colorScheme
+    val tint = accent ?: scheme.primary
+    val unselected = dev.app8.engine.style.readableOn(authoredUnselected, scheme.surfaceContainer, scheme.onSurfaceVariant)
     Box(Modifier.fillMaxSize()) {
         val i = state.selected
         key(i) {
