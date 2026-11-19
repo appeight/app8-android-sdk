@@ -81,11 +81,11 @@ internal object MotionSpecs {
 
     fun coverFadeOut(): FiniteAnimationSpec<Float> = tween(COVER_EXIT_MS, easing = EmphasizedAccelerate)
 
-    /**
-     * After a sheet has slid away, the layer stays this long so the scrim's own fade
-     * (Material's 300ms tween, started with the hide) reaches zero instead of being cut.
-     */
-    const val SHEET_SCRIM_TAIL_MS = 60L
+    /** Sheet scrim fade in, with the sheet (M3 `DurationMedium2`, emphasized decelerate). */
+    const val SHEET_SCRIM_IN_MS = 300
+
+    /** Sheet scrim fade out as the sheet heads for hidden (emphasized accelerate, 200–250ms band). */
+    const val SHEET_SCRIM_OUT_MS = 220
 
     // Predictive back preview (M3 "Predictive back", compose-material3 `PredictiveBack`).
 

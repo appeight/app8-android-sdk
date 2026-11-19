@@ -27,6 +27,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import kotlinx.coroutines.flow.first
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavEntry
@@ -174,14 +176,30 @@ private fun ModalLayer(flow: FlowController, layer: Layer) {
             // down and the scrim fades with it before the layer goes, never a cut. A swipe or a
             // scrim tap has already hidden the sheet when Material calls onDismissRequest.
             var hiddenByUser by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+            // The scrim is ours, in the window under the sheet's dialog: Material's own stays
+            // opaque until its dialog goes, so a sheet closed by back or from code cut it in
+            // one frame. This one fades in with the sheet and out as it heads for hidden.
+            val scrimOn = state.targetValue != androidx.compose.material3.SheetValue.Hidden && !layer.dismissing && !hiddenByUser
+            val scrim = androidx.compose.animation.core.animateFloatAsState(
+                if (scrimOn) 1f else 0f,
+                if (scrimOn) androidx.compose.animation.core.tween(MotionSpecs.SHEET_SCRIM_IN_MS, easing = MotionSpecs.EmphasizedDecelerate)
+                else androidx.compose.animation.core.tween(MotionSpecs.SHEET_SCRIM_OUT_MS, easing = MotionSpecs.EmphasizedAccelerate),
+                label = "a8-sheet-scrim",
+            )
+            val scrimColor = BottomSheetDefaults.ScrimColor
+            Box(Modifier.fillMaxSize().drawBehind { drawRect(scrimColor, alpha = scrim.value) })
             androidx.compose.runtime.LaunchedEffect(layer.dismissing, hiddenByUser) {
                 if (!layer.dismissing && !hiddenByUser) return@LaunchedEffect
                 if (state.currentValue != androidx.compose.material3.SheetValue.Hidden) runCatching { state.hide() }
-                kotlinx.coroutines.delay(MotionSpecs.SHEET_SCRIM_TAIL_MS)
+                // The layer goes once the scrim has faded (bounded, in case no frame comes).
+                kotlinx.coroutines.withTimeoutOrNull(MotionSpecs.SHEET_SCRIM_OUT_MS + 200L) {
+                    androidx.compose.runtime.snapshotFlow { scrim.value }.first { it <= 0f }
+                }
                 flow.remove(layer)
             }
             ModalBottomSheet(
                 onDismissRequest = { hiddenByUser = true },
+                scrimColor = androidx.compose.ui.graphics.Color.Transparent,
                 sheetState = state,
                 // M3 sheet container; a screen without its own background shows it too (ScreenHost).
                 containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
