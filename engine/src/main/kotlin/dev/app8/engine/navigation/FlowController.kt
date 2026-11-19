@@ -60,8 +60,12 @@ internal class StackState(root: Route) {
 
     fun push(route: Route) {
         popping = false
+        predictiveRoute = null
         entries += route
     }
+
+    /** The route a predictive back gesture is popping (set when the gesture starts). */
+    var predictiveRoute: Long? by androidx.compose.runtime.mutableStateOf(null)
 
     fun pop(toRoot: Boolean): Boolean {
         if (entries.size <= 1) return false

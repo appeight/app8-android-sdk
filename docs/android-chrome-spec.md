@@ -48,6 +48,9 @@ Sources (cited by letter in the tables):
 | Navigation icon center | 28 from the edge | 28 (measured: glyph 20.6–36.2) | S, REF |
 | Title start with navigation icon | 56 | 56 (glyph starts at 57.1) | S |
 | Back icon | `arrow_back` | `arrow_back`, DSL tint | M3 |
+| Icon button labels | content description on every icon-only action | back arrow "Navigate up"; bar items their `label` when set, else a name from the symbol ("Search", "Favourite", "Close", "More options", or the symbol's first word); the glyph itself is hidden from TalkBack (`SymbolLabels`) | M3, AppCompat `abc_action_bar_up_description` |
+| Title color | `onSurface` | `titleColor`, else the app scheme's `onSurface` | T `AppBarTokens` |
+| Empty bar on a root screen | no app bar without content | a root screen (a tab's first screen, the flow start, a modal's first screen) whose bar has no title, `titleView`, items or search draws no bar: 0dp, the status bar inset only. Pushed screens keep the bar for the back arrow | M3 |
 | Container at rest | `surface` | transparent over the screen (iOS parity; looks like `surface` over the screen background) | T `AppBarTokens.ContainerColor` |
 | Container on scroll | `surfaceContainer`, **no shadow** (elevation 0) | `surfaceContainer` derived from the screen root's background (`systemColorScheme(null, dark, bg)`), animated | T `AppBarTokens.OnScrollContainerColor` |
 | Translucency / blur | none: M3 bars are opaque and content is clipped at the bar edge | none | M3, T |
@@ -74,7 +77,14 @@ image, edge-to-edge):
 The switch happens when the scroll distance reaches the bottom of the tallest
 full-width view that starts at y = 0, minus the bar's bottom edge
 (`heroScrollDistance`). With no such view it happens on the first scroll. The
-change animates over 200ms. Sources: M3 app bars specs ("on scroll" container
+change animates over 200ms. Only views that really draw under the bar count: the
+content of a scroll view that insets itself by the safe area
+(`contentInsetAdjustment` other than `never`) is skipped.
+
+With `topEdgeEffect: automatic` (or `soft` / `hard`) over a hero drawn under the
+bar, the bar keeps its usual behavior (title shown, `surfaceContainer` as soon as
+content scrolls under it), but while it is at rest its icons sit on the same
+legibility circles, so a back arrow never stands bare on a photo. Sources: M3 app bars specs ("on scroll" container
 color, no elevation), E2E (draw behind the system bars), Play Store app details.
 
 ## Search (`navigationBar.search`)
@@ -116,17 +126,21 @@ copy it.
 | Icon | 24 | 24 | T |
 | Label | labelMedium 12/16 medium | labelMedium | T |
 | Container | `surfaceContainer` | `surfaceContainer` of the app scheme | T |
+| Selected icon, label, indicator | `secondaryContainer` indicator, `onSurface` / `onSecondaryContainer` | `tintColor` (else the scheme's `primary`), indicator the tint at 14% | T, DSL |
+| Unselected icon and label | `onSurfaceVariant` | `unselectedColor` while it reaches 4.5:1 on the container (alpha composited), else `onSurfaceVariant`. The iOS gray defaults read 2.3–3:1 there | T, WCAG 1.4.3 |
 | Wide windows (≥ 600) | horizontal items (icon beside label), centered | `Centered` + `NavigationItemIconPosition.Start` from 600dp | S, M3 |
 
 ## Sheets, dialogs, controls
 
 | Element | Spec | Ours | Source |
 |---|---|---|---|
-| Bottom sheet drag handle | 32×4, 22 above and below | Material `DragHandle`; content height subtracts the 48 block so the sheet top stays 10 below the status bar | T `SheetBottomTokens` |
+| Bottom sheet drag handle | 32×4, 22 above and below | Material `DragHandle`; the content height subtracts the 48 block | T `SheetBottomTokens` |
+| Bottom sheet, large detent | full height: top edge at the status bar's bottom | top edge at the status bar's bottom (no iOS 10pt gap) | S `ModalBottomSheet` |
 | Bottom sheet corners | 28 top | 28 (Material) | T |
 | Bottom sheet scrim | 32% black | Material | T `ScrimTokens` |
 | Bottom sheet max width | 640 | Material | S |
-| Bottom sheet container | `surfaceContainerLow` | `systemBackground` (sheet content is the DSL screen) | T |
+| Bottom sheet container | `surfaceContainerLow` | `surfaceContainerLow` of the app scheme; a sheet screen without its own `backgroundColor` shows it too | T |
+| Screen and full-screen cover background | `surface` | `surface` of the app scheme when the screen sets no `backgroundColor` (white / black unless `dynamicColor`) | T |
 | Dialog | corner 28, headlineSmall 24/32, 280–560 wide | Material `AlertDialog` | T `DialogTokens` |
 | Switch | track 52×32; thumb 16 / 24 / 28 pressed | Material `Switch`, laid out at the iOS size (brand layout) | T `SwitchTokens` |
 | Slider (baseline) | Material `Slider` | Material `Slider` | T |

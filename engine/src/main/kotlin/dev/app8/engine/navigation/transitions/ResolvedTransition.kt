@@ -98,7 +98,7 @@ internal data class ResolvedTransition(
 
         fun resolve(inline: ScreenTransition.Inline, app: App?): ResolvedTransition {
             val preset = inline.preset
-            val mode = inline.mode ?: preset?.defaultMode ?: ScreenTransition.Mode.push
+            val mode = routingMode(inline)
             val edge = inline.edge ?: preset?.defaultEdge ?: Edge.trailing
             val raise = inline.raise ?: ScreenTransition.Raise.incoming
             if (preset == Preset.system || preset == Preset.none) {
@@ -317,3 +317,12 @@ internal fun Animation.Inline.toTransitionSpec(): FiniteAnimationSpec<Float> {
         )
     }
 }
+
+/**
+ * Push or modal for a transition (iOS `TransitionPresets.resolve`): `mode` when set, else the
+ * preset's default. The native zoom (`zoom` + `sourceKey`) is the exception: it pushes unless
+ * `mode: modal`, so a card zooming into its detail screen lands on the same stack, with the
+ * back arrow and predictive back, not in a full-screen modal.
+ */
+internal fun routingMode(inline: ScreenTransition.Inline): ScreenTransition.Mode =
+    inline.mode ?: if (inline.isNativeZoom) ScreenTransition.Mode.push else inline.preset?.defaultMode ?: ScreenTransition.Mode.push

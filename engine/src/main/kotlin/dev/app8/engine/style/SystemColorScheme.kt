@@ -4,6 +4,7 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
 import kotlin.math.roundToInt
 
@@ -87,4 +88,24 @@ internal fun onColor(c: Color): Color = if (c.luminance() > 0.5f) Color.Black el
 internal fun App8ChromeTheme(accent: Color?, dark: Boolean, content: @Composable () -> Unit) {
     if (accent == null || dev.app8.engine.render.LocalRenderEnv.current.runtime.dynamicColor) return content()
     MaterialTheme(colorScheme = systemColorScheme(accent, dark), content = content)
+}
+
+/** WCAG 2 contrast ratio of two opaque colors (1…21). */
+internal fun contrastRatio(a: Color, b: Color): Double {
+    val la = a.copy(alpha = 1f).luminance().toDouble()
+    val lb = b.copy(alpha = 1f).luminance().toDouble()
+    return (maxOf(la, lb) + 0.05) / (minOf(la, lb) + 0.05)
+}
+
+/** WCAG AA for text and icons that carry meaning (navigation bar labels and icons). */
+internal const val MIN_CHROME_CONTRAST = 4.5
+
+/**
+ * [color] when it reads on [background] (≥ [MIN_CHROME_CONTRAST], alpha composited over it),
+ * else [fallback] (the scheme's `onSurfaceVariant`). Chrome only: brand content keeps its colors.
+ */
+internal fun readableOn(color: Color?, background: Color, fallback: Color): Color {
+    color ?: return fallback
+    val shown = if (color.alpha < 1f) color.compositeOver(background) else color
+    return if (contrastRatio(shown, background) >= MIN_CHROME_CONTRAST) color else fallback
 }

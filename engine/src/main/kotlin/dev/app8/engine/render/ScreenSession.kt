@@ -116,7 +116,8 @@ internal class ScreenSession private constructor(
                     }
                 }
                 defs = applyPreviews(screenId, defs, params, loader, runtime)
-                store.defineVariables(defs)
+                // One failing expression must not take the screen down: log it, define the rest.
+                store.defineVariables(defs) { name, e -> runtime.diagnostics.warn("variable", "'$name' on '$screenId': ${e.message}") }
             }
             for ((name, value) in params) {
                 val v = Values.normalize(value)

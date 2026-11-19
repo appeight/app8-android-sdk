@@ -37,7 +37,7 @@ import dev.app8.engine.navigation.transitions.TransitionFrame
 import dev.app8.engine.navigation.transitions.stackTransitionSpec
 import dev.app8.engine.core.model.Action
 import dev.app8.engine.render.LocalRenderEnv
-import dev.app8.engine.style.IosSystemColors
+import androidx.compose.material3.MaterialTheme
 
 /**
  * System chrome around a stack, in points: what the screens' safe area adds on each edge
@@ -84,6 +84,7 @@ internal fun StackHost(flow: FlowController, layer: Layer, stack: StackState, ta
             transitionSpec = stackTransitionSpec(stack, pop = false, predictive = false, platformPush),
             popTransitionSpec = stackTransitionSpec(stack, pop = true, predictive = false, platformPop),
             predictivePopTransitionSpec = { edge: Int ->
+                stack.predictiveRoute = initialState.entries.lastOrNull()?.contentKey as? Long
                 stackTransitionSpec<Route>(stack, pop = true, predictive = true) { platformPredictive(this, edge) }(this)
             },
             entryProvider = { route ->
@@ -118,7 +119,7 @@ private fun ModalLayer(flow: FlowController, layer: Layer) {
             backEnabled = layer.stack.entries.size <= 1,
             onPresented = { layer.presented = true },
         ) {
-            Box(Modifier.fillMaxSize().background(IosSystemColors.of("systemBackground", LocalRenderEnv.current.appearance))) {
+            Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
                 StackHost(flow, layer, layer.stack, null, Chrome())
             }
         }
@@ -150,7 +151,8 @@ private fun ModalLayer(flow: FlowController, layer: Layer) {
                     state.currentValue != androidx.compose.material3.SheetValue.Hidden && state.targetValue != androidx.compose.material3.SheetValue.Hidden
                 }.collect { layer.presented = it }
             }
-            // A large detent leaves the status bar and a 10pt gap above the sheet, like iOS.
+            // A large detent: the M3 full-height sheet, its top edge at the status bar's bottom
+            // (no iOS 10pt gap; the page behind does not scale on Android).
             val density = androidx.compose.ui.platform.LocalDensity.current
             val windowHeight = with(density) { androidx.compose.ui.platform.LocalWindowInfo.current.containerSize.height.toDp().value }
             val statusTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding().value
@@ -160,12 +162,13 @@ private fun ModalLayer(flow: FlowController, layer: Layer) {
                 is Action.SheetDetent.Fixed -> Modifier.height(single.points.dp)
                 is Action.SheetDetent.Fraction -> Modifier.height((screenHeight * single.fraction).dp)
                 // The M3 drag handle block (32x4dp handle, 22dp above and below) sits above the content.
-                else -> Modifier.height((windowHeight - statusTop - 10f - (if (layer.grabber != false) SHEET_HANDLE_BLOCK else 0f)).coerceAtLeast(0f).dp)
+                else -> Modifier.height((windowHeight - statusTop - (if (layer.grabber != false) SHEET_HANDLE_BLOCK else 0f)).coerceAtLeast(0f).dp)
             }
             ModalBottomSheet(
                 onDismissRequest = { flow.dismiss(layer) },
                 sheetState = state,
-                containerColor = IosSystemColors.of("systemBackground", LocalRenderEnv.current.appearance),
+                // M3 sheet container; a screen without its own background shows it too (ScreenHost).
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                 dragHandle = if (layer.grabber != false) ({ BottomSheetDefaults.DragHandle() }) else null,
                 contentWindowInsets = { WindowInsets(0, 0, 0, 0) },
             ) {
@@ -184,7 +187,7 @@ private fun ModalLayer(flow: FlowController, layer: Layer) {
                 visibleState = visible,
                 enter = if (layer.presentation == Action.PresentationStyle.crossDissolve) fadeIn() else slideInVertically { it },
             ) {
-                Box(Modifier.fillMaxSize().background(IosSystemColors.of("systemBackground", LocalRenderEnv.current.appearance))) {
+                Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
                     StackHost(flow, layer, layer.stack, null, Chrome())
                 }
             }

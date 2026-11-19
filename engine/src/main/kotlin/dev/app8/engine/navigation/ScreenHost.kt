@@ -28,6 +28,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import dev.app8.engine.render.bool
 import dev.app8.engine.style.dslMaterial
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.layout.size
@@ -64,7 +67,6 @@ import dev.app8.engine.render.ScreenCanvas
 import dev.app8.engine.render.ScreenSession
 import dev.app8.engine.render.string
 import dev.app8.engine.style.App8BackdropSource
-import dev.app8.engine.style.IosSystemColors
 import dev.app8.engine.style.rememberApp8Backdrop
 
 internal val LocalAppScope = staticCompositionLocalOf<Scope> { error("No app scope") }
@@ -104,13 +106,20 @@ internal fun ScreenHost(route: Route, navigator: StackNavigator, flow: FlowContr
     }
     val session = result?.getOrNull()
     DisposableEffect(session) { onDispose { session?.dispose() } }
-    val background = IosSystemColors.of("systemBackground", env.appearance)
+    // Default screen background: the app scheme's `surface`; in a bottom sheet the sheet's own
+    // `surfaceContainerLow`, so the drag handle strip and the screen are one surface (M3).
+    // A screen's own `backgroundColor` (brand content) draws over it.
+    val scheme = MaterialTheme.colorScheme
+    val background = if (layer.presentation.isBottomSheet) scheme.surfaceContainerLow else scheme.surface
     val visible = rememberScreenVisible(flow, layer, stack, route)
     CompositionLocalProvider(LocalScreenVisible provides visible) {
     when {
         result == null -> Box(Modifier.fillMaxSize().background(background))
+        // A screen that fails to load: the error (already in diagnostics) is shown only in a
+        // debuggable app; a release build shows the empty screen, never the message.
         session == null -> Box(Modifier.fillMaxSize().background(background), contentAlignment = Alignment.Center) {
-            BasicText(result?.exceptionOrNull()?.message ?: "Failed to load screen", style = TextStyle(color = Color.Red))
+            val debuggable = androidx.compose.ui.platform.LocalContext.current.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0
+            if (debuggable) BasicText(result?.exceptionOrNull()?.message ?: "Failed to load screen", style = TextStyle(color = Color.Red))
         }
         session.tabBar != null -> TabBarHost(session, flow, layer)
         else -> {
@@ -124,7 +133,7 @@ internal fun ScreenHost(route: Route, navigator: StackNavigator, flow: FlowContr
             // iOS hidesBottomBarWhenPushed: the screen's safe area ends at the window edge.
             val screenChrome = if (hides) chrome.copy(bottom = null) else chrome
             CompositionLocalProvider(LocalDispatcher provides dispatcher) {
-                Screen(session, screenChrome, canGoBack = stack.entries.size > 1 && stack.entries.lastOrNull() == route, background)
+                Screen(session, screenChrome, canGoBack = stack.entries.size > 1 && stack.entries.lastOrNull() == route, background, isRoot = stack.entries.firstOrNull() == route)
             }
         }
     }
@@ -133,10 +142,13 @@ internal fun ScreenHost(route: Route, navigator: StackNavigator, flow: FlowContr
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun Screen(session: ScreenSession, chrome: Chrome, canGoBack: Boolean, background: Color) {
+private fun Screen(session: ScreenSession, chrome: Chrome, canGoBack: Boolean, background: Color, isRoot: Boolean = false) {
     val env = LocalRenderEnv.current
     val content = session.content
-    val bar = content?.navigationBar?.takeIf { it.hidden != true }
+    // A root screen's bar with nothing to show (no title, title view, items or search) is not
+    // drawn on Android: no empty 64dp band, only the status bar inset (Material: no app bar
+    // without content). iOS keeps its empty bar.
+    val bar = content?.navigationBar?.takeIf { it.hidden != true && !(isRoot && isEmptyBar(it, session)) }
     val window = WindowInsets.safeDrawing.asPaddingValues()
     val ld = LocalLayoutDirection.current
     val extra = (content as? dev.app8.engine.core.model.ComponentContent<*, *>)?.additionalSafeAreaInsets
@@ -180,6 +192,9 @@ private fun Screen(session: ScreenSession, chrome: Chrome, canGoBack: Boolean, b
     // Content under the bar (`topEdgeEffect: hidden`, e.g. a hero image): the bar stays
     // transparent until the hero has scrolled out from under it (Play Store app details).
     val overContent = bar?.topEdgeEffect == NavigationBar.EdgeEffect.hidden
+    // Any other edge effect over a hero that is drawn under the bar: the bar keeps its usual
+    // behavior, but at rest its icons sit on the same legibility circles.
+    val heroAware = bar != null && !overContent
     var heroScroll by remember { androidx.compose.runtime.mutableDoubleStateOf(0.0) }
     val solid = if (overContent) -barState.contentOffset / density >= heroScroll.coerceAtLeast(1.0)
     else barState.overlappedFraction > 0.01f
@@ -201,9 +216,12 @@ private fun Screen(session: ScreenSession, chrome: Chrome, canGoBack: Boolean, b
             }
             val safe = if (bottomBarState == null) baseSafe else baseSafe.copy(bottom = baseSafe.bottom + bottomBarState.safeAreaHeight)
             CompositionLocalProvider(dev.app8.engine.render.LocalBottomEdge provides bottomBarState?.edge) {
-                App8BackdropSource(backdrop) { mm -> ScreenCanvas(session, safe, mm, onSolved = if (overContent) ({ heroScroll = heroScrollDistance(it, safe.top) }) else null) }
+                App8BackdropSource(backdrop) { mm -> ScreenCanvas(session, safe, mm, onSolved = if (overContent || heroAware) ({ heroScroll = heroScrollDistance(it, safe.top, keysOutsideAdjustingScrolls(session.root), it.absolute[session.screenId]?.width) }) else null) }
             }
-            if (bar != null) TopBar(session, bar, style, behavior, canGoBack, chrome.top == null, screenBackground(session, background), overContent, solid)
+            if (bar != null) {
+                val heroCircles = heroAware && heroScroll > 0.0 && !solid
+                TopBar(session, bar, style, behavior, canGoBack, chrome.top == null, screenBackground(session, background), overContent, solid, heroCircles)
+            }
             if (bottomBarState != null) {
                 BottomBarView(session, bottomBarState, bottom, screenBackground(session, background), Modifier.align(Alignment.BottomCenter))
             }
@@ -314,14 +332,50 @@ private fun bottomBarMaterial(style: dev.app8.engine.core.model.style.StyleAny, 
  * the tallest full-width view that starts at the top edge, minus the bar's bottom (0 when
  * there is none: opaque as soon as anything scrolls under).
  */
-internal fun heroScrollDistance(solved: dev.app8.engine.render.Solved, barBottom: Double): Double {
-    val frames = solved.absolute.values
-    val width = frames.maxOfOrNull { it.width } ?: return 0.0
+internal fun heroScrollDistance(
+    solved: dev.app8.engine.render.Solved,
+    barBottom: Double,
+    keys: Set<String>? = null,
+    /** The screen's width: content wider than the screen (a horizontal row's content) is not the reference. */
+    screenWidth: Double? = null,
+): Double {
+    val frames = if (keys == null) solved.absolute.values else solved.absolute.filterKeys { it in keys }.values
+    val width = screenWidth ?: frames.maxOfOrNull { it.width } ?: return 0.0
     val height = frames.maxOfOrNull { it.height } ?: return 0.0
     val hero = frames.filter { it.y <= 0.5 && it.x <= 0.5 && it.width >= width - 1 && it.height > barBottom && it.height < height * 0.9 }
         .maxOfOrNull { it.y + it.height } ?: return 0.0
     return (hero - barBottom).coerceAtLeast(0.0)
 }
+
+/**
+ * Keys of the nodes whose solved frame is where they draw at rest: everything except the
+ * content of a vertical scroll view that insets itself by the safe area (its frames are in
+ * content coordinates, so a header at y 0 there really sits below the bar).
+ */
+internal fun keysOutsideAdjustingScrolls(root: dev.app8.engine.render.RenderNode): Set<String> {
+    val out = HashSet<String>()
+    fun visit(n: dev.app8.engine.render.RenderNode) {
+        out += n.key
+        val p = n.content.properties as? dev.app8.engine.core.model.ScrollViewProperties
+        val adjusting = (n.type as? dev.app8.engine.core.model.ComponentType.Known)?.key == dev.app8.engine.core.model.ComponentType.Key.scrollView &&
+            p?.direction != dev.app8.engine.core.model.ScrollViewProperties.Direction.horizontal &&
+            p?.contentInsetAdjustment != dev.app8.engine.core.model.ScrollViewProperties.ContentInsetAdjustment.never
+        if (!adjusting) n.children.forEach(::visit)
+    }
+    visit(root)
+    return out
+}
+
+/** A bar that would draw nothing but its container: no title or title view, no items, no search. */
+internal fun isEmptyBar(bar: NavigationBar, session: ScreenSession): Boolean =
+    bar.titleView == null && bar.search == null && bar.leftAction == null && bar.rightAction == null &&
+        bar.rightActions.isNullOrEmpty() && bar.title?.let { session.root.string(it) }.isNullOrEmpty()
+
+/** Bottom sheet presentations (Material 3 modal bottom sheet). */
+internal val dev.app8.engine.core.model.Action.PresentationStyle?.isBottomSheet: Boolean
+    get() = this == dev.app8.engine.core.model.Action.PresentationStyle.sheet ||
+        this == dev.app8.engine.core.model.Action.PresentationStyle.formSheet ||
+        this == dev.app8.engine.core.model.Action.PresentationStyle.pageSheet
 
 /** The color under the top app bar at rest: the screen root's opaque background, else the system background. */
 private fun screenBackground(session: ScreenSession, fallback: Color): Color {
@@ -397,12 +451,14 @@ private fun TopBar(
     under: Color,
     overContent: Boolean,
     solid: Boolean,
+    /** A hero under a bar that is not `hidden`: icons on legibility circles while at rest over it. */
+    heroCircles: Boolean = false,
 ) {
     val env = LocalRenderEnv.current
     val dispatcher = LocalDispatcher.current
     val root = session.root
     fun hex(s: String?) = root.hexColor(s)
-    val titleColor = hex(bar.titleColor) ?: IosSystemColors.of("label", env.appearance)
+    val titleColor = hex(bar.titleColor) ?: MaterialTheme.colorScheme.onSurface
     val tint = hex(bar.tintColor) ?: titleColor
     val title = bar.title?.let { root.string(it) }.orEmpty()
     val search = bar.search
@@ -417,7 +473,11 @@ private fun TopBar(
         androidx.compose.animation.core.tween(dev.app8.engine.navigation.transitions.MaterialTransitions.COLOR_MS), label = "barOverlay",
     )
     val overContentColor = androidx.compose.ui.graphics.lerp(scrolled, Color.Transparent, overlay)
-    val iconContainer = MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = OVER_CONTENT_ICON_ALPHA * overlay)
+    val circles by androidx.compose.animation.core.animateFloatAsState(
+        if ((overContent && !solid) || heroCircles) 1f else 0f,
+        androidx.compose.animation.core.tween(dev.app8.engine.navigation.transitions.MaterialTransitions.COLOR_MS), label = "barIconCircles",
+    )
+    val iconContainer = MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = OVER_CONTENT_ICON_ALPHA * circles)
     val colors = TopAppBarDefaults.topAppBarColors(
         containerColor = if (overContent) overContentColor else Color.Transparent,
         scrolledContainerColor = if (overContent) overContentColor else scrolled,
@@ -444,13 +504,21 @@ private fun TopBar(
         val left = bar.leftAction?.takeIf { bar.titleAlignment != "left" || bar.titleView == null }
         when {
             left != null -> BarItem(root, left, root.hexColor(left.color) ?: tint, iconContainer) { dispatcher.run(root, left.actions) }
-            canGoBack && bar.hidesBackButton != true -> IconButton(onClick = { dispatcher.execute(root, BACK) }, colors = iconColors(iconContainer)) { Symbol("arrow_back", tint) }
+            canGoBack && bar.hidesBackButton != true -> IconButton(
+                onClick = { dispatcher.execute(root, BACK) },
+                modifier = Modifier.semantics { contentDescription = dev.app8.engine.icons.SymbolLabels.NAVIGATE_UP },
+                colors = iconColors(iconContainer),
+            ) { Symbol("arrow_back", tint) }
         }
     }
     val actions: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit = {
         val items = bar.rightActions ?: listOfNotNull(bar.rightAction)
         for (item in items) BarItem(root, item, root.hexColor(item.color) ?: tint, iconContainer) { dispatcher.run(root, item.actions) }
-        if (slot == SearchSlot.Button && !searchOpen) IconButton(onClick = { searchOpen = true }) { Symbol("magnifyingglass", tint) }
+        if (slot == SearchSlot.Button && !searchOpen) {
+            IconButton(onClick = { searchOpen = true }, modifier = Modifier.semantics { contentDescription = dev.app8.engine.icons.SymbolLabels.of("magnifyingglass") }) {
+                Symbol("magnifyingglass", tint)
+            }
+        }
     }
     val insets = if (statusBarInset) WindowInsets.statusBars else WindowInsets(0, 0, 0, 0)
     androidx.compose.foundation.layout.Column {
@@ -576,7 +644,11 @@ private fun BarItem(root: dev.app8.engine.render.RenderNode, item: BarAction, co
     // composition so a change to their variables recomposes just this item.
     if (item.icon != null) {
         val icon = root.string(item.icon).orEmpty()
-        IconButton(onClick = onClick, colors = iconColors(iconContainer)) { if (icon.isNotEmpty()) Symbol(icon, color) }
+        // TalkBack: the item's label when it has one (iOS reads the title), else the symbol's name.
+        val spoken = item.label?.let { root.string(it) }?.takeIf { it.isNotBlank() } ?: dev.app8.engine.icons.SymbolLabels.of(icon)
+        IconButton(onClick = onClick, modifier = Modifier.semantics { contentDescription = spoken }, colors = iconColors(iconContainer)) {
+            if (icon.isNotEmpty()) Symbol(icon, color)
+        }
     } else {
         TextButton(onClick = onClick) { Text(root.string(item.label).orEmpty(), color = color) }
     }
@@ -598,7 +670,8 @@ internal fun Symbol(name: String, color: Color, size: Float = 24f) {
             style = TextStyle(color = color, fontSize = fontSize, lineHeight = fontSize, fontFamily = MaterialSymbols.family(glyph.filled, 400, size)),
             maxLines = 1,
             softWrap = false,
-            modifier = Modifier.wrapContentSize(unbounded = true),
+            // The glyph is a Private Use Area character: never read it; the button carries the label.
+            modifier = Modifier.wrapContentSize(unbounded = true).clearAndSetSemantics { },
         )
     }
 }
