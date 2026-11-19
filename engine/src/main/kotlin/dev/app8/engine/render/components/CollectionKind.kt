@@ -114,6 +114,48 @@ internal object CollectionKind : ComponentKind {
         return node.inVerticalScroll && !hasOwnHeight(node.content.layout)
     }
 
+    /**
+     * The safe-area part of a vertical collection's adjustedContentInset (top, bottom), as
+     * UIKit's `.automatic` computes it. A self-sizing collection does not scroll on the
+     * vertical axis, so it gets none (UIKit adjusts only the scrollable axes). In a vertical
+     * scroll view the collection's solved frame is in the scroll content's coordinates; on
+     * screen it sits below the scroll view's own adjusted top inset, so the overlap is
+     * measured from there: the safe area is never counted twice.
+     */
+    internal fun automaticInsets(node: RenderNode, s: dev.app8.engine.render.Solved, selfSizing: Boolean): Pair<Double, Double> {
+        if (selfSizing) return 0.0 to 0.0
+        val self = s.absolute[node.key] ?: return 0.0 to 0.0
+        val root = s.absolute[node.session.screenId] ?: return 0.0 to 0.0
+        val shift = if (node.inVerticalScroll) enclosingScrollTopInset(node, s) else 0.0
+        val y = self.y + shift
+        val maxY = self.maxY + shift
+        return (root.y + s.safeArea.top - y).coerceIn(0.0, self.height) to
+            (maxY - (root.maxY - s.safeArea.bottom)).coerceIn(0.0, self.height)
+    }
+
+    /** The adjusted top content inset of the nearest vertical scroll view around [node] (ScrollKind's own rule). */
+    private fun enclosingScrollTopInset(node: RenderNode, s: dev.app8.engine.render.Solved): Double {
+        var p = node.parent
+        while (p != null) {
+            val props = p.content.properties as? dev.app8.engine.core.model.ScrollViewProperties
+            if ((p.type as? dev.app8.engine.core.model.ComponentType.Known)?.key == dev.app8.engine.core.model.ComponentType.Key.scrollView &&
+                props?.direction != dev.app8.engine.core.model.ScrollViewProperties.Direction.horizontal
+            ) {
+                // A scroll view in a scroll view: its own frame is shifted by the outer inset too.
+                val outer = enclosingScrollTopInset(p, s)
+                var top = props?.contentInset?.top ?: 0.0
+                val frame = s.absolute[p.key]
+                val root = s.absolute[node.session.screenId]
+                if (props?.contentInsetAdjustment != dev.app8.engine.core.model.ScrollViewProperties.ContentInsetAdjustment.never && frame != null && root != null) {
+                    top += (root.y + s.safeArea.top - (frame.y + outer)).coerceIn(0.0, frame.height)
+                }
+                return top + outer
+            }
+            p = p.parent
+        }
+        return 0.0
+    }
+
     private fun hasOwnHeight(layout: dev.app8.engine.core.model.Layout?): Boolean {
         layout ?: return false
         if (layout.height != null || (layout.top != null && layout.bottom != null)) return true
@@ -275,15 +317,9 @@ internal object CollectionKind : ComponentKind {
         val insets = config?.contentInsets
         // adjustedContentInset: contentInset + the part of the safe area the collection covers.
         val solved = LocalSolved.current
-        val auto = remember(node, solved) {
-            derivedStateOf {
-                val s = solved.value
-                val self = s.absolute[node.key]
-                val root = s.absolute[node.session.screenId]
-                if (self == null || root == null) 0.0 to 0.0
-                else (root.y + s.safeArea.top - self.y).coerceIn(0.0, self.height) to
-                    (self.maxY - (root.maxY - s.safeArea.bottom)).coerceIn(0.0, self.height)
-            }
+        val selfSizing = sizesToContent(node)
+        val auto = remember(node, solved, selfSizing) {
+            derivedStateOf { automaticInsets(node, solved.value, selfSizing) }
         }.value
         val inverted = p.inverted == true
         var top = (insets?.top ?: 0.0)
