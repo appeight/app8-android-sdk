@@ -42,4 +42,11 @@ class MaterialSymbolsTest {
         // The longest prefix wins: briefcase.circle (work, not bundled here) before briefcase.
         assertEquals(Lookup.Unavailable("work"), MaterialSymbols.lookup("briefcase.circle.badge", table, font))
     }
+
+    @Test
+    fun slashVariantsNeverFallBackToThePlainSymbol() {
+        // "suitcase.slash" means "no suitcase": drawing the plain suitcase would say the opposite.
+        assertEquals(Lookup.Unmapped, MaterialSymbols.lookup("suitcase.slash", table, font))
+        assertEquals(Lookup.Unmapped, MaterialSymbols.lookup("heart.slash.fill", table, font))
+    }
 }

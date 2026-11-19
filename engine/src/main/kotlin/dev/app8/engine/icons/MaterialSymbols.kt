@@ -92,7 +92,10 @@ internal object MaterialSymbols {
         val parts = name.split('.')
         val core = parts.filter { it != "fill" }
         val anyFill = core.size != parts.size
-        for (n in core.size - 1 downTo 1) {
+        // Never drop a `slash` segment: "bell.slash" means the opposite of "bell", so an
+        // unmapped slash variant stays unmapped rather than drawing the plain symbol.
+        val lastSlash = core.lastIndexOf("slash")
+        for (n in core.size - 1 downTo maxOf(1, lastSlash + 1)) {
             table[core.subList(0, n).joinToString(".")]?.let { return found(it, anyFill) }
         }
         return Lookup.Unmapped
