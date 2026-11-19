@@ -6312,6 +6312,7 @@ public final class dev/app8/engine/core/vars/ScopedVariableStore : dev/app8/engi
 	public synthetic fun <init> (Ldev/app8/engine/core/vars/VariableStoreProtocol;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun defineVariable (Ljava/lang/String;Ldev/app8/engine/core/vars/VariableDefinition;)V
 	public fun defineVariables (Ljava/util/Map;)V
+	public fun defineVariables (Ljava/util/Map;Lkotlin/jvm/functions/Function2;)V
 	public final fun detach ()V
 	public fun getAllValues ()Ljava/util/Map;
 	public fun getAllVariables ()Ljava/util/Map;
@@ -6488,6 +6489,7 @@ public final class dev/app8/engine/core/vars/VariableStore : dev/app8/engine/cor
 	public fun <init> ()V
 	public fun defineVariable (Ljava/lang/String;Ldev/app8/engine/core/vars/VariableDefinition;)V
 	public fun defineVariables (Ljava/util/Map;)V
+	public fun defineVariables (Ljava/util/Map;Lkotlin/jvm/functions/Function2;)V
 	public fun getAllValues ()Ljava/util/Map;
 	public fun getAllVariables ()Ljava/util/Map;
 	public fun getAnyVariableChanged ()Ldev/app8/engine/core/vars/ChangePublisher;
@@ -6508,6 +6510,7 @@ public final class dev/app8/engine/core/vars/VariableStore : dev/app8/engine/cor
 public abstract interface class dev/app8/engine/core/vars/VariableStoreProtocol {
 	public abstract fun defineVariable (Ljava/lang/String;Ldev/app8/engine/core/vars/VariableDefinition;)V
 	public fun defineVariables (Ljava/util/Map;)V
+	public fun defineVariables (Ljava/util/Map;Lkotlin/jvm/functions/Function2;)V
 	public abstract fun getAllValues ()Ljava/util/Map;
 	public abstract fun getAllVariables ()Ljava/util/Map;
 	public abstract fun getAnyVariableChanged ()Ldev/app8/engine/core/vars/ChangePublisher;
@@ -6523,6 +6526,7 @@ public abstract interface class dev/app8/engine/core/vars/VariableStoreProtocol 
 
 public final class dev/app8/engine/core/vars/VariableStoreProtocol$DefaultImpls {
 	public static fun defineVariables (Ldev/app8/engine/core/vars/VariableStoreProtocol;Ljava/util/Map;)V
+	public static fun defineVariables (Ldev/app8/engine/core/vars/VariableStoreProtocol;Ljava/util/Map;Lkotlin/jvm/functions/Function2;)V
 }
 
 public final class dev/app8/engine/core/vars/VariableType : java/lang/Enum {

@@ -341,7 +341,7 @@ internal class App8Runtime(
      */
     private fun defineAppVariables(raw: Map<String, JsonElement>) {
         val defs = decodeVariableDefinitions(raw, diagnostics)
-        appStore.defineVariables(defs)
+        appStore.defineVariables(defs) { name, e -> diagnostics.warn("variable", "app variable '$name': ${e.message}") }
         val sourced = defs.filterValues { it.source != null }
         registerDatasources(APP_SCOPE_ID, appStore, sourced)
         for ((name, def) in sourced) {

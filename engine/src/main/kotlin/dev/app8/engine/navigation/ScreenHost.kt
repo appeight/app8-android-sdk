@@ -112,8 +112,11 @@ internal fun ScreenHost(route: Route, navigator: StackNavigator, flow: FlowContr
     CompositionLocalProvider(LocalScreenVisible provides visible) {
     when {
         result == null -> Box(Modifier.fillMaxSize().background(background))
+        // A screen that fails to load: the error (already in diagnostics) is shown only in a
+        // debuggable app; a release build shows the empty screen, never the message.
         session == null -> Box(Modifier.fillMaxSize().background(background), contentAlignment = Alignment.Center) {
-            BasicText(result?.exceptionOrNull()?.message ?: "Failed to load screen", style = TextStyle(color = Color.Red))
+            val debuggable = androidx.compose.ui.platform.LocalContext.current.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0
+            if (debuggable) BasicText(result?.exceptionOrNull()?.message ?: "Failed to load screen", style = TextStyle(color = Color.Red))
         }
         session.tabBar != null -> TabBarHost(session, flow, layer)
         else -> {

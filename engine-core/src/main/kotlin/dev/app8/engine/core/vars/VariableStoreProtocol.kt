@@ -20,28 +20,22 @@ public interface VariableStoreProtocol {
      * batch (parent scopes) are ignored for ordering.
      */
     public fun defineVariables(definitions: Map<String, VariableDefinition>) {
-        val parser = ExpressionParser()
-        val extractor = DependencyExtractor()
-        val sorted = ArrayList<Pair<String, VariableDefinition>>()
-        val visited = HashSet<String>()
+        for ((name, definition) in dependencyOrder(definitions)) defineVariable(name, definition)
+    }
 
-        fun visit(name: String) {
-            if (name in visited) return
-            val definition = definitions[name] ?: return
-            visited.add(name)
-            val raw = definition.rawInitialValue
-            val expression = definition.computed ?: (raw as? String)?.takeIf { it.contains("{{") }
-            if (expression != null) {
-                val node = runCatching { parser.parse(expression) }.getOrNull()
-                if (node != null) {
-                    for (dep in extractor.extractDependencies(node)) if (definitions.containsKey(dep)) visit(dep)
-                }
+    /**
+     * [defineVariables], but a variable that fails to define (a computed expression that throws,
+     * say) is reported to [onError] and skipped; the others are still defined. A screen with one
+     * bad expression renders the rest (iOS logs the error and goes on).
+     */
+    public fun defineVariables(definitions: Map<String, VariableDefinition>, onError: (name: String, error: Exception) -> Unit) {
+        for ((name, definition) in dependencyOrder(definitions)) {
+            try {
+                defineVariable(name, definition)
+            } catch (e: Exception) {
+                onError(name, e)
             }
-            sorted.add(name to definition)
         }
-
-        for (name in definitions.keys) visit(name)
-        for ((name, definition) in sorted) defineVariable(name, definition)
     }
 
     /** Current value, or `null` when undefined (or defined without a value). */
@@ -76,4 +70,30 @@ public interface VariableStoreProtocol {
      * then recomputes local computed dependents. Variables are kept; parent stores are untouched.
      */
     public fun resetToInitialValues()
+}
+
+/** [definitions] ordered so each computed variable (or expression `initialValue`) follows its same-batch dependencies. */
+internal fun dependencyOrder(definitions: Map<String, VariableDefinition>): List<Pair<String, VariableDefinition>> {
+    val parser = ExpressionParser()
+    val extractor = DependencyExtractor()
+    val sorted = ArrayList<Pair<String, VariableDefinition>>()
+    val visited = HashSet<String>()
+
+    fun visit(name: String) {
+        if (name in visited) return
+        val definition = definitions[name] ?: return
+        visited.add(name)
+        val raw = definition.rawInitialValue
+        val expression = definition.computed ?: (raw as? String)?.takeIf { it.contains("{{") }
+        if (expression != null) {
+            val node = runCatching { parser.parse(expression) }.getOrNull()
+            if (node != null) {
+                for (dep in extractor.extractDependencies(node)) if (definitions.containsKey(dep)) visit(dep)
+            }
+        }
+        sorted.add(name to definition)
+    }
+
+    for (name in definitions.keys) visit(name)
+    return sorted
 }

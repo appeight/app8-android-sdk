@@ -205,7 +205,9 @@ internal class RenderNode(
             val isScreenRoot = parentType == null
             val scope = (content as? StatefulContent)?.variables?.takeIf { it.isNotEmpty() && !isScreenRoot }?.let { raw ->
                 val store = ScopedVariableStore(parentScope.store)
-                store.defineVariables(App8Runtime.decodeVariableDefinitions(raw, session.runtime.diagnostics))
+                store.defineVariables(App8Runtime.decodeVariableDefinitions(raw, session.runtime.diagnostics)) { name, e ->
+                    session.runtime.diagnostics.warn("variable", "'$name' in '${entity.id}': ${e.message}")
+                }
                 Scope(store, parentScope).also { scopes += it }
             } ?: parentScope
             val node = RenderNode(key, entity.id, entity.type, content, scope, session, parentType, entity.isHidden, inVerticalScroll, entity.isHiddenAnimation, parent)
