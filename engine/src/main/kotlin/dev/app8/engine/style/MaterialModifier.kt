@@ -282,7 +282,8 @@ private class DslMaterialNode(
 
     private fun DrawScope.drawEffect(effect: EffectSpec, shape: ShapePaths, index: Int) {
         if (darkness < 0f) darkness = targetDarkness()
-        val spec = if (effect.glassStyle != null) effect.glassAt(darkness) else effect
+        // Regular glass adapts; clear glass keeps its dimmed look (iOS 26 clear glass does not adapt).
+        val spec = if (effect.glassStyle == dev.app8.engine.core.model.style.Glass.normal) effect.glassAt(darkness) else effect
         if (spec.glass) drawGlassLift(shape)
         val backdrop = currentValueOf(LocalApp8Backdrop)
         val source = backdrop?.layer
