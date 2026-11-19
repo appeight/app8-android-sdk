@@ -40,13 +40,20 @@ internal class App8Backdrop {
  */
 internal val LocalApp8Backdrop: ProvidableCompositionLocal<App8Backdrop?> = staticCompositionLocalOf { null }
 
+/**
+ * The backdrop of the screen a material sits in, for reading its luminance only
+ * (adaptive glass): unlike [LocalApp8Backdrop] it is also set inside the source, whose
+ * recording then contains the material itself, so readers sample around their bounds.
+ */
+internal val LocalApp8SampleBackdrop: ProvidableCompositionLocal<App8Backdrop?> = staticCompositionLocalOf { null }
+
 @Composable
 internal fun rememberApp8Backdrop(): App8Backdrop = remember { App8Backdrop() }
 
 /** Composes [content] as the backdrop source: records it, and hides the backdrop from it. */
 @Composable
 internal fun App8BackdropSource(backdrop: App8Backdrop, modifier: Modifier = Modifier, content: @Composable (Modifier) -> Unit) {
-    CompositionLocalProvider(LocalApp8Backdrop provides null) {
+    CompositionLocalProvider(LocalApp8Backdrop provides null, LocalApp8SampleBackdrop provides backdrop) {
         content(modifier.then(BackdropSourceElement(backdrop)))
     }
 }

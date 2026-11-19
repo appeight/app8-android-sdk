@@ -4785,6 +4785,7 @@ public final class dev/app8/engine/core/model/style/ActivityIndicatorStyle : dev
 	public fun getBlendMode ()Ldev/app8/engine/core/model/style/BlendMode;
 	public final fun getColor ()Ljava/lang/String;
 	public fun getContentMode ()Ldev/app8/engine/core/model/style/ContentMode;
+	public fun getGlassAppearance ()Ldev/app8/engine/core/model/style/GlassAppearance;
 	public final fun getIndicatorStyle ()Ldev/app8/engine/core/model/style/ActivityIndicatorStyle$IndicatorStyle;
 	public fun getMaterial ()Ldev/app8/engine/core/model/style/Wrapped;
 	public fun getTransform ()Ldev/app8/engine/core/model/style/Transform;
@@ -4824,12 +4825,14 @@ public abstract interface class dev/app8/engine/core/model/style/BaseStyle {
 	public abstract fun getAlpha ()Ljava/lang/Double;
 	public fun getBlendMode ()Ldev/app8/engine/core/model/style/BlendMode;
 	public abstract fun getContentMode ()Ldev/app8/engine/core/model/style/ContentMode;
+	public fun getGlassAppearance ()Ldev/app8/engine/core/model/style/GlassAppearance;
 	public abstract fun getMaterial ()Ldev/app8/engine/core/model/style/Wrapped;
 	public abstract fun getTransform ()Ldev/app8/engine/core/model/style/Transform;
 }
 
 public final class dev/app8/engine/core/model/style/BaseStyle$DefaultImpls {
 	public static fun getBlendMode (Ldev/app8/engine/core/model/style/BaseStyle;)Ldev/app8/engine/core/model/style/BlendMode;
+	public static fun getGlassAppearance (Ldev/app8/engine/core/model/style/BaseStyle;)Ldev/app8/engine/core/model/style/GlassAppearance;
 }
 
 public final class dev/app8/engine/core/model/style/BlendMode : java/lang/Enum {
@@ -4870,6 +4873,7 @@ public final class dev/app8/engine/core/model/style/ButtonStyle : dev/app8/engin
 	public fun getAlpha ()Ljava/lang/Double;
 	public fun getBlendMode ()Ldev/app8/engine/core/model/style/BlendMode;
 	public fun getContentMode ()Ldev/app8/engine/core/model/style/ContentMode;
+	public fun getGlassAppearance ()Ldev/app8/engine/core/model/style/GlassAppearance;
 	public fun getMaterial ()Ldev/app8/engine/core/model/style/Wrapped;
 	public final fun getSystem ()Ldev/app8/engine/core/model/style/Wrapped;
 	public final fun getText ()Ldev/app8/engine/core/model/style/Wrapped;
@@ -4896,6 +4900,7 @@ public final class dev/app8/engine/core/model/style/CollectionStyle : dev/app8/e
 	public final fun getBackgroundColor ()Ljava/lang/String;
 	public fun getBlendMode ()Ldev/app8/engine/core/model/style/BlendMode;
 	public fun getContentMode ()Ldev/app8/engine/core/model/style/ContentMode;
+	public fun getGlassAppearance ()Ldev/app8/engine/core/model/style/GlassAppearance;
 	public fun getMaterial ()Ldev/app8/engine/core/model/style/Wrapped;
 	public final fun getSeparatorColor ()Ljava/lang/String;
 	public final fun getSeparatorInset ()Ljava/lang/Double;
@@ -5039,6 +5044,7 @@ public final class dev/app8/engine/core/model/style/DatePickerStyle : dev/app8/e
 	public fun getAlpha ()Ljava/lang/Double;
 	public fun getBlendMode ()Ldev/app8/engine/core/model/style/BlendMode;
 	public fun getContentMode ()Ldev/app8/engine/core/model/style/ContentMode;
+	public fun getGlassAppearance ()Ldev/app8/engine/core/model/style/GlassAppearance;
 	public fun getMaterial ()Ldev/app8/engine/core/model/style/Wrapped;
 	public final fun getTintColor ()Ljava/lang/String;
 	public fun getTransform ()Ldev/app8/engine/core/model/style/Transform;
@@ -5172,6 +5178,15 @@ public final class dev/app8/engine/core/model/style/Glass : java/lang/Enum {
 	public static fun values ()[Ldev/app8/engine/core/model/style/Glass;
 }
 
+public final class dev/app8/engine/core/model/style/GlassAppearance : java/lang/Enum {
+	public static final field auto Ldev/app8/engine/core/model/style/GlassAppearance;
+	public static final field dark Ldev/app8/engine/core/model/style/GlassAppearance;
+	public static final field light Ldev/app8/engine/core/model/style/GlassAppearance;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/app8/engine/core/model/style/GlassAppearance;
+	public static fun values ()[Ldev/app8/engine/core/model/style/GlassAppearance;
+}
+
 public final class dev/app8/engine/core/model/style/Gradient {
 	public fun <init> (Ldev/app8/engine/core/model/style/Gradient$Vertex;Ldev/app8/engine/core/model/style/Gradient$Vertex;Ljava/util/List;)V
 	public synthetic fun <init> (Ldev/app8/engine/core/model/style/Gradient$Vertex;Ldev/app8/engine/core/model/style/Gradient$Vertex;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -5241,6 +5256,7 @@ public final class dev/app8/engine/core/model/style/IconStyle : dev/app8/engine/
 	public final fun getColor ()Ldev/app8/engine/core/model/style/Wrapped;
 	public fun getContentMode ()Ldev/app8/engine/core/model/style/ContentMode;
 	public final fun getFontId ()Ljava/lang/String;
+	public fun getGlassAppearance ()Ldev/app8/engine/core/model/style/GlassAppearance;
 	public final fun getHierarchicalColor ()Ldev/app8/engine/core/model/style/Wrapped;
 	public final fun getIconPointer ()Ldev/app8/engine/core/model/style/StyleAny;
 	public fun getMaterial ()Ldev/app8/engine/core/model/style/Wrapped;
@@ -5279,6 +5295,7 @@ public final class dev/app8/engine/core/model/style/ImageStyle : dev/app8/engine
 	public fun getBlendMode ()Ldev/app8/engine/core/model/style/BlendMode;
 	public fun getContentMode ()Ldev/app8/engine/core/model/style/ContentMode;
 	public final fun getCorner ()Ldev/app8/engine/core/model/style/Corner;
+	public fun getGlassAppearance ()Ldev/app8/engine/core/model/style/GlassAppearance;
 	public fun getMaterial ()Ldev/app8/engine/core/model/style/Wrapped;
 	public final fun getRenderingMode ()Ldev/app8/engine/core/model/style/ImageStyle$RenderingMode;
 	public final fun getTintColor ()Ldev/app8/engine/core/model/style/Wrapped;
@@ -5311,6 +5328,7 @@ public final class dev/app8/engine/core/model/style/LabelStyle : dev/app8/engine
 	public fun getAlpha ()Ljava/lang/Double;
 	public fun getBlendMode ()Ldev/app8/engine/core/model/style/BlendMode;
 	public fun getContentMode ()Ldev/app8/engine/core/model/style/ContentMode;
+	public fun getGlassAppearance ()Ldev/app8/engine/core/model/style/GlassAppearance;
 	public fun getMaterial ()Ldev/app8/engine/core/model/style/Wrapped;
 	public final fun getText ()Ldev/app8/engine/core/model/style/Wrapped;
 	public fun getTransform ()Ldev/app8/engine/core/model/style/Transform;
@@ -5357,6 +5375,7 @@ public final class dev/app8/engine/core/model/style/MapStyle : dev/app8/engine/c
 	public fun getBlendMode ()Ldev/app8/engine/core/model/style/BlendMode;
 	public fun getContentMode ()Ldev/app8/engine/core/model/style/ContentMode;
 	public final fun getCorner ()Ldev/app8/engine/core/model/style/Corner;
+	public fun getGlassAppearance ()Ldev/app8/engine/core/model/style/GlassAppearance;
 	public fun getMaterial ()Ldev/app8/engine/core/model/style/Wrapped;
 	public final fun getRouteColor ()Ljava/lang/String;
 	public final fun getRouteWidth ()Ljava/lang/Double;
@@ -5422,6 +5441,7 @@ public final class dev/app8/engine/core/model/style/PageControlStyle : dev/app8/
 	public fun getBlendMode ()Ldev/app8/engine/core/model/style/BlendMode;
 	public fun getContentMode ()Ldev/app8/engine/core/model/style/ContentMode;
 	public final fun getCurrentPageIndicatorTintColor ()Ljava/lang/String;
+	public fun getGlassAppearance ()Ldev/app8/engine/core/model/style/GlassAppearance;
 	public fun getMaterial ()Ldev/app8/engine/core/model/style/Wrapped;
 	public final fun getPageIndicatorTintColor ()Ljava/lang/String;
 	public fun getTransform ()Ldev/app8/engine/core/model/style/Transform;
@@ -5450,6 +5470,7 @@ public final class dev/app8/engine/core/model/style/PickerStyle : dev/app8/engin
 	public fun getAlpha ()Ljava/lang/Double;
 	public fun getBlendMode ()Ldev/app8/engine/core/model/style/BlendMode;
 	public fun getContentMode ()Ldev/app8/engine/core/model/style/ContentMode;
+	public fun getGlassAppearance ()Ldev/app8/engine/core/model/style/GlassAppearance;
 	public final fun getIndicator ()Ljava/lang/String;
 	public final fun getIndicatorColor ()Ljava/lang/String;
 	public final fun getIndicatorSize ()Ljava/lang/Double;
@@ -5478,6 +5499,7 @@ public final class dev/app8/engine/core/model/style/ScrollViewStyle : dev/app8/e
 	public fun getAlpha ()Ljava/lang/Double;
 	public fun getBlendMode ()Ldev/app8/engine/core/model/style/BlendMode;
 	public fun getContentMode ()Ldev/app8/engine/core/model/style/ContentMode;
+	public fun getGlassAppearance ()Ldev/app8/engine/core/model/style/GlassAppearance;
 	public fun getMaterial ()Ldev/app8/engine/core/model/style/Wrapped;
 	public fun getTransform ()Ldev/app8/engine/core/model/style/Transform;
 	public fun hashCode ()I
@@ -5547,6 +5569,7 @@ public final class dev/app8/engine/core/model/style/SliderStyle : dev/app8/engin
 	public fun getAlpha ()Ljava/lang/Double;
 	public fun getBlendMode ()Ldev/app8/engine/core/model/style/BlendMode;
 	public fun getContentMode ()Ldev/app8/engine/core/model/style/ContentMode;
+	public fun getGlassAppearance ()Ldev/app8/engine/core/model/style/GlassAppearance;
 	public fun getMaterial ()Ldev/app8/engine/core/model/style/Wrapped;
 	public final fun getMaximumTrackTintColor ()Ljava/lang/String;
 	public final fun getMinimumTrackTintColor ()Ljava/lang/String;
@@ -5786,6 +5809,7 @@ public final class dev/app8/engine/core/model/style/TextInputStyle : dev/app8/en
 	public fun getAlpha ()Ljava/lang/Double;
 	public fun getBlendMode ()Ldev/app8/engine/core/model/style/BlendMode;
 	public fun getContentMode ()Ldev/app8/engine/core/model/style/ContentMode;
+	public fun getGlassAppearance ()Ldev/app8/engine/core/model/style/GlassAppearance;
 	public fun getMaterial ()Ldev/app8/engine/core/model/style/Wrapped;
 	public final fun getPadding ()Ldev/app8/engine/core/model/EdgeInsets;
 	public final fun getPlaceholder ()Ldev/app8/engine/core/model/style/Wrapped;
@@ -5952,6 +5976,7 @@ public final class dev/app8/engine/core/model/style/ToggleStyle : dev/app8/engin
 	public fun getAlpha ()Ljava/lang/Double;
 	public fun getBlendMode ()Ldev/app8/engine/core/model/style/BlendMode;
 	public fun getContentMode ()Ldev/app8/engine/core/model/style/ContentMode;
+	public fun getGlassAppearance ()Ldev/app8/engine/core/model/style/GlassAppearance;
 	public fun getMaterial ()Ldev/app8/engine/core/model/style/Wrapped;
 	public final fun getOnTintColor ()Ljava/lang/String;
 	public final fun getThumbTintColor ()Ljava/lang/String;
@@ -5993,6 +6018,7 @@ public final class dev/app8/engine/core/model/style/VideoStyle : dev/app8/engine
 	public fun getBlendMode ()Ldev/app8/engine/core/model/style/BlendMode;
 	public fun getContentMode ()Ldev/app8/engine/core/model/style/ContentMode;
 	public final fun getCorner ()Ldev/app8/engine/core/model/style/Corner;
+	public fun getGlassAppearance ()Ldev/app8/engine/core/model/style/GlassAppearance;
 	public fun getMaterial ()Ldev/app8/engine/core/model/style/Wrapped;
 	public fun getTransform ()Ldev/app8/engine/core/model/style/Transform;
 	public fun hashCode ()I
@@ -6001,20 +6027,22 @@ public final class dev/app8/engine/core/model/style/VideoStyle : dev/app8/engine
 
 public final class dev/app8/engine/core/model/style/ViewStyle : dev/app8/engine/core/model/style/BaseStyle {
 	public fun <init> ()V
-	public fun <init> (Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/BlendMode;Ldev/app8/engine/core/model/style/LayoutMargins;)V
-	public synthetic fun <init> (Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/BlendMode;Ldev/app8/engine/core/model/style/LayoutMargins;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/BlendMode;Ldev/app8/engine/core/model/style/LayoutMargins;Ldev/app8/engine/core/model/style/GlassAppearance;)V
+	public synthetic fun <init> (Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/BlendMode;Ldev/app8/engine/core/model/style/LayoutMargins;Ldev/app8/engine/core/model/style/GlassAppearance;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ldev/app8/engine/core/model/style/ContentMode;
 	public final fun component2 ()Ldev/app8/engine/core/model/style/Wrapped;
 	public final fun component3 ()Ljava/lang/Double;
 	public final fun component4 ()Ldev/app8/engine/core/model/style/Transform;
 	public final fun component5 ()Ldev/app8/engine/core/model/style/BlendMode;
 	public final fun component6 ()Ldev/app8/engine/core/model/style/LayoutMargins;
-	public final fun copy (Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/BlendMode;Ldev/app8/engine/core/model/style/LayoutMargins;)Ldev/app8/engine/core/model/style/ViewStyle;
-	public static synthetic fun copy$default (Ldev/app8/engine/core/model/style/ViewStyle;Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/BlendMode;Ldev/app8/engine/core/model/style/LayoutMargins;ILjava/lang/Object;)Ldev/app8/engine/core/model/style/ViewStyle;
+	public final fun component7 ()Ldev/app8/engine/core/model/style/GlassAppearance;
+	public final fun copy (Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/BlendMode;Ldev/app8/engine/core/model/style/LayoutMargins;Ldev/app8/engine/core/model/style/GlassAppearance;)Ldev/app8/engine/core/model/style/ViewStyle;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/style/ViewStyle;Ldev/app8/engine/core/model/style/ContentMode;Ldev/app8/engine/core/model/style/Wrapped;Ljava/lang/Double;Ldev/app8/engine/core/model/style/Transform;Ldev/app8/engine/core/model/style/BlendMode;Ldev/app8/engine/core/model/style/LayoutMargins;Ldev/app8/engine/core/model/style/GlassAppearance;ILjava/lang/Object;)Ldev/app8/engine/core/model/style/ViewStyle;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getAlpha ()Ljava/lang/Double;
 	public fun getBlendMode ()Ldev/app8/engine/core/model/style/BlendMode;
 	public fun getContentMode ()Ldev/app8/engine/core/model/style/ContentMode;
+	public fun getGlassAppearance ()Ldev/app8/engine/core/model/style/GlassAppearance;
 	public final fun getLayoutMargins ()Ldev/app8/engine/core/model/style/LayoutMargins;
 	public fun getMaterial ()Ldev/app8/engine/core/model/style/Wrapped;
 	public fun getTransform ()Ldev/app8/engine/core/model/style/Transform;

@@ -149,7 +149,7 @@ internal fun NodeView(node: RenderNode) {
             compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen
         }
     }
-    if (material != null) m = m.dslMaterial(material, env.appearance)
+    if (material != null) m = m.dslMaterial(material, env.appearance, style?.glassAppearance)
     if (bgColor != null || bg != Color.Transparent) {
         val corner = props?.cornerRadius
         m = if (corner != null && corner > 0) m.background(bg, androidx.compose.foundation.shape.RoundedCornerShape(corner.toFloat().let { androidx.compose.ui.unit.Dp(it) }))

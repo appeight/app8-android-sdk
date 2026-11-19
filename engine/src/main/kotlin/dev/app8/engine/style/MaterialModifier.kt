@@ -46,6 +46,10 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import dev.app8.engine.core.model.style.Corner
 import dev.app8.engine.core.model.style.Material
+import dev.app8.engine.core.model.style.GlassAppearance
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.unit.IntRect
+import kotlinx.coroutines.launch
 import kotlin.math.ceil
 import kotlin.math.max
 import androidx.compose.ui.Modifier.Node
@@ -57,11 +61,11 @@ import androidx.compose.ui.Modifier.Node
  *
  * [appearance] `null` follows [LocalApp8Appearance].
  */
-internal fun Modifier.dslMaterial(material: Material, appearance: App8Appearance? = null): Modifier =
-    this then DslMaterialElement(material, null, appearance)
+internal fun Modifier.dslMaterial(material: Material, appearance: App8Appearance? = null, glass: GlassAppearance? = null): Modifier =
+    this then DslMaterialElement(material, null, appearance, glass ?: GlassAppearance.auto)
 
 /** Draws an already resolved [plan] (render features the DSL can't express yet: radial fills, spread, …). */
-internal fun Modifier.materialPlan(plan: MaterialPlan): Modifier = this then DslMaterialElement(null, plan, null)
+internal fun Modifier.materialPlan(plan: MaterialPlan): Modifier = this then DslMaterialElement(null, plan, null, GlassAppearance.auto)
 
 /** Clips content to the material's first corner (iOS `clipsToBounds` with the corner's radius and curve). */
 internal fun Modifier.dslClip(material: Material): Modifier {
@@ -69,10 +73,10 @@ internal fun Modifier.dslClip(material: Material): Modifier {
     return if (corner == null) this else clip(DslCornerShape(corner))
 }
 
-private data class DslMaterialElement(val material: Material?, val plan: MaterialPlan?, val appearance: App8Appearance?) :
+private data class DslMaterialElement(val material: Material?, val plan: MaterialPlan?, val appearance: App8Appearance?, val glass: GlassAppearance) :
     ModifierNodeElement<DslMaterialNode>() {
-    override fun create() = DslMaterialNode(material, plan, appearance)
-    override fun update(node: DslMaterialNode) = node.update(material, plan, appearance)
+    override fun create() = DslMaterialNode(material, plan, appearance, glass)
+    override fun update(node: DslMaterialNode) = node.update(material, plan, appearance, glass)
     override fun InspectorInfo.inspectableProperties() {
         name = "dslMaterial"
         properties["material"] = material ?: plan
@@ -82,6 +86,42 @@ private data class DslMaterialElement(val material: Material?, val plan: Materia
 
 private val GLASS_LIFT = ShadowSpec(Color.Black, radius = 4f, offsetX = 0f, offsetY = 2f, opacity = 0.12f)
 
+/** How often adaptive glass samples its backdrop, and how long it cross-fades (ms). */
+private const val GLASS_SAMPLE_MS = 250L
+private const val GLASS_FADE_MS = 300f
+
+/** Dark below / light above these relative luminances; in between the glass holds (same as iOS and web). */
+internal const val GLASS_DARK_BELOW = 0.14f
+internal const val GLASS_LIGHT_ABOVE = 0.24f
+
+internal fun nextGlassDark(current: Boolean?, l: Float): Boolean =
+    if (current == null) l < (GLASS_DARK_BELOW + GLASS_LIGHT_ABOVE) / 2 else if (current) l < GLASS_LIGHT_ABOVE else l < GLASS_DARK_BELOW
+
+/** Relative luminance of an sRGB colour (channels 0–255). */
+internal fun relativeLuminance(r: Int, g: Int, b: Int): Float {
+    fun lin(c: Int): Double { val s = c / 255.0; return if (s <= 0.04045) s / 12.92 else Math.pow((s + 0.055) / 1.055, 2.4) }
+    return (0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)).toFloat()
+}
+
+/** Mean luminance of [image]'s opaque pixels, or null when it is empty. */
+private fun backdropLuminance(image: androidx.compose.ui.graphics.ImageBitmap, skip: IntRect? = null): Float? {
+    val px = IntArray(image.width * image.height)
+    image.readPixels(px)
+    var sum = 0f
+    var n = 0
+    for ((i, c) in px.withIndex()) {
+        if (skip != null) {
+            val x = i % image.width
+            val y = i / image.width
+            if (x >= skip.left && x < skip.right && y >= skip.top && y < skip.bottom) continue
+        }
+        if ((c ushr 24) < 128) continue
+        sum += relativeLuminance((c shr 16) and 0xFF, (c shr 8) and 0xFF, c and 0xFF)
+        n++
+    }
+    return if (n == 0) null else sum / n
+}
+
 /** Downsampling of the backdrop before blurring: blur hides it, and it keeps the effect cheap. */
 private const val BACKDROP_SCALE = 0.25f
 
@@ -89,7 +129,96 @@ private class DslMaterialNode(
     private var material: Material?,
     private var fixedPlan: MaterialPlan?,
     private var appearance: App8Appearance?,
+    private var glass: GlassAppearance,
 ) : Node(), DrawModifierNode, GlobalPositionAwareModifierNode, CompositionLocalConsumerModifierNode {
+
+    // Adaptive glass (styles.md, glassAppearance): `auto` glass samples what it blurs a few
+    // times a second and turns dark over dark content, light over light (hysteresis, a short
+    // cross-fade). `light` / `dark` pin it.
+    private var sampledDark: Boolean? = null
+    /** 0 light … 1 dark, animated between the two. */
+    private var darkness = -1f
+    private var lastSize = Size.Zero
+    private var sampling: kotlinx.coroutines.Job? = null
+    private var tiny: GraphicsLayer? = null
+
+    private fun targetDarkness(): Float {
+        val dark = when (glass) {
+            GlassAppearance.light -> false
+            GlassAppearance.dark -> true
+            GlassAppearance.auto -> sampledDark ?: (appearance ?: currentValueOf(LocalApp8Appearance)).isDark
+        }
+        return if (dark) 1f else 0f
+    }
+
+    private fun startSampling() {
+        if (sampling != null || glass != GlassAppearance.auto || !isAttached) return
+        sampling = coroutineScope.launch {
+            while (true) {
+                sampleBackdrop()
+                kotlinx.coroutines.delay(GLASS_SAMPLE_MS)
+            }
+        }
+    }
+
+    private suspend fun sampleBackdrop() {
+        if (cachedPlan?.hasEffects != true || lastSize.width <= 0f || lastSize.height <= 0f) return
+        // Over chrome: the backdrop under it. Inside screen content: the screen's own
+        // recording, which contains this material, so only a ring around it is read.
+        val outer = currentValueOf(LocalApp8Backdrop)
+        val backdrop = outer ?: currentValueOf(LocalApp8SampleBackdrop) ?: return
+        val source = backdrop.layer ?: return
+        val layer = tiny ?: currentValueOf(LocalGraphicsContext).createGraphicsLayer().also { tiny = it }
+        val density = currentValueOf(androidx.compose.ui.platform.LocalDensity)
+        val pad = if (outer == null) 16f * density.density else 0f
+        val offset = positionInRoot - backdrop.positionInRoot - Offset(pad, pad)
+        val rw = lastSize.width + 2 * pad
+        val rh = lastSize.height + 2 * pad
+        val w = 12
+        val h = 8
+        layer.record(density, currentValueOf(androidx.compose.ui.platform.LocalLayoutDirection), IntSize(w, h)) {
+            scale(w / rw, h / rh, pivot = Offset.Zero) {
+                translate(-offset.x, -offset.y) { drawLayer(source) }
+            }
+        }
+        // The cells the material itself covers, when it is in the recording.
+        val inner = if (pad > 0f) {
+            val x0 = (pad / rw * w).toInt() + 1
+            val y0 = (pad / rh * h).toInt() + 1
+            IntRect(x0, y0, w - x0, h - y0)
+        } else {
+            null
+        }
+        val l = backdropLuminance(layer.toImageBitmap(), inner) ?: return
+        val next = nextGlassDark(sampledDark, l)
+        if (next == sampledDark) return
+        sampledDark = next
+        animateDarkness()
+    }
+
+    private fun animateDarkness() {
+        val target = targetDarkness()
+        if (darkness < 0f) {
+            darkness = target
+            invalidateDraw()
+            return
+        }
+        val from = darkness
+        coroutineScope.launch {
+            val start = androidx.compose.runtime.withFrameNanos { it }
+            var t = 0f
+            while (t < 1f) {
+                val now = androidx.compose.runtime.withFrameNanos { it }
+                t = ((now - start) / 1_000_000f / GLASS_FADE_MS).coerceAtMost(1f)
+                darkness = from + (target - from) * t
+                invalidateDraw()
+            }
+        }
+    }
+
+    override fun onAttach() {
+        startSampling()
+    }
 
     private var cachedPlan: MaterialPlan? = null
     private var cachedFor: App8Appearance? = null
@@ -97,7 +226,15 @@ private class DslMaterialNode(
     private val effectLayers = mutableListOf<GraphicsLayer>()
     private val renderEffects = HashMap<Pair<EffectSpec, Float>, androidx.compose.ui.graphics.RenderEffect>()
 
-    fun update(material: Material?, plan: MaterialPlan?, appearance: App8Appearance?) {
+    fun update(material: Material?, plan: MaterialPlan?, appearance: App8Appearance?, glass: GlassAppearance) {
+        if (glass != this.glass) {
+            this.glass = glass
+            sampling?.cancel()
+            sampling = null
+            darkness = -1f
+            startSampling()
+            invalidateDraw()
+        }
         if (material != this.material || plan != fixedPlan || appearance != this.appearance) {
             this.material = material
             this.fixedPlan = plan
@@ -123,13 +260,18 @@ private class DslMaterialNode(
     }
 
     override fun onDetach() {
+        sampling?.cancel()
+        sampling = null
         val gc = currentValueOf(LocalGraphicsContext)
+        tiny?.let(gc::releaseGraphicsLayer)
+        tiny = null
         effectLayers.forEach(gc::releaseGraphicsLayer)
         effectLayers.clear()
         renderEffects.clear()
     }
 
     override fun ContentDrawScope.draw() {
+        lastSize = size
         val plan = plan()
         if (plan.layers.isNotEmpty() && size.width > 0f && size.height > 0f) {
             var effectIndex = 0
@@ -138,7 +280,10 @@ private class DslMaterialNode(
         drawContent()
     }
 
-    private fun DrawScope.drawEffect(spec: EffectSpec, shape: ShapePaths, index: Int) {
+    private fun DrawScope.drawEffect(effect: EffectSpec, shape: ShapePaths, index: Int) {
+        if (darkness < 0f) darkness = targetDarkness()
+        // Regular glass adapts; clear glass keeps its dimmed look (iOS 26 clear glass does not adapt).
+        val spec = if (effect.glassStyle == dev.app8.engine.core.model.style.Glass.normal) effect.glassAt(darkness) else effect
         if (spec.glass) drawGlassLift(shape)
         val backdrop = currentValueOf(LocalApp8Backdrop)
         val source = backdrop?.layer

@@ -42,7 +42,23 @@ internal data class EffectSpec(
     val fallback: Color,
     /** Glass only: specular rim and lift. */
     val glass: Boolean = false,
+    /** Glass only: which glass, to redraw it light or dark (adaptive glass). */
+    val glassStyle: Glass? = null,
 )
+
+/** This glass drawn light ([darkness] 0) or dark (1), or in between while it cross-fades. */
+internal fun EffectSpec.glassAt(darkness: Float): EffectSpec {
+    val g = glassStyle ?: return this
+    val light = g.effectSpec(App8Appearance.Light)
+    val dark = g.effectSpec(App8Appearance.Dark)
+    val t = darkness.coerceIn(0f, 1f)
+    fun mix(a: Color, b: Color) = androidx.compose.ui.graphics.lerp(a, b, t)
+    return light.copy(
+        brightness = light.brightness + (dark.brightness - light.brightness) * t,
+        tint = mix(light.tint, dark.tint),
+        fallback = mix(light.fallback, dark.fallback),
+    )
+}
 
 private val LIGHT_BASE = Color(0xFFF7F7F7)
 private val DARK_BASE = Color(0xFF1C1C1E)
@@ -81,12 +97,14 @@ internal fun Glass.effectSpec(appearance: App8Appearance): EffectSpec {
             tint = if (dark) Color(0x5C2A2A2C) else Color(0x57FFFFFF),
             fallback = if (dark) Color(0xEB2A2A2C) else Color(0xEBF7F7F7),
             glass = true,
+            glassStyle = Glass.normal,
         )
         Glass.clear -> EffectSpec(
             blurSigmaDp = 4f, saturation = 1.4f, brightness = 1f,
             tint = if (dark) Color(0x24000000) else Color(0x1FFFFFFF),
             fallback = if (dark) Color(0x99202022) else Color(0x99FFFFFF),
             glass = true,
+            glassStyle = Glass.clear,
         )
     }
 }

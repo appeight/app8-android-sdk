@@ -6,6 +6,7 @@ import android.content.Context
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.unit.IntSize
@@ -131,15 +132,30 @@ internal class ZoomOrigin(
         val q = progress.coerceIn(0f, 1f)
         fun lerp(x: Float, y: Float) = x + (y - x) * q
         val g = Rect(lerp(c0.left, a.left), lerp(c0.top, a.top), lerp(c0.right, a.right), lerp(c0.bottom, a.bottom))
-        return PhotoGhost(key, image, g.translate(-a.left, -a.top), lerp(f.cornerPx / s0, 0f))
+        // The destination (the element's own photo) cross-dissolves over the source's with the
+        // progress, both ways: the box shows the card's photo at the card, the screen's on the screen.
+        return PhotoGhost(key, image, g.translate(-a.left, -a.top), lerp(f.cornerPx / s0, 0f), zoomDestinationAlpha(q))
     }
+}
+
+/**
+ * The destination photo's opacity over the source's at zoom progress [q] (0 at the source, 1
+ * on the screen): ease-in-out over the middle 80 %, so each end shows one photo only.
+ */
+internal fun zoomDestinationAlpha(q: Float): Float {
+    val d = ((q - 0.1f) / 0.8f).coerceIn(0f, 1f)
+    return d * d * (3f - 2f * d)
 }
 
 /** A source photo loaded for the morph; [model] is the source image's asset reference. */
 internal class ZoomPhoto(val model: Any, val image: ImageBitmap)
 
-/** What the alignment element [key] draws instead of itself: [image] aspect-filled in [rect] (element-local px). */
-internal class PhotoGhost(val key: String, val image: ImageBitmap, val rect: Rect, val radius: Float)
+/**
+ * What the alignment element [key] draws instead of itself: [image] aspect-filled in [rect]
+ * (element-local px), and over it the element's own content aspect-filled in the same rect at
+ * [destAlpha] (the source photo cross-dissolving into the destination's).
+ */
+internal class PhotoGhost(val key: String, val image: ImageBitmap, val rect: Rect, val radius: Float, val destAlpha: Float = 0f)
 
 /** Draws [ghost]'s photo aspect-filled (crop) in its rect with its corner. */
 internal fun DrawScope.drawPhotoGhost(ghost: PhotoGhost) {
@@ -265,6 +281,20 @@ internal fun Modifier.zoomSource(sources: ZoomSources, session: Any, key: String
             val ghost = alignment?.ghost?.invoke()?.takeIf { it.key == key }
             if (ghost != null) {
                 drawPhotoGhost(ghost)
+                if (ghost.destAlpha > 0f && size.width > 0f && size.height > 0f) {
+                    val r = ghost.rect
+                    val k = max(r.width / size.width, r.height / size.height)
+                    val path = Path().apply { addRoundRect(RoundRect(r, CornerRadius(ghost.radius.coerceAtLeast(0f)))) }
+                    clipPath(path) {
+                        // The element's own photo, at the dissolve's opacity, aspect-filled in the box.
+                        drawIntoCanvas { it.saveLayer(r, Paint().apply { alpha = ghost.destAlpha }) }
+                        withTransform({
+                            translate(r.center.x - k * size.width / 2, r.center.y - k * size.height / 2)
+                            scale(k, k, pivot = Offset.Zero)
+                        }) { this@drawWithContent.drawContent() }
+                        drawIntoCanvas { it.restore() }
+                    }
+                }
                 return@drawWithContent
             }
             // Recorded even while hidden: the ghost draws the same content over the zooming screen.
