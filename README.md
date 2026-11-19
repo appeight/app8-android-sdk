@@ -59,8 +59,8 @@ In your app module:
 
 ```kotlin
 dependencies {
-    implementation("dev.app8:engine:0.7.2")
-    // implementation("dev.app8:engine-maps:0.7.2") // Google Maps for `map` components
+    implementation("dev.app8:engine:0.7.3")
+    // implementation("dev.app8:engine-maps:0.7.3") // Google Maps for `map` components
 }
 ```
 
@@ -264,7 +264,7 @@ To add an icon:
 
 The SDKs ride one release train (see
 [`app8-dsl/VERSIONING.md`](https://github.com/appeight/app8-dsl/blob/main/VERSIONING.md)):
-Android `0.7.2` renders exactly what iOS `0.7.2` renders.
+Android `0.7.3` renders exactly what iOS `0.7.3` renders.
 
 - `EngineVersion.CURRENT` (`engine-core`) is the single source of the version.
   Gradle reads it for the Maven version; the git tag, the iOS
