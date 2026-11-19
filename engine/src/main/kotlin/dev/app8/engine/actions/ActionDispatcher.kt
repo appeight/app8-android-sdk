@@ -220,7 +220,8 @@ internal class ActionDispatcher(
             } else {
                 exec.pending = runtime.actionScope.async(start = CoroutineStart.UNDISPATCHED) { navigator.dismissAndAwait() }
             }
-            Action.Type.selectTab -> navigator.selectTab(action.tabIndex, action.tabId)
+            // `tabId` may be an expression (`{{item.id}}` in a custom tab bar component).
+            Action.Type.selectTab -> navigator.selectTab(action.tabIndex, action.tabId?.let { raw -> node.string(raw, context) ?: raw })
             Action.Type.showAlert -> showAlert(node, action, context)
             Action.Type.haptic -> host.haptic(action.hapticStyle ?: Action.HapticStyle.medium)
             Action.Type.openURL -> action.url?.let { raw ->

@@ -4277,22 +4277,24 @@ public final class dev/app8/engine/core/model/Tab {
 }
 
 public final class dev/app8/engine/core/model/TabBarScreenContent : dev/app8/engine/core/model/EntityContent {
-	public fun <init> (Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
-	public synthetic fun <init> (Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/TabBarStyle;)V
+	public synthetic fun <init> (Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/TabBarStyle;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/util/List;
 	public final fun component2 ()Ljava/lang/String;
 	public final fun component3 ()Ljava/lang/String;
 	public final fun component4 ()Ljava/lang/String;
 	public final fun component5 ()Ljava/lang/String;
 	public final fun component6 ()Ljava/lang/String;
-	public final fun copy (Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ldev/app8/engine/core/model/TabBarScreenContent;
-	public static synthetic fun copy$default (Ldev/app8/engine/core/model/TabBarScreenContent;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ldev/app8/engine/core/model/TabBarScreenContent;
+	public final fun component7 ()Ldev/app8/engine/core/model/TabBarStyle;
+	public final fun copy (Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/TabBarStyle;)Ldev/app8/engine/core/model/TabBarScreenContent;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/TabBarScreenContent;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ldev/app8/engine/core/model/TabBarStyle;ILjava/lang/Object;)Ldev/app8/engine/core/model/TabBarScreenContent;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getAccessibility ()Ldev/app8/engine/core/model/Accessibility;
 	public fun getActions ()Ljava/util/Map;
 	public fun getAnalytics ()Ljava/util/Map;
 	public final fun getBadgeColor ()Ljava/lang/String;
 	public final fun getBadgeTextColor ()Ljava/lang/String;
+	public final fun getBarStyle ()Ldev/app8/engine/core/model/TabBarStyle;
 	public fun getChildren ()Ljava/util/List;
 	public fun getGestures ()Ldev/app8/engine/core/model/Gestures;
 	public final fun getInitialTab ()Ljava/lang/String;
@@ -4305,6 +4307,60 @@ public final class dev/app8/engine/core/model/TabBarScreenContent : dev/app8/eng
 	public final fun getUnselectedColor ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/app8/engine/core/model/TabBarStyle {
+	public static final field Companion Ldev/app8/engine/core/model/TabBarStyle$Companion;
+	public static final field DEFAULT_UNSELECTED_OPACITY D
+	public static final field MIN_HEIGHT D
+	public fun <init> ()V
+	public fun <init> (Ldev/app8/engine/core/model/TabBarStyle$Variant;Ljava/lang/String;Ldev/app8/engine/core/model/TabBarStyle$Selection;Ldev/app8/engine/core/model/style/Wrapped;Ldev/app8/engine/core/model/style/Wrapped;DLjava/lang/String;Ljava/lang/Double;Ljava/lang/String;)V
+	public synthetic fun <init> (Ldev/app8/engine/core/model/TabBarStyle$Variant;Ljava/lang/String;Ldev/app8/engine/core/model/TabBarStyle$Selection;Ldev/app8/engine/core/model/style/Wrapped;Ldev/app8/engine/core/model/style/Wrapped;DLjava/lang/String;Ljava/lang/Double;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ldev/app8/engine/core/model/TabBarStyle$Variant;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ldev/app8/engine/core/model/TabBarStyle$Selection;
+	public final fun component4 ()Ldev/app8/engine/core/model/style/Wrapped;
+	public final fun component5 ()Ldev/app8/engine/core/model/style/Wrapped;
+	public final fun component6 ()D
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/lang/Double;
+	public final fun component9 ()Ljava/lang/String;
+	public final fun copy (Ldev/app8/engine/core/model/TabBarStyle$Variant;Ljava/lang/String;Ldev/app8/engine/core/model/TabBarStyle$Selection;Ldev/app8/engine/core/model/style/Wrapped;Ldev/app8/engine/core/model/style/Wrapped;DLjava/lang/String;Ljava/lang/Double;Ljava/lang/String;)Ldev/app8/engine/core/model/TabBarStyle;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/TabBarStyle;Ldev/app8/engine/core/model/TabBarStyle$Variant;Ljava/lang/String;Ldev/app8/engine/core/model/TabBarStyle$Selection;Ldev/app8/engine/core/model/style/Wrapped;Ldev/app8/engine/core/model/style/Wrapped;DLjava/lang/String;Ljava/lang/Double;Ljava/lang/String;ILjava/lang/Object;)Ldev/app8/engine/core/model/TabBarStyle;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBackground ()Ljava/lang/String;
+	public final fun getComponent ()Ljava/lang/String;
+	public final fun getHeight ()Ljava/lang/Double;
+	public final fun getIndicatorColor ()Ljava/lang/String;
+	public final fun getSelectedText ()Ldev/app8/engine/core/model/style/Wrapped;
+	public final fun getSelection ()Ldev/app8/engine/core/model/TabBarStyle$Selection;
+	public final fun getText ()Ldev/app8/engine/core/model/style/Wrapped;
+	public final fun getUnselectedOpacity ()D
+	public final fun getVariant ()Ldev/app8/engine/core/model/TabBarStyle$Variant;
+	public fun hashCode ()I
+	public final fun isSystem ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/app8/engine/core/model/TabBarStyle$Companion {
+}
+
+public final class dev/app8/engine/core/model/TabBarStyle$Selection : java/lang/Enum {
+	public static final field box Ldev/app8/engine/core/model/TabBarStyle$Selection;
+	public static final field capsule Ldev/app8/engine/core/model/TabBarStyle$Selection;
+	public static final field opacity Ldev/app8/engine/core/model/TabBarStyle$Selection;
+	public static final field underline Ldev/app8/engine/core/model/TabBarStyle$Selection;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/app8/engine/core/model/TabBarStyle$Selection;
+	public static fun values ()[Ldev/app8/engine/core/model/TabBarStyle$Selection;
+}
+
+public final class dev/app8/engine/core/model/TabBarStyle$Variant : java/lang/Enum {
+	public static final field system Ldev/app8/engine/core/model/TabBarStyle$Variant;
+	public static final field text Ldev/app8/engine/core/model/TabBarStyle$Variant;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/app8/engine/core/model/TabBarStyle$Variant;
+	public static fun values ()[Ldev/app8/engine/core/model/TabBarStyle$Variant;
 }
 
 public final class dev/app8/engine/core/model/TableViewContent : dev/app8/engine/core/model/StatefulContent {
