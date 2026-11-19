@@ -32,6 +32,22 @@ class BundledIconsTest {
     }
 
     @Test
+    fun brandStoreSymbolsResolve() {
+        // SF Symbols seen blank on Android before they were mapped, plus variants via the prefix fallback.
+        val expected = mapOf(
+            "hanger" to "checkroom",
+            "ruler" to "straighten",
+            "arrow.3.trianglepath" to "recycling",
+            "bag.badge.plus" to "shopping_bag",
+            "ruler.fill" to "straighten",
+        )
+        for ((sf, material) in expected) {
+            val l = MaterialSymbols.lookup(sf, mapping, codepoints)
+            assertTrue(l is MaterialSymbols.Lookup.Found && l.glyph.name == material, "$sf -> $l, expected $material")
+        }
+    }
+
+    @Test
     fun codepointsMatchTheFontCmap() {
         val missing = codepoints.filterValues { it !in cmap }
         assertTrue(missing.isEmpty(), "codepoints without a glyph in the bundled font: $missing")

@@ -16,7 +16,8 @@ import kotlinx.serialization.json.JsonPrimitive
  * SF Symbols are licensed for Apple platforms only, so Android draws `icon` symbols with
  * Material Symbols Rounded (Apache 2.0). Resolution order (app8-dsl `docs/platforms.md`): the
  * node's `android` override (already merged into the name), then the built-in SF → Material
- * table, then nothing (`icon.unmapped`).
+ * table, then the table entry for the longest dot-prefix of the SF name (a variant such as
+ * `bag.badge.plus` draws `bag`), then nothing (`icon.unmapped`).
  *
  * The bundled font is a subset (`scripts/subset-icons.py`): only the Material names the table
  * maps to plus `engine/extra-icons.txt`, drawn by codepoint (no ligatures). A Material name
@@ -86,6 +87,14 @@ internal object MaterialSymbols {
         table[name.replace(".fill", "")]?.let { return found(it, true) }
         // A Material Symbols name (the `android` override): lowercase, underscores, no dots.
         if (MATERIAL_NAME.matches(name)) return found(name, false)
+        // A variant of a mapped symbol: drop trailing segments ("bag.badge.plus" -> "bag.badge" -> "bag").
+        // A `fill` segment anywhere still means FILL=1.
+        val parts = name.split('.')
+        val core = parts.filter { it != "fill" }
+        val anyFill = core.size != parts.size
+        for (n in core.size - 1 downTo 1) {
+            table[core.subList(0, n).joinToString(".")]?.let { return found(it, anyFill) }
+        }
         return Lookup.Unmapped
     }
 
