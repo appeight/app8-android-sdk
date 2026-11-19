@@ -482,7 +482,14 @@ internal object CollectionKind : ComponentKind {
         if (!tappable || !LocalInteractionEnabled.current) return Modifier
         val dispatcher = LocalDispatcher.current
         val current = rememberUpdatedState(item)
-        return Modifier.clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {
+        // Press feedback on the cell, clipped to its root's corners (unless the cell has its own touch state).
+        val root = cell.root
+        val indication = if (dev.app8.engine.render.PressFeedback.wanted(root.content)) {
+            val style = root.content.style as? dev.app8.engine.core.model.style.BaseStyle
+            val props = root.content.properties as? dev.app8.engine.core.model.ViewProperties
+            dev.app8.engine.render.pressIndication(dev.app8.engine.render.cornerOf(root, style, props, LocalRenderEnv.current))
+        } else null
+        return Modifier.clickable(interactionSource = remember { MutableInteractionSource() }, indication = indication) {
             dispatcher.dispatchTrigger(node, ActionTrigger.onItemTap, cell.scope.untracked, cell.scope.store)
             if (selection != null) select(node, selection, current.value)
         }

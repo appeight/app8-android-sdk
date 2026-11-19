@@ -15,6 +15,12 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicLong
 
+/**
+ * Longest wait (ms) for an incoming screen to load before its push, presentation or tab switch
+ * starts anyway (a slow remote datasource): beyond it the screen fills in during the transition.
+ */
+internal const val PREPARE_TIMEOUT_MS = 300L
+
 /** One screen on a back stack. [id] is unique per push, so the same screen can be pushed twice. */
 internal data class Route(
     val screenId: String,
@@ -32,7 +38,7 @@ internal data class Route(
 
 /** A back stack (UINavigationController). */
 @Stable
-internal class StackState(root: Route) {
+internal class StackState(root: Route, private val sessions: SessionCache? = null) {
     val entries: SnapshotStateList<Route> = mutableStateListOf(root)
 
     /** Routes whose screen sets `hidesTabBar` (filled in as screens load). */
@@ -64,8 +70,30 @@ internal class StackState(root: Route) {
         entries += route
     }
 
-    /** The route a predictive back gesture is popping (set when the gesture starts). */
+    /**
+     * The route a predictive back gesture is popping (set when the gesture starts, cleared
+     * when the transition settles): its screen draws the Material back preview.
+     */
     var predictiveRoute: Long? by androidx.compose.runtime.mutableStateOf(null)
+
+    /** The swipe edge of the running predictive back gesture (`BackEventCompat.EDGE_*`). */
+    var predictiveEdge: Int = 0
+
+    /**
+     * Back gesture progress (0..1, eased) while a predictive pop of this stack is running, for
+     * chrome that follows it (the tab bar coming back); null otherwise.
+     */
+    var backProgress: androidx.compose.runtime.State<Float>? by androidx.compose.runtime.mutableStateOf(null)
+
+    /** False once the stack is discarded (its modal dismissed, its tab bar gone). */
+    var isLive: Boolean = true
+        private set
+
+    /** Every route on the stack left it (the stack itself is discarded). */
+    fun discard() {
+        isLive = false
+        sessions?.retire(entries.toList())
+    }
 
     fun pop(toRoot: Boolean): Boolean {
         if (entries.size <= 1) return false
@@ -74,6 +102,7 @@ internal class StackState(root: Route) {
         val removed = if (toRoot) entries.subList(1, entries.size).toList() else listOf(entries.last())
         if (toRoot) entries.removeRange(1, entries.size) else entries.removeAt(entries.lastIndex)
         for (route in removed) scrollSignals.remove(route.id)
+        sessions?.retire(removed)
         return true
     }
 
@@ -138,13 +167,24 @@ internal class FlowController(
     private val scope: kotlinx.coroutines.CoroutineScope? = null,
     /** A screen's own default transition (`content.transition` on its root). */
     private val screenTransition: (suspend (String) -> ScreenTransition?)? = null,
+    /**
+     * Loads a route's screen session. When set (with [scope]), pushes and presentations load
+     * the incoming screen before its transition starts, for up to [PREPARE_TIMEOUT_MS].
+     */
+    val createSession: (suspend (Route) -> dev.app8.engine.render.ScreenSession)? = null,
 ) {
+    /** Loaded screens of the routes on every stack (see [SessionCache]). */
+    val sessions = SessionCache()
+
+    /** Pushes and presentations run in order even though each waits for its screen first. */
+    private var lastNavigation: kotlinx.coroutines.Job? = null
+
     var currentFlowId: String? = startFlowId
         private set
 
     /** Bumped when a screen's top bar turns opaque or transparent: status bar icons re-sample what is under them. */
     var chromeEpoch: Int by androidx.compose.runtime.mutableIntStateOf(0)
-    val layers: SnapshotStateList<Layer> = mutableStateListOf(Layer(StackState(Route(startScreen, params)), null))
+    val layers: SnapshotStateList<Layer> = mutableStateListOf(Layer(StackState(Route(startScreen, params), sessions), null))
 
     /** The base flow's tab bar while it is on screen (TabBarHost registers it). */
     private var tabs: Pair<TabState, List<StackState>>? = null
@@ -219,18 +259,59 @@ internal class FlowController(
         zoom: dev.app8.engine.navigation.transitions.ZoomOrigin? = null,
     ) {
         val resolved = ResolvedTransition.resolve(transition, app)?.takeIf { it.isAnimated || it.kind == ResolvedTransition.Kind.None }
-        layers += Layer(StackState(Route(screenId, params)), presentation, detents, grabber, resolved, zoom?.takeIf { resolved?.nativeZoom == true })
+        val route = Route(screenId, params)
+        whenPrepared(route) {
+            layers += Layer(StackState(route, sessions), presentation, detents, grabber, resolved, zoom?.takeIf { resolved?.nativeZoom == true })
+        }
+    }
+
+    /**
+     * Runs [show] once [route]'s screen has loaded (or after [PREPARE_TIMEOUT_MS]), after any
+     * earlier navigation waiting the same way. Without a session loader it runs now.
+     */
+    private fun whenPrepared(route: Route, show: () -> Unit) {
+        val create = createSession
+        val scope = scope
+        if (create == null || scope == null) {
+            show()
+            return
+        }
+        val previous = lastNavigation
+        val load = sessions.prepare(route, scope, create)
+        lastNavigation = scope.launch {
+            previous?.join()
+            kotlinx.coroutines.withTimeoutOrNull(PREPARE_TIMEOUT_MS) { load.await() }
+            show()
+        }
+    }
+
+    /** The navigation scope (outlives any one screen), else [fallback]. */
+    fun scopeOr(fallback: kotlinx.coroutines.CoroutineScope): kotlinx.coroutines.CoroutineScope = scope ?: fallback
+
+    /** Starts loading the session of [route] (a tab about to be shown); null without a loader. */
+    fun prepare(route: Route): kotlinx.coroutines.Deferred<Result<dev.app8.engine.render.ScreenSession>>? {
+        val create = createSession ?: return null
+        val scope = scope ?: return null
+        return sessions.prepare(route, scope, create)
     }
 
     /** Dismisses [layer]: a custom modal animates out first (see [Layer.dismissing]). */
     fun dismiss(layer: Layer) {
         if (layers.indexOf(layer) <= 0) return
-        if (layer.transition?.isAnimated == true) layer.dismissing = true else layers.remove(layer)
+        // Custom modals, system covers and sheets play their exit first; the host removes the layer.
+        if (layer.transition?.isAnimated == true || (layer.transition == null && layer.presentation != null)) {
+            layer.dismissing = true
+        } else {
+            remove(layer)
+        }
     }
 
     /** Removes [layer] now (end of its exit animation). */
     fun remove(layer: Layer) {
-        if (layers.indexOf(layer) > 0) layers.remove(layer)
+        if (layers.indexOf(layer) > 0) {
+            layers.remove(layer)
+            layer.stack.discard()
+        }
     }
 
     /** A navigator for the screen on top of [layer]: its selected tab's stack on the base flow, else its own. */
@@ -251,17 +332,20 @@ internal class FlowController(
     fun push(stack: StackState, screenId: String, params: Map<String, Any?>, transition: ScreenTransition?, zoom: dev.app8.engine.navigation.transitions.ZoomOrigin? = null) {
         if (transition != null) {
             val resolved = ResolvedTransition.resolve(transition, app)
-            stack.push(Route(screenId, params, resolved, zoom = zoom?.takeIf { resolved?.nativeZoom == true }))
+            val route = Route(screenId, params, resolved, zoom = zoom?.takeIf { resolved?.nativeZoom == true })
+            whenPrepared(route) { stack.push(route) }
             return
         }
         val load = screenTransition
         if (load == null || scope == null) {
-            stack.push(Route(screenId, params, ResolvedTransition.resolve(app?.defaultTransition, app)))
+            val route = Route(screenId, params, ResolvedTransition.resolve(app?.defaultTransition, app))
+            whenPrepared(route) { stack.push(route) }
             return
         }
         scope.launch {
             val screenDefault = runCatching { load(screenId) }.getOrNull()
-            stack.push(Route(screenId, params, ResolvedTransition.resolve(screenDefault ?: app?.defaultTransition, app)))
+            val route = Route(screenId, params, ResolvedTransition.resolve(screenDefault ?: app?.defaultTransition, app))
+            whenPrepared(route) { stack.push(route) }
         }
     }
 
@@ -278,8 +362,9 @@ internal class FlowController(
         }
         if (destination == currentFlowId) return
         currentFlowId = destination
+        layers.forEach { it.stack.discard() }
         layers.clear()
-        layers += Layer(StackState(Route(flow.startScreen)), null)
+        layers += Layer(StackState(Route(flow.startScreen), sessions), null)
     }
 }
 

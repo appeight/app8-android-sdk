@@ -1,6 +1,7 @@
 package dev.app8.engine.navigation
 
 import dev.app8.engine.render.hexColor
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -18,10 +19,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import kotlinx.coroutines.launch
 import dev.app8.engine.core.model.style.ColorHex
 import dev.app8.engine.render.LocalRenderEnv
@@ -55,10 +59,25 @@ internal fun TabBarHost(session: ScreenSession, flow: FlowController, layer: Lay
     val state = remember(session) {
         TabState(tabs.indexOfFirst { it.id == content.initialTab }.coerceAtLeast(0), tabs.size, tabs.map { it.id })
     }
-    val stacks = remember(session) { tabs.map { StackState(Route(it.screen)) } }
+    val stacks = remember(session) { tabs.map { StackState(Route(it.screen), flow.sessions) } }
     androidx.compose.runtime.DisposableEffect(state, stacks) {
         flow.registerTabs(layer, state, stacks)
-        onDispose { flow.unregisterTabs(state) }
+        onDispose {
+            flow.unregisterTabs(state)
+            stacks.forEach { it.discard() }
+        }
+    }
+    // The tab whose content is drawn. It follows the selection once the incoming tab's top
+    // screen has loaded (at most PREPARE_TIMEOUT_MS), so the fade through never shows a blank
+    // screen; a tab visited before is still loaded and switches at once.
+    var shown by remember(session) { androidx.compose.runtime.mutableIntStateOf(state.selected) }
+    androidx.compose.runtime.LaunchedEffect(state, stacks) {
+        androidx.compose.runtime.snapshotFlow { state.selected }.collect { target ->
+            stacks.getOrNull(target)?.entries?.lastOrNull()?.let { top ->
+                flow.prepare(top)?.let { load -> kotlinx.coroutines.withTimeoutOrNull(PREPARE_TIMEOUT_MS) { load.await() } }
+            }
+            shown = target
+        }
     }
     val holder = rememberSaveableStateHolder()
     val reselectScope = androidx.compose.runtime.rememberCoroutineScope()
@@ -77,19 +96,46 @@ internal fun TabBarHost(session: ScreenSession, flow: FlowController, layer: Lay
     val scheme = MaterialTheme.colorScheme
     val tint = accent ?: scheme.primary
     val unselected = dev.app8.engine.style.readableOn(authoredUnselected, scheme.surfaceContainer, scheme.onSurfaceVariant)
-    Box(Modifier.fillMaxSize()) {
+    // The fade through passes through the surface color, never the black window behind.
+    Box(Modifier.fillMaxSize().background(scheme.surface)) {
         val i = state.selected
-        key(i) {
-            holder.SaveableStateProvider(i) {
-                StackHost(flow, layer, stacks[i], state, Chrome(bottom = TAB_BAR_HEIGHT + navInset, inTabs = true))
+        // M3 fade through between tabs. Each tab's saved state (scroll, fields) lives in the
+        // holder and its screens in the session cache, so a revisit draws at once, unchanged.
+        androidx.compose.animation.AnimatedContent(
+            targetState = shown,
+            transitionSpec = { MotionSpecs.tabFadeThrough() },
+            contentKey = { it },
+            label = "a8-tab",
+        ) { tab ->
+            // The outgoing tab is gone as far as the screen and back gestures go.
+            val current = tab == shown
+            val backOwner = androidx.navigationevent.compose.rememberNavigationEventDispatcherOwner(enabled = current)
+            androidx.compose.runtime.CompositionLocalProvider(
+                LocalScreenVisible provides (LocalScreenVisible.current && current),
+                androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner provides backOwner,
+            ) {
+                holder.SaveableStateProvider(tab) {
+                    StackHost(flow, layer, stacks[tab], state, Chrome(bottom = TAB_BAR_HEIGHT + navInset, inTabs = true))
+                }
             }
         }
-        // `hidesTabBar` on the top screen of the selected tab slides the bar away.
-        androidx.compose.animation.AnimatedVisibility(
-            visible = !stacks[i].topHidesTabBar,
-            modifier = Modifier.align(Alignment.BottomCenter),
-            enter = androidx.compose.animation.slideInVertically { it },
-            exit = androidx.compose.animation.slideOutVertically { it },
+        // `hidesTabBar` on the top screen of the selected tab slides the bar away. During a
+        // predictive back to a screen that shows it, the bar follows the gesture (iOS).
+        val stack = stacks[i]
+        val hidden = stack.topHidesTabBar
+        val belowShows = stack.entries.size > 1 && stack.hidesTabBar[stack.entries[stack.entries.size - 2].id] != true
+        val offset = androidx.compose.animation.core.animateFloatAsState(
+            if (hidden) 1f else 0f,
+            // Engine chrome: the Material standard motion scheme's spatial spring.
+            MotionSpecs.spatialSpring(),
+            label = "a8-tab-bar",
+        )
+        val back = stack.backProgress
+        Box(
+            Modifier.align(Alignment.BottomCenter).graphicsLayer {
+                val p = if (hidden && belowShows) back?.value else null
+                translationY = size.height * (if (p != null) 1f - p else offset.value)
+            },
         ) {
         // Medium and wider windows: centered items with the icon beside the label.
         val windowWidth = androidx.compose.ui.platform.LocalWindowInfo.current.containerSize.width

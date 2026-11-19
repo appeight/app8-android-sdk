@@ -23,6 +23,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -84,8 +86,12 @@ internal fun StackHost(flow: FlowController, layer: Layer, stack: StackState, ta
             transitionSpec = stackTransitionSpec(stack, pop = false, predictive = false, platformPush),
             popTransitionSpec = stackTransitionSpec(stack, pop = true, predictive = false, platformPop),
             predictivePopTransitionSpec = { edge: Int ->
-                stack.predictiveRoute = initialState.entries.lastOrNull()?.contentKey as? Long
-                stackTransitionSpec<Route>(stack, pop = true, predictive = true) { platformPredictive(this, edge) }(this)
+                stackTransitionSpec<Route>(stack, pop = true, predictive = true) {
+                    // The top screen draws the Material back preview (TransitionFrame).
+                    stack.predictiveEdge = edge
+                    stack.predictiveRoute = initialState.entries.lastOrNull()?.contentKey as? Long
+                    platformPredictive(this, edge)
+                }(this)
             },
             entryProvider = { route ->
                 NavEntry(route, contentKey = route.id) {
@@ -164,8 +170,18 @@ private fun ModalLayer(flow: FlowController, layer: Layer) {
                 // The M3 drag handle block (32x4dp handle, 22dp above and below) sits above the content.
                 else -> Modifier.height((windowHeight - statusTop - (if (layer.grabber != false) SHEET_HANDLE_BLOCK else 0f)).coerceAtLeast(0f).dp)
             }
+            // Closing from code (a close button, `dismiss`, a navigation away): the sheet slides
+            // down and the scrim fades with it before the layer goes, never a cut. A swipe or a
+            // scrim tap has already hidden the sheet when Material calls onDismissRequest.
+            var hiddenByUser by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+            androidx.compose.runtime.LaunchedEffect(layer.dismissing, hiddenByUser) {
+                if (!layer.dismissing && !hiddenByUser) return@LaunchedEffect
+                if (state.currentValue != androidx.compose.material3.SheetValue.Hidden) runCatching { state.hide() }
+                kotlinx.coroutines.delay(MotionSpecs.SHEET_SCRIM_TAIL_MS)
+                flow.remove(layer)
+            }
             ModalBottomSheet(
-                onDismissRequest = { flow.dismiss(layer) },
+                onDismissRequest = { hiddenByUser = true },
                 sheetState = state,
                 // M3 sheet container; a screen without its own background shows it too (ScreenHost).
                 containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -179,13 +195,20 @@ private fun ModalLayer(flow: FlowController, layer: Layer) {
         }
         else -> {
             val visible = remember { MutableTransitionState(false).apply { targetState = true } }
+            visible.targetState = !layer.dismissing
             androidx.compose.runtime.LaunchedEffect(visible, layer) {
                 androidx.compose.runtime.snapshotFlow { visible.isIdle && visible.currentState }.collect { layer.presented = it }
             }
-            BackHandler(enabled = layer.stack.entries.size <= 1) { flow.dismiss(layer) }
+            // Dismissed: the cover leaves the way it came (slide down and fade), then the layer goes.
+            androidx.compose.runtime.LaunchedEffect(visible, layer) {
+                androidx.compose.runtime.snapshotFlow { layer.dismissing && visible.isIdle && !visible.currentState }.collect { if (it) flow.remove(layer) }
+            }
+            BackHandler(enabled = layer.stack.entries.size <= 1 && !layer.dismissing) { flow.dismiss(layer) }
+            val dissolve = layer.presentation == Action.PresentationStyle.crossDissolve
             AnimatedVisibility(
                 visibleState = visible,
-                enter = if (layer.presentation == Action.PresentationStyle.crossDissolve) fadeIn() else slideInVertically { it },
+                enter = if (dissolve) fadeIn(MotionSpecs.coverFadeIn()) else MotionSpecs.coverEnter(),
+                exit = if (dissolve) androidx.compose.animation.fadeOut(MotionSpecs.coverFadeOut()) else MotionSpecs.coverExit(),
             ) {
                 Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
                     StackHost(flow, layer, layer.stack, null, Chrome())

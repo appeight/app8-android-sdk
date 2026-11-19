@@ -9,7 +9,6 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
@@ -66,16 +65,17 @@ internal object MaterialTransitions {
             (slideOutHorizontally(slide<IntOffset>()) { d } + fadeOut(tween(fadeOutMs, easing = LinearEasing)))
     }
 
-    /** [edge] is `BackEventCompat.EDGE_LEFT` / `EDGE_RIGHT`: the screen drifts away from it. */
+    /**
+     * [edge] is `BackEventCompat.EDGE_LEFT` / `EDGE_RIGHT`. The leaving screen's scale, drift and
+     * rounded corners are drawn by [TransitionFrame] from the seek fraction (they need the
+     * Material predictive back easing and a clip); here it only fades in the last third, over the
+     * same [DURATION_MS] so the seek fraction is the gesture progress.
+     */
     fun <T : Any> predictivePop(density: Float): AnimatedContentTransitionScope<Scene<T>>.(Int) -> ContentTransform = { edge ->
         val d = (SLIDE_DP * density).toInt()
         val sign = if (edge == BackEventCompat.EDGE_RIGHT) -1 else 1
         val linear = tween<Float>(DURATION_MS, easing = LinearEasing)
         (slideInHorizontally(tween(DURATION_MS, easing = LinearEasing)) { -d * sign } + fadeIn(linear)) togetherWith
-            (
-                scaleOut(linear, targetScale = PREDICTIVE_SCALE) +
-                    slideOutHorizontally(tween(DURATION_MS, easing = LinearEasing)) { w -> sign * w / 20 } +
-                    fadeOut(tween(DURATION_MS / 3, delayMillis = DURATION_MS * 2 / 3, easing = LinearEasing))
-                )
+            fadeOut(tween(DURATION_MS / 3, delayMillis = DURATION_MS * 2 / 3, easing = LinearEasing))
     }
 }

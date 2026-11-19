@@ -90,22 +90,37 @@ internal fun ScreenHost(route: Route, navigator: StackNavigator, flow: FlowContr
     val env = LocalRenderEnv.current
     val runtime = env.runtime
     val appScope = LocalAppScope.current
-    val result by produceState<Result<ScreenSession>?>(null, route) {
-        runtime.beginWork()
-        try {
-            value = runCatching { ScreenSession.create(runtime, appScope, route.screenId, route.params) }
-                .onFailure { runtime.diagnostics.warn("screen", "'${route.screenId}': ${it.message}") }
-        } finally {
-            runtime.endWork()
+    // The session usually loaded before the push or tab switch (SessionCache): the screen then
+    // draws its content on the first frame of the transition.
+    val sessions = flow.sessions
+    val cacheScope = androidx.compose.runtime.rememberCoroutineScope()
+    val result by produceState(sessions.peek(route.id), route) {
+        if (value == null) {
+            val load = sessions.prepare(route, flow.scopeOr(cacheScope)) { r ->
+                flow.createSession?.invoke(r) ?: run {
+                    runtime.beginWork()
+                    try { ScreenSession.create(runtime, appScope, r.screenId, r.params) } finally { runtime.endWork() }
+                }
+            }
+            value = load.await().onFailure { runtime.diagnostics.warn("screen", "'${route.screenId}': ${it.message}") }
         }
         // `streaming: true`: live datasource / screen / style updates while shown.
         val initial = value?.getOrNull()
         if (initial != null && initial.isStreaming) {
-            dev.app8.engine.render.runScreenStreams(runtime, appScope, route.screenId, route.params, initial) { value = Result.success(it) }
+            dev.app8.engine.render.runScreenStreams(runtime, appScope, route.screenId, route.params, initial) { next ->
+                val old = value?.getOrNull()
+                sessions.replace(route.id, next, cacheScope)
+                value = Result.success(next)
+                if (old != null && old !== next) old.dispose()
+            }
         }
     }
     val session = result?.getOrNull()
-    DisposableEffect(session) { onDispose { session?.dispose() } }
+    DisposableEffect(route.id) {
+        sessions.acquire(route.id)
+        // A covered screen or an unselected tab keeps its session for the return.
+        onDispose { sessions.release(route.id, stillOnStack = route in stack.entries && stack.isLive) }
+    }
     // Default screen background: the app scheme's `surface`; in a bottom sheet the sheet's own
     // `surfaceContainerLow`, so the drag handle strip and the screen are one surface (M3).
     // A screen's own `backgroundColor` (brand content) draws over it.
