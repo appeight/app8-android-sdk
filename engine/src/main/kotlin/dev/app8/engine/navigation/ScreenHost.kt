@@ -216,7 +216,7 @@ private fun Screen(session: ScreenSession, chrome: Chrome, canGoBack: Boolean, b
             }
             val safe = if (bottomBarState == null) baseSafe else baseSafe.copy(bottom = baseSafe.bottom + bottomBarState.safeAreaHeight)
             CompositionLocalProvider(dev.app8.engine.render.LocalBottomEdge provides bottomBarState?.edge) {
-                App8BackdropSource(backdrop) { mm -> ScreenCanvas(session, safe, mm, onSolved = if (overContent || heroAware) ({ heroScroll = heroScrollDistance(it, safe.top, keysOutsideAdjustingScrolls(session.root)) }) else null) }
+                App8BackdropSource(backdrop) { mm -> ScreenCanvas(session, safe, mm, onSolved = if (overContent || heroAware) ({ heroScroll = heroScrollDistance(it, safe.top, keysOutsideAdjustingScrolls(session.root), it.absolute[session.screenId]?.width) }) else null) }
             }
             if (bar != null) {
                 val heroCircles = heroAware && heroScroll > 0.0 && !solid
@@ -332,9 +332,15 @@ private fun bottomBarMaterial(style: dev.app8.engine.core.model.style.StyleAny, 
  * the tallest full-width view that starts at the top edge, minus the bar's bottom (0 when
  * there is none: opaque as soon as anything scrolls under).
  */
-internal fun heroScrollDistance(solved: dev.app8.engine.render.Solved, barBottom: Double, keys: Set<String>? = null): Double {
+internal fun heroScrollDistance(
+    solved: dev.app8.engine.render.Solved,
+    barBottom: Double,
+    keys: Set<String>? = null,
+    /** The screen's width: content wider than the screen (a horizontal row's content) is not the reference. */
+    screenWidth: Double? = null,
+): Double {
     val frames = if (keys == null) solved.absolute.values else solved.absolute.filterKeys { it in keys }.values
-    val width = frames.maxOfOrNull { it.width } ?: return 0.0
+    val width = screenWidth ?: frames.maxOfOrNull { it.width } ?: return 0.0
     val height = frames.maxOfOrNull { it.height } ?: return 0.0
     val hero = frames.filter { it.y <= 0.5 && it.x <= 0.5 && it.width >= width - 1 && it.height > barBottom && it.height < height * 0.9 }
         .maxOfOrNull { it.y + it.height } ?: return 0.0
