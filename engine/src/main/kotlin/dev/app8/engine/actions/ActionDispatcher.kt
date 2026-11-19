@@ -433,7 +433,7 @@ internal class ActionDispatcher(
             // A registry pointer resolves first: its `mode` decides push vs custom modal.
             val transition = action.transition
             val inline = transition?.inline { id -> runtime.app?.transitions?.firstNotNullOfOrNull { (it as? ScreenTransition.Inline)?.takeIf { t -> t.id == id } } }
-            val customModal = inline != null && (inline.mode ?: inline.preset?.defaultMode) == ScreenTransition.Mode.modal &&
+            val customModal = inline != null && dev.app8.engine.navigation.transitions.routingMode(inline) == ScreenTransition.Mode.modal &&
                 inline.preset != ScreenTransition.Preset.system
             val zoom = inline?.takeIf { it.isNativeZoom }?.let { z -> zoomOrigin(node, z, context) }
             when {
