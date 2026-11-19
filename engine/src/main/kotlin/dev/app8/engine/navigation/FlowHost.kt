@@ -84,6 +84,7 @@ internal fun StackHost(flow: FlowController, layer: Layer, stack: StackState, ta
             transitionSpec = stackTransitionSpec(stack, pop = false, predictive = false, platformPush),
             popTransitionSpec = stackTransitionSpec(stack, pop = true, predictive = false, platformPop),
             predictivePopTransitionSpec = { edge: Int ->
+                stack.predictiveRoute = initialState.entries.lastOrNull()?.contentKey as? Long
                 stackTransitionSpec<Route>(stack, pop = true, predictive = true) { platformPredictive(this, edge) }(this)
             },
             entryProvider = { route ->

@@ -7,6 +7,10 @@ import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -72,8 +76,37 @@ internal fun <T : Any> stackTransitionSpec(
     when {
         t == null || t.kind == ResolvedTransition.Kind.System -> platform()
         t.kind == ResolvedTransition.Kind.None -> ContentTransform(EnterTransition.None, ExitTransition.None, sizeTransform = null)
-        else -> ContentTransform(EnterTransition.None, ExitTransition.KeepUntilTransitionsFinished, zIndex(t, isPop), sizeTransform = null)
+        else -> {
+            // Navigation 3 animates a pop (and a push) over the transition's total duration as
+            // it stands when the change starts, before the entries' own keyframe animations are
+            // registered: with no animation here it would be 0 and the screen would cut in one
+            // frame. An invisible fade of the keyframes' length carries the duration.
+            val ms = holdMillis(t, isPop)
+            ContentTransform(
+                fadeIn(tween(ms, easing = LinearEasing), initialAlpha = 1f),
+                fadeOut(tween(ms, easing = LinearEasing), targetAlpha = 1f),
+                if (isPop) 0f else zIndex(t, isPop),
+                sizeTransform = null,
+            )
+        }
     }
+}
+
+/**
+ * Extra time a zoom pop keeps both screens up: its own clock starts after the pop's first frame,
+ * which may be slow (the revealed screen is composed again).
+ */
+internal const val POP_FIRST_FRAME_SLACK_MS = 600
+
+/** How long an engine transition keeps both screens up (ms): its keyframes' length, springs with slack. */
+internal fun holdMillis(t: ResolvedTransition, pop: Boolean): Int {
+    if (t.nativeZoom && t.animation == ResolvedTransition.NATIVE_ZOOM_ANIMATION) {
+        return if (pop) NATIVE_ZOOM_OUT_MS + POP_FIRST_FRAME_SLACK_MS else NATIVE_ZOOM_IN_MS + NATIVE_ZOOM_READY_TIMEOUT_MS
+    }
+    val a = t.animation
+    val base = a.duration * 1000
+    val settle = if (a.timing is dev.app8.engine.core.model.Animation.Timing.SpringTiming) base * 1.5 else base
+    return (settle + a.delay * 1000).toInt().coerceAtLeast(1)
 }
 
 private class Role(val transition: ResolvedTransition, val entering: Boolean, val pop: Boolean) {
@@ -162,12 +195,32 @@ internal fun TransitionFrame(route: Route, stack: StackState, shared: SharedTran
     val zoomOrigin = route.zoom?.takeIf { role != null && role.transition.nativeZoom && role.entering != role.pop }
     val runtime = dev.app8.engine.render.LocalRenderEnv.current.runtime
     var ownBounds by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(androidx.compose.ui.geometry.Rect.Zero) }
+    // The pop zoom's own clock too (default timing, not a back gesture): it starts after the
+    // first frame of the pop, which rebuilds the revealed screen's composition and can take
+    // longer than the whole animation; on Navigation 3's clock the shrink would be skipped.
+    val zoomOut = androidx.compose.runtime.remember(route) { androidx.compose.animation.core.Animatable(1f) }
+    // A back gesture seeks the transition instead: the shrink follows the finger.
+    val gesture = stack.predictiveRoute == route.id
+    val ownClockOut = zoomOrigin != null && role?.pop == true && !gesture &&
+        role.transition.animation == ResolvedTransition.NATIVE_ZOOM_ANIMATION
+    if (gesture) {
+        // A cancelled gesture (settled back on screen) ends it.
+        androidx.compose.runtime.LaunchedEffect(t.currentState, t.targetState) {
+            if (t.currentState == EnterExitState.Visible && t.targetState == EnterExitState.Visible) stack.predictiveRoute = null
+        }
+    }
+    if (ownClockOut) {
+        androidx.compose.runtime.LaunchedEffect(route) {
+            androidx.compose.runtime.withFrameNanos { }
+            zoomOut.animateTo(0f, NATIVE_ZOOM_OUT)
+        }
+    }
     if (route.zoom != null) {
         // Hidden while this route is on the stack (or animating out). A pop that has landed
         // shows the source again under the ghost (same pixels) before the screen goes: no blink.
         val popping = zoomOrigin != null && role?.pop == true
-        val landed by androidx.compose.runtime.remember(popping) {
-            androidx.compose.runtime.derivedStateOf { popping && visibleState.value >= 2f }
+        val landed by androidx.compose.runtime.remember(popping, ownClockOut) {
+            androidx.compose.runtime.derivedStateOf { popping && (if (ownClockOut) zoomOut.value <= 0f else visibleState.value >= 2f) }
         }
         HideZoomSource(runtime.zoomSources, route.zoom, active = !landed)
     }
@@ -186,6 +239,7 @@ internal fun TransitionFrame(route: Route, stack: StackState, shared: SharedTran
     }
     fun zoomProgress(): Float = when {
         ownClock -> zoomIn.value
+        ownClockOut -> zoomOut.value
         visible <= 1f -> visible
         else -> 2f - visible
     }
