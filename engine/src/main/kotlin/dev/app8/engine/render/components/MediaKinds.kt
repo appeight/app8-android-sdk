@@ -1,5 +1,6 @@
 package dev.app8.engine.render.components
 
+import androidx.compose.runtime.collectAsState
 import dev.app8.engine.render.hexColor
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -73,13 +74,29 @@ internal object ImageKind : ComponentKind {
         val env = LocalRenderEnv.current
         val style = node.content.style as? ImageStyle
         val ref: AssetRef? = imageRef(node)
+        // A `photo://` reference (photos.md): the stored file, or nothing once it is deleted.
+        val photoId = dev.app8.engine.runtime.PhotoStore.photoId(ref?.url) ?: dev.app8.engine.runtime.PhotoStore.photoId(ref?.name)
+        val photoGeneration = if (photoId != null) dev.app8.engine.runtime.PhotoStore.generation.collectAsState().value else 0
         val (scale, alignment) = style?.contentMode.toScale(ContentMode.scaleAspectFill)
         val tint = env.color(style?.tintColor, node)
         val template = style?.renderingMode == ImageStyle.RenderingMode.alwaysTemplate
         var m = modifier.clipToBounds()
         style?.corner?.let { m = m.clip(DslCornerShape(it)) }
         Box(m) {
-            if (ref != null && (ref.id != null || ref.name != null || ref.url != null)) {
+            if (photoId != null) {
+                val file = dev.app8.engine.runtime.PhotoStore.file(LocalContext.current, node.runtime.persistenceId, photoId)
+                // The generation in the key reloads after a delete; a missing file draws nothing.
+                androidx.compose.runtime.key(photoGeneration) {
+                    AsyncImage(
+                        model = coil3.request.ImageRequest.Builder(LocalContext.current).data(file).memoryCacheKey("${file.path}#$photoGeneration").build(),
+                        contentDescription = node.content.accessibility?.label,
+                        imageLoader = node.runtime.imageLoader,
+                        contentScale = scale,
+                        alignment = alignment,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+            } else if (ref != null && (ref.id != null || ref.name != null || ref.url != null)) {
                 AsyncImage(
                     model = ref,
                     contentDescription = node.content.accessibility?.label,

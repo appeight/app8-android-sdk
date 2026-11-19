@@ -18,6 +18,8 @@ import dev.app8.engine.events.App8Event
 import dev.app8.engine.render.RenderNode
 import dev.app8.engine.render.string
 import dev.app8.engine.runtime.App8Runtime
+import dev.app8.engine.runtime.PhotoProcessing
+import dev.app8.engine.runtime.PhotoStore
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
@@ -240,6 +242,12 @@ internal class ActionDispatcher(
             Action.Type.requestNotificationPermission -> host.requestNotificationPermission { granted ->
                 for (next in (if (granted) action.onGranted else action.onDenied).orEmpty()) execute(node, next, context, store)
             }
+            Action.Type.capturePhoto -> capturePhoto(node, action, context, store, exec)
+            Action.Type.deletePhoto -> action.ref?.let { raw ->
+                PhotoStore.photoId(node.string(raw, context) ?: raw)?.let { id ->
+                    runtime.actionScope.launch(kotlinx.coroutines.Dispatchers.IO) { PhotoStore.delete(runtime.appContext, runtime.persistenceId, id) }
+                }
+            }
             Action.Type.executeFunction, Action.Type.complete -> Unit
             // A newer DSL's action: reported once by name, runs nothing.
             Action.Type.unknown -> runtime.diagnostics.warn("action.unknown", "unknown action type '${action.unknownType}' in ${node.key}: skipped")
@@ -299,6 +307,67 @@ internal class ActionDispatcher(
             val status = (response["status"] as? Number)?.toInt() ?: 0
             val handlers = if (status in 200..299) action.onSuccess else action.onError
             runList(node, handlers.orEmpty(), context.overlaying("response", response), store, Exec(navigator))
+        }
+    }
+
+    /**
+     * `capturePhoto` (photos.md): the host's photo UI answers; a picked image is decoded upright,
+     * cropped, downscaled and stored as JPEG off the main thread. Like `request`, the list goes on
+     * at once and the callbacks run only while the screen is alive (an app `resultVariable` is
+     * still written).
+     */
+    private fun capturePhoto(node: RenderNode, action: Action, context: VariableContext, store: VariableStoreProtocol, exec: Exec) {
+        val source = when (action.source) { "camera" -> PhotoCaptureRequest.Source.camera; "library" -> PhotoCaptureRequest.Source.library; else -> PhotoCaptureRequest.Source.cameraOrLibrary }
+        fun label(key: String, fallback: String): String =
+            action.labels?.get(key)?.let { dev.app8.engine.render.Coerce.string(resolveDeep(it, context)) }?.takeIf { it.isNotEmpty() } ?: fallback
+        val request = PhotoCaptureRequest(
+            source = source,
+            front = action.camera == "front",
+            cameraLabel = label("camera", "Take Photo"),
+            libraryLabel = label("library", "Choose from Library"),
+            cancelLabel = label("cancel", "Cancel"),
+        )
+        val options = PhotoProcessing.Options.of(
+            action.maxDimension?.let { resolveDeep(it, context) },
+            action.quality?.let { resolveDeep(it, context) },
+            action.aspectRatio?.let { resolveDeep(it, context) },
+        )
+        val navigator = exec.navigator
+        host.capturePhoto(request) { pick ->
+            runtime.actionScope.launch {
+                val outcome: Pair<List<Action>?, Pair<String, Any?>?> = when (pick) {
+                    is PhotoPick.Cancel -> action.onCancel to null
+                    is PhotoPick.Error -> action.onError to ("error" to mapOf("code" to pick.code, "message" to pick.message))
+                    is PhotoPick.Image -> {
+                        val photo = runCatching {
+                            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                val encoded = PhotoProcessing.encode(runtime.appContext, pick.uri, options)
+                                pick.cleanup()
+                                val id = PhotoStore.save(runtime.appContext, runtime.persistenceId, encoded.jpeg)
+                                val created = java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString()
+                                mapOf("ref" to PhotoStore.reference(id), "width" to encoded.width.toLong(), "height" to encoded.height.toLong(), "createdAt" to created, "source" to pick.source)
+                            }
+                        }.onFailure { pick.cleanup() }.getOrNull()
+                        if (photo == null) {
+                            action.onError to ("error" to mapOf("code" to "failed", "message" to "the photo could not be read or stored"))
+                        } else {
+                            val alive = node.session.isAlive
+                            action.resultVariable?.let { name ->
+                                val target = if (alive) store else runtime.appStore.takeIf { it.hasVariable(name) }
+                                target?.let { t ->
+                                    runCatching { t.setValue(name, photo["ref"]) }
+                                        .onFailure { runtime.diagnostics.warn("action.capturePhoto", "resultVariable '$name' in ${node.key}: ${it.message}") }
+                                }
+                            }
+                            action.onSuccess to ("photo" to photo)
+                        }
+                    }
+                }
+                if (!node.session.isAlive) return@launch
+                val (handlers, scoped) = outcome
+                val ctx = scoped?.let { context.overlaying(it.first, it.second) } ?: context
+                runList(node, handlers.orEmpty(), ctx, store, Exec(navigator))
+            }
         }
     }
 

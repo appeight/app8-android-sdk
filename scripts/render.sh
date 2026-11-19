@@ -19,7 +19,8 @@ OUT=${2:-${ENVELOPE%.json}.png}
 command -v jq >/dev/null 2>&1 || die "jq required"
 
 ADB=${ADB:-${ANDROID_HOME:-$HOME/Library/Android/sdk}/platform-tools/adb}
-PKG=dev.app8.sample
+# PKG: the sample package id (a test run may install the sample under its own id).
+PKG=${PKG:-dev.app8.sample}
 DEV=/sdcard/Android/data/$PKG/files
 TIMEOUT=${RENDER_TIMEOUT:-30}
 
@@ -27,7 +28,7 @@ $ADB get-state >/dev/null 2>&1 || die "no device"
 $ADB shell pm path $PKG >/dev/null 2>&1 || die "$PKG not installed (./gradlew :sample:installDebug)"
 
 # Host is up (singleTask: an existing instance is brought to front, not restarted).
-$ADB shell am start -n $PKG/.PreviewHostActivity >/dev/null 2>&1 || die "cannot start PreviewHostActivity"
+$ADB shell am start -n $PKG/dev.app8.sample.PreviewHostActivity >/dev/null 2>&1 || die "cannot start PreviewHostActivity"
 # The app creates jobs/, output/ and assets/ itself (it must own them).
 for _ in $(seq 1 50); do
   [[ "$($ADB shell "[ -d $DEV/output ] && echo ok" | tr -d '\r')" == ok ]] && break

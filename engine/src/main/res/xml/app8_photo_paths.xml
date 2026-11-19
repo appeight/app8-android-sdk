@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- capturePhoto: the camera app's output, before the engine stores it (photos.md). -->
+<paths>
+    <cache-path name="app8_photos" path="app8-photos/" />
+</paths>

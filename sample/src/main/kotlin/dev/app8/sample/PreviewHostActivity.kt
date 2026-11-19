@@ -54,7 +54,12 @@ class PreviewHostActivity : ComponentActivity() {
         // Created by the app (not adb) so it owns them; render.sh pushes assets under assets/.
         listOf(jobsDir, outputDir, File(getExternalFilesDir(null), "assets")).forEach { it.mkdirs() }
         Log.i(TAG, "watching ${jobsDir.absolutePath}")
-        lifecycleScope.launch { pollLoop() }
+        lifecycleScope.launch {
+            // The host's account switch (variables.md, photos.md "Reset"), for photo E2E runs:
+            // `am start --ez clearPersistedData true`.
+            if (intent.getBooleanExtra("clearPersistedData", false)) App8.clearPersistedData(this@PreviewHostActivity)
+            pollLoop()
+        }
     }
 
     private var pendingScreen: String? = null

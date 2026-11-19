@@ -68,6 +68,17 @@ internal class ComposeHostEffects(
         alert.value = request
     }
 
+    /** A pending `capturePhoto`: [PhotoCaptureHost] shows the chooser, camera or library. */
+    val photoRequest: MutableState<PendingPhoto?> = mutableStateOf(null)
+
+    override fun capturePhoto(request: dev.app8.engine.actions.PhotoCaptureRequest, onResult: (dev.app8.engine.actions.PhotoPick) -> Unit) {
+        if (photoRequest.value != null) {
+            diagnostics.warn("photo.capture.busy", "a capturePhoto is already open: ignored")
+            return
+        }
+        photoRequest.value = PendingPhoto(request, onResult)
+    }
+
     /** A pending `requestNotificationPermission`: [NotificationPermissionHost] launches the system dialog. */
     val notificationRequest: MutableState<((Boolean) -> Unit)?> = mutableStateOf(null)
 
