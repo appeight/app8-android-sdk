@@ -236,7 +236,14 @@ internal fun ComponentTabBar(
     }
     val cell = remember(store) { Cell.create(session.root, template, store, null, null) }
     DisposableEffect(cell) { onDispose { cell?.dispose() } }
-    SideEffect { if (store.getValue("tabs") != tabValues) runCatching { store.setValue("tabs", tabValues) } }
+    // Only a real change (a badge) is pushed into the scope.
+    val lastTabs = remember(store) { arrayOf<Any?>(tabValues) }
+    SideEffect {
+        if (lastTabs[0] != tabValues) {
+            lastTabs[0] = tabValues
+            runCatching { store.setValue("tabs", tabValues) }
+        }
+    }
     LaunchedEffect(store) {
         snapshotFlow { state.selected }.collect { i ->
             runCatching {
