@@ -41,7 +41,8 @@ class TabBarStyleModelTest {
     fun emptyBarStyleIsTheSystemBar() {
         val s = assertNotNull(tabBar("{}").barStyle)
         assertEquals(TabBarStyle.Variant.system, s.variant)
-        assertEquals(TabBarStyle.Selection.capsule, s.selection)
+        assertNull(s.selection)
+        assertEquals(TabBarStyle.Selection.capsule, s.effectiveSelection)
         assertEquals(0.5, s.unselectedOpacity)
         assertNull(s.background)
         assertNull(s.height)
@@ -91,7 +92,12 @@ class TabBarStyleModelTest {
         val s = assertNotNull(tabBar("""{ "component": "BarCustom", "background": "solid" }""").barStyle)
         assertEquals("BarCustom", s.component)
         assertEquals(TabBarStyle.Variant.system, s.variant)
+        assertNull(s.selection)
         assertFalse(s.isSystem)
+        assertEquals(
+            TabBarStyle.Selection.underline,
+            tabBar("""{ "component": "BarCustom", "selection": "underline" }""").barStyle?.selection,
+        )
     }
 
     @Test
@@ -106,7 +112,8 @@ class TabBarStyleModelTest {
     fun unknownValuesFallBackToDefaults() {
         val s = assertNotNull(tabBar("""{ "variant": "floating", "selection": "glow", "height": "tall", "unselectedOpacity": "x" }""").barStyle)
         assertEquals(TabBarStyle.Variant.system, s.variant)
-        assertEquals(TabBarStyle.Selection.capsule, s.selection)
+        assertNull(s.selection)
+        assertEquals(TabBarStyle.Selection.capsule, s.effectiveSelection)
         assertNull(s.height)
         assertEquals(0.5, s.unselectedOpacity)
     }

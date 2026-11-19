@@ -227,9 +227,12 @@ private fun StyledBar(
     val badges = tabs.map { tab -> tab.badge?.let { session.root.string(it) }?.takeIf { it.isNotEmpty() && it != "0" } }
     androidx.compose.foundation.layout.Column(Modifier.fillMaxWidth().tabBarBackground(style.background, env)) {
         if (template != null) {
-            ComponentTabBar(session, template, tabs, badges, state, progress, height)
+            // A host indicator only for an explicit capsule / underline / box (opacity is the template's job).
+            val indicator = style.selection?.takeIf { it != dev.app8.engine.core.model.TabBarStyle.Selection.opacity }
+                ?.let { it to indicatorColorFor(style, hex(style.indicatorColor), tint) }
+            ComponentTabBar(session, template, tabs, badges, state, progress, height, indicator)
         } else {
-            val opacity = style.selection == dev.app8.engine.core.model.TabBarStyle.Selection.opacity
+            val opacity = style.effectiveSelection == dev.app8.engine.core.model.TabBarStyle.Selection.opacity
             // Labels take their color from their text style; without one, tint (selected) and
             // unselectedColor (tint for both with `opacity`, where only the opacity differs).
             val fallback = MaterialTheme.typography.labelLarge

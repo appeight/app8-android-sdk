@@ -60,7 +60,11 @@ public data class TabBarStyle(
     val variant: Variant = Variant.system,
     /** `glass` (default), `solid`, or the id of a fill / material style. */
     val background: String? = null,
-    val selection: Selection = Selection.capsule,
+    /**
+     * As authored; null when unset (or unknown). A text bar then uses [Selection.capsule]
+     * ([effectiveSelection]); a component bar draws no host indicator.
+     */
+    val selection: Selection? = null,
     val text: Wrapped<TextModel> = Wrapped.none(),
     /** Selected label style; [text] when unset. */
     val selectedText: Wrapped<TextModel> = Wrapped.none(),
@@ -79,6 +83,9 @@ public data class TabBarStyle(
     @Suppress("EnumEntryName")
     public enum class Selection { capsule, underline, box, opacity }
 
+    /** The selection a text bar draws: [selection], else [Selection.capsule]. */
+    val effectiveSelection: Selection get() = selection ?: Selection.capsule
+
     /** True when the platform bar is drawn, exactly as without a `barStyle`. */
     val isSystem: Boolean get() = component == null && variant == Variant.system
 
@@ -93,7 +100,7 @@ internal fun decodeTabBarStyle(c: Cursor): TabBarStyle {
     return TabBarStyle(
         variant = c.attempt { it.optSafeEnum("variant", TabBarStyle.Variant.system) } ?: TabBarStyle.Variant.system,
         background = c.attempt { it.optString("background") }?.trim()?.takeIf { it.isNotEmpty() },
-        selection = c.attempt { it.optSafeEnum("selection", TabBarStyle.Selection.capsule) } ?: TabBarStyle.Selection.capsule,
+        selection = c.attempt { it.opt("selection") { s -> TabBarStyle.Selection.entries.firstOrNull { e -> e.name == s.stringOrNull() } } },
         text = c.wrapped("text", ::decodeTextModel),
         selectedText = c.wrapped("selectedText", ::decodeTextModel),
         unselectedOpacity = (c.attempt { it.optDouble("unselectedOpacity") } ?: TabBarStyle.DEFAULT_UNSELECTED_OPACITY).coerceIn(0.0, 1.0),
