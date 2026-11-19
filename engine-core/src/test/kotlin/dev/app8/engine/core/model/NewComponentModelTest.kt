@@ -256,6 +256,27 @@ class NewComponentModelTest {
     }
 
     @Test
+    fun videoWithoutTypeIsAnAssetName() {
+        // Web plays a video by its assets.json name alone; the decode used to fail.
+        val p = props<VideoProperties>("video", """{ "name": "launch-loop", "poster": { "name": "launch-poster" } }""")
+        val m = assertIs<VideoProperties.Model.RemoteAsset>(p.model)
+        assertEquals("launch-loop", m.asset.name)
+        assertEquals(VideoProperties.PosterSource.Kind.remoteAsset, p.poster?.kind)
+        assertEquals("launch-poster", p.poster?.name)
+    }
+
+    @Test
+    fun videoWithoutTypeUsesUrlOrNothing() {
+        val u = props<VideoProperties>("video", """{ "url": "https://example.com/a.mp4", "poster": { "url": "https://example.com/a.jpg" }, "endPoster": { "time": 2 } }""")
+        assertEquals("https://example.com/a.mp4", assertIs<VideoProperties.Model.RemoteAsset>(u.model).asset.url)
+        assertEquals(VideoProperties.PosterSource.Kind.url, u.poster?.kind)
+        assertEquals(VideoProperties.PosterSource.Kind.frameAtTime, u.endPoster?.kind)
+        val n = props<VideoProperties>("video", """{ "autoplay": true, "poster": {} }""")
+        assertEquals(VideoProperties.Model.None, n.model)
+        assertEquals(VideoProperties.PosterSource.Kind.firstFrame, n.poster?.kind)
+    }
+
+    @Test
     fun videoDecodesFlagOverrides() {
         val p = props<VideoProperties>("video", """{ "type": "localAsset", "name": "clip", "autoplay": false, "loop": false, "muted": false }""")
         assertEquals(false, p.autoplay)

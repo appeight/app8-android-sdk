@@ -523,7 +523,12 @@ public data class VideoProperties(
 
 internal fun decodeVideoProperties(c: Cursor): VideoProperties {
     c.obj()
-    val type = c.req("type") { it.strictEnum<VideoProperties.Type>() }
+    // `type` is optional (as on web and for images): a `name`, `id` or `url` is an
+    // asset the host resolves (data source by id/name, then the URL).
+    val type = c.opt("type") { it.strictEnum<VideoProperties.Type>() } ?: when {
+        c.hasNonNull("name") || c.hasNonNull("id") || c.hasNonNull("url") -> VideoProperties.Type.remoteAsset
+        else -> VideoProperties.Type.none
+    }
     val model = when (type) {
         VideoProperties.Type.localAsset -> VideoProperties.Model.LocalAsset(c.reqString("name"))
         VideoProperties.Type.remoteAsset -> VideoProperties.Model.RemoteAsset(decodeAsset(c))
@@ -549,7 +554,14 @@ internal fun decodeVideoProperties(c: Cursor): VideoProperties {
 private fun decodePosterSource(c: Cursor): VideoProperties.PosterSource {
     c.obj()
     return VideoProperties.PosterSource(
-        kind = c.req("type") { it.strictEnum<VideoProperties.PosterSource.Kind>() },
+        // `type` is optional: a `name`/`id` is a host asset, a bare `url` is loaded,
+        // a `time` is that frame, nothing else is the first frame.
+        kind = c.opt("type") { it.strictEnum<VideoProperties.PosterSource.Kind>() } ?: when {
+            c.hasNonNull("name") || c.hasNonNull("id") -> VideoProperties.PosterSource.Kind.remoteAsset
+            c.hasNonNull("url") -> VideoProperties.PosterSource.Kind.url
+            c.hasNonNull("time") -> VideoProperties.PosterSource.Kind.frameAtTime
+            else -> VideoProperties.PosterSource.Kind.firstFrame
+        },
         name = c.optString("name"),
         id = c.optString("id"),
         url = c.optString("url"),

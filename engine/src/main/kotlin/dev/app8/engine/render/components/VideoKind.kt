@@ -260,8 +260,11 @@ internal object VideoKind : ComponentKind {
     private fun resolveSource(node: RenderNode, p: VideoProperties): VideoSource? = when (val m = p.model) {
         is VideoProperties.Model.LocalAsset -> node.string(m.name)?.takeIf { it.isNotEmpty() }?.let { VideoSource(it, null, it, null) }
         is VideoProperties.Model.RemoteAsset -> {
-            val name = m.asset.name?.let { node.string(it) }?.takeIf { it.isNotEmpty() }
-            val url = m.asset.url?.let { node.string(it) }?.takeIf { it.isNotEmpty() }
+            val rawUrl = m.asset.url?.let { node.string(it) }?.takeIf { it.isNotEmpty() }
+            // A `url` that is not absolute names an asset (as for images): resolved by name.
+            val relative = rawUrl?.takeIf { !it.contains("://") }
+            val name = m.asset.name?.let { node.string(it) }?.takeIf { it.isNotEmpty() } ?: relative
+            val url = rawUrl?.takeIf { relative == null }
                 ?: name?.takeIf { it.startsWith("http://") || it.startsWith("https://") }
             VideoSource(url ?: name ?: m.asset.id ?: "", m.asset.id, name, url)
         }
