@@ -443,13 +443,13 @@ private fun TopBar(
         // A left-aligned titleView replaces the left item (iOS); the back arrow stays: it is chrome.
         val left = bar.leftAction?.takeIf { bar.titleAlignment != "left" || bar.titleView == null }
         when {
-            left != null -> BarItem(left, root.hexColor(left.color) ?: tint, iconContainer) { dispatcher.execute(root, left.action) }
+            left != null -> BarItem(root, left, root.hexColor(left.color) ?: tint, iconContainer) { dispatcher.run(root, left.actions) }
             canGoBack && bar.hidesBackButton != true -> IconButton(onClick = { dispatcher.execute(root, BACK) }, colors = iconColors(iconContainer)) { Symbol("arrow_back", tint) }
         }
     }
     val actions: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit = {
         val items = bar.rightActions ?: listOfNotNull(bar.rightAction)
-        for (item in items) BarItem(item, root.hexColor(item.color) ?: tint, iconContainer) { dispatcher.execute(root, item.action) }
+        for (item in items) BarItem(root, item, root.hexColor(item.color) ?: tint, iconContainer) { dispatcher.run(root, item.actions) }
         if (slot == SearchSlot.Button && !searchOpen) IconButton(onClick = { searchOpen = true }) { Symbol("magnifyingglass", tint) }
     }
     val insets = if (statusBarInset) WindowInsets.statusBars else WindowInsets(0, 0, 0, 0)
@@ -571,12 +571,14 @@ private fun iconColors(container: Color) =
     else androidx.compose.material3.IconButtonDefaults.iconButtonColors()
 
 @Composable
-private fun BarItem(item: BarAction, color: Color, iconContainer: Color = Color.Transparent, onClick: () -> Unit) {
-    val icon = item.icon
-    if (icon != null) {
-        IconButton(onClick = onClick, colors = iconColors(iconContainer)) { Symbol(icon, color) }
+private fun BarItem(root: dev.app8.engine.render.RenderNode, item: BarAction, color: Color, iconContainer: Color = Color.Transparent, onClick: () -> Unit) {
+    // `icon` and `label` are expressions like the title (navigation.md, Bar Action), read in
+    // composition so a change to their variables recomposes just this item.
+    if (item.icon != null) {
+        val icon = root.string(item.icon).orEmpty()
+        IconButton(onClick = onClick, colors = iconColors(iconContainer)) { if (icon.isNotEmpty()) Symbol(icon, color) }
     } else {
-        TextButton(onClick = onClick) { Text(item.label.orEmpty(), color = color) }
+        TextButton(onClick = onClick) { Text(root.string(item.label).orEmpty(), color = color) }
     }
 }
 

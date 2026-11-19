@@ -131,11 +131,17 @@ public data class SearchBar(
 
 /** Navigation bar button. */
 public data class BarAction(
+    /** Button text; an expression follows its variables. */
     val label: String? = null,
+    /** SF Symbol / Material Symbol name; an expression follows its variables. */
     val icon: String? = null,
+    /** The first action. */
     val action: Action,
     val style: String? = null,
+    /** Tint: a hex color or a color expression. */
     val color: String? = null,
+    /** Every action, in order: `action` is a single action or an array. */
+    val actions: List<Action> = listOf(action),
 )
 
 internal fun decodeNavigationBar(c: Cursor): NavigationBar {
@@ -160,7 +166,10 @@ internal fun decodeNavigationBar(c: Cursor): NavigationBar {
 
 private fun decodeBarAction(c: Cursor): BarAction {
     c.obj()
-    return BarAction(c.optString("label"), c.optString("icon"), c.req("action", ::decodeAction), c.optString("style"), c.optString("color"))
+    // A single action or an array, like every other trigger.
+    val actions = c.attempt { it.req("action") { a -> a.list(::decodeAction) } }?.takeIf { it.isNotEmpty() }
+        ?: listOf(c.req("action", ::decodeAction))
+    return BarAction(c.optString("label"), c.optString("icon"), actions.first(), c.optString("style"), c.optString("color"), actions)
 }
 
 internal fun decodeSearchBar(c: Cursor): SearchBar {
