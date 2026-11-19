@@ -1,5 +1,7 @@
 package dev.app8.engine.navigation
 
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import dev.app8.engine.render.hexColor
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -174,7 +176,7 @@ internal fun NavSearchField(
                         expanded = false
                         onClose?.invoke()
                         cancel?.forEach { dispatcher.execute(root, it) }
-                    }) { Symbol("xmark", tint) }
+                    }, modifier = Modifier.semantics { contentDescription = dev.app8.engine.icons.SymbolLabels.of("xmark") }) { Symbol("xmark", tint) }
                 }
             } else null,
             colors = colors,

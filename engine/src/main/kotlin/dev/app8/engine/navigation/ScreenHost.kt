@@ -28,6 +28,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import dev.app8.engine.render.bool
 import dev.app8.engine.style.dslMaterial
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.layout.size
@@ -444,13 +447,21 @@ private fun TopBar(
         val left = bar.leftAction?.takeIf { bar.titleAlignment != "left" || bar.titleView == null }
         when {
             left != null -> BarItem(root, left, root.hexColor(left.color) ?: tint, iconContainer) { dispatcher.run(root, left.actions) }
-            canGoBack && bar.hidesBackButton != true -> IconButton(onClick = { dispatcher.execute(root, BACK) }, colors = iconColors(iconContainer)) { Symbol("arrow_back", tint) }
+            canGoBack && bar.hidesBackButton != true -> IconButton(
+                onClick = { dispatcher.execute(root, BACK) },
+                modifier = Modifier.semantics { contentDescription = dev.app8.engine.icons.SymbolLabels.NAVIGATE_UP },
+                colors = iconColors(iconContainer),
+            ) { Symbol("arrow_back", tint) }
         }
     }
     val actions: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit = {
         val items = bar.rightActions ?: listOfNotNull(bar.rightAction)
         for (item in items) BarItem(root, item, root.hexColor(item.color) ?: tint, iconContainer) { dispatcher.run(root, item.actions) }
-        if (slot == SearchSlot.Button && !searchOpen) IconButton(onClick = { searchOpen = true }) { Symbol("magnifyingglass", tint) }
+        if (slot == SearchSlot.Button && !searchOpen) {
+            IconButton(onClick = { searchOpen = true }, modifier = Modifier.semantics { contentDescription = dev.app8.engine.icons.SymbolLabels.of("magnifyingglass") }) {
+                Symbol("magnifyingglass", tint)
+            }
+        }
     }
     val insets = if (statusBarInset) WindowInsets.statusBars else WindowInsets(0, 0, 0, 0)
     androidx.compose.foundation.layout.Column {
@@ -576,7 +587,11 @@ private fun BarItem(root: dev.app8.engine.render.RenderNode, item: BarAction, co
     // composition so a change to their variables recomposes just this item.
     if (item.icon != null) {
         val icon = root.string(item.icon).orEmpty()
-        IconButton(onClick = onClick, colors = iconColors(iconContainer)) { if (icon.isNotEmpty()) Symbol(icon, color) }
+        // TalkBack: the item's label when it has one (iOS reads the title), else the symbol's name.
+        val spoken = item.label?.let { root.string(it) }?.takeIf { it.isNotBlank() } ?: dev.app8.engine.icons.SymbolLabels.of(icon)
+        IconButton(onClick = onClick, modifier = Modifier.semantics { contentDescription = spoken }, colors = iconColors(iconContainer)) {
+            if (icon.isNotEmpty()) Symbol(icon, color)
+        }
     } else {
         TextButton(onClick = onClick) { Text(root.string(item.label).orEmpty(), color = color) }
     }
@@ -598,7 +613,8 @@ internal fun Symbol(name: String, color: Color, size: Float = 24f) {
             style = TextStyle(color = color, fontSize = fontSize, lineHeight = fontSize, fontFamily = MaterialSymbols.family(glyph.filled, 400, size)),
             maxLines = 1,
             softWrap = false,
-            modifier = Modifier.wrapContentSize(unbounded = true),
+            // The glyph is a Private Use Area character: never read it; the button carries the label.
+            modifier = Modifier.wrapContentSize(unbounded = true).clearAndSetSemantics { },
         )
     }
 }
