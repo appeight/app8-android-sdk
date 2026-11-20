@@ -41,8 +41,8 @@ class Benchmarks {
     @Test fun openProductNone() = openProduct(CompilationMode.None())
     @Test fun openProductBaselineProfile() = openProduct(BASELINE)
 
-    @Test fun switchTabsNone() = switchTabs(CompilationMode.None())
-    @Test fun switchTabsBaselineProfile() = switchTabs(BASELINE)
+    @Test fun switchTabsNone() = tabSwitch(CompilationMode.None())
+    @Test fun switchTabsBaselineProfile() = tabSwitch(BASELINE)
 
     @Test fun scrollLongListNone() = scrollLongList(CompilationMode.None())
     @Test fun scrollLongListBaselineProfile() = scrollLongList(BASELINE)
@@ -82,7 +82,7 @@ class Benchmarks {
         },
     ) { openProductAndBack() }
 
-    private fun switchTabs(mode: CompilationMode) = rule.measureRepeated(
+    private fun tabSwitch(mode: CompilationMode) = rule.measureRepeated(
         packageName = PACKAGE,
         metrics = listOf(FrameTimingMetric()) + engineSections,
         compilationMode = mode,
