@@ -215,10 +215,10 @@ private class KeyboardAnchors(
 /** Anchor pairs BaseView.makeRelation supports; anything else relates like-to-like. */
 private val RELATION_PAIRS: Map<LayoutAttribute, Set<LayoutAttribute>> =
     mapOf(
-        LEADING to setOf(LEADING, TRAILING),
-        TRAILING to setOf(TRAILING, LEADING),
-        TOP to setOf(TOP, BOTTOM),
-        BOTTOM to setOf(BOTTOM, TOP),
+        LEADING to setOf(LEADING, TRAILING, CENTER_X),
+        TRAILING to setOf(TRAILING, LEADING, CENTER_X),
+        TOP to setOf(TOP, BOTTOM, CENTER_Y),
+        BOTTOM to setOf(BOTTOM, TOP, CENTER_Y),
         CENTER_X to setOf(CENTER_X, LEADING, TRAILING),
         CENTER_Y to setOf(CENTER_Y, TOP, BOTTOM),
         WIDTH to setOf(WIDTH, HEIGHT),
@@ -228,10 +228,10 @@ private val RELATION_PAIRS: Map<LayoutAttribute, Set<LayoutAttribute>> =
 /** Pairs BaseView.makeRelationToGuide supports; anything else becomes bottom = guide.bottom. */
 private val GUIDE_PAIRS: Map<LayoutAttribute, Set<LayoutAttribute>> =
     mapOf(
-        TOP to setOf(TOP, BOTTOM),
-        BOTTOM to setOf(BOTTOM, TOP),
-        LEADING to setOf(LEADING, TRAILING),
-        TRAILING to setOf(TRAILING, LEADING),
+        TOP to setOf(TOP, BOTTOM, CENTER_Y),
+        BOTTOM to setOf(BOTTOM, TOP, CENTER_Y),
+        LEADING to setOf(LEADING, TRAILING, CENTER_X),
+        TRAILING to setOf(TRAILING, LEADING, CENTER_X),
         CENTER_X to setOf(CENTER_X),
         CENTER_Y to setOf(CENTER_Y),
         WIDTH to setOf(WIDTH),

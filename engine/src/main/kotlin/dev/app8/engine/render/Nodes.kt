@@ -95,16 +95,21 @@ internal fun NodeView(node: RenderNode) {
     val props = content.properties as? ViewProperties
 
     // Animated alpha / transforms (view properties) on top of the static style values.
-    val alphaTarget = (props?.alpha?.let { node.number(it.value) } ?: 1.0).toFloat() * (style?.alpha ?: 1.0).toFloat()
-    val alpha by animateFloatAsState(alphaTarget, props?.alpha?.animation.toSpec(node), label = "alpha")
-    val scaleTarget = (props?.transformScale?.let { node.number(it.value) } ?: 1.0).toFloat() * (style?.transform?.scale ?: 1.0).toFloat()
-    val scale by animateFloatAsState(scaleTarget, props?.transformScale?.animation.toSpec(node), label = "scale")
+    // A `repeat` animation loops from the property's start value (see animatedDslFloat).
+    val styleAlpha = (style?.alpha ?: 1.0).toFloat()
+    val alphaTarget = (props?.alpha?.let { node.number(it.value) } ?: 1.0).toFloat() * styleAlpha
+    val alpha by animatedDslFloat(alphaTarget, props?.alpha?.animation, styleAlpha, node, "alpha")
+    val styleScale = (style?.transform?.scale ?: 1.0).toFloat()
+    val scaleTarget = (props?.transformScale?.let { node.number(it.value) } ?: 1.0).toFloat() * styleScale
+    val scale by animatedDslFloat(scaleTarget, props?.transformScale?.animation, styleScale, node, "scale")
     val txTarget = (props?.transformTranslateX?.let { node.number(it.value) } ?: 0.0).toFloat()
-    val tx by animateFloatAsState(txTarget, props?.transformTranslateX?.animation.toSpec(node), label = "tx")
-    val tyTarget = (props?.transformTranslateY?.let { node.number(it.value) } ?: 0.0).toFloat() + (style?.transform?.translateY ?: 0.0).toFloat()
-    val ty by animateFloatAsState(tyTarget, props?.transformTranslateY?.animation.toSpec(node), label = "ty")
-    val rotationTarget = (props?.transformRotation?.let { node.number(it.value) } ?: 0.0).toFloat() + (style?.transform?.rotation ?: 0.0).toFloat()
-    val rotation by animateFloatAsState(rotationTarget, props?.transformRotation?.animation.toSpec(node), label = "rotation")
+    val tx by animatedDslFloat(txTarget, props?.transformTranslateX?.animation, 0f, node, "tx")
+    val styleTy = (style?.transform?.translateY ?: 0.0).toFloat()
+    val tyTarget = (props?.transformTranslateY?.let { node.number(it.value) } ?: 0.0).toFloat() + styleTy
+    val ty by animatedDslFloat(tyTarget, props?.transformTranslateY?.animation, styleTy, node, "ty")
+    val styleRotation = (style?.transform?.rotation ?: 0.0).toFloat()
+    val rotationTarget = (props?.transformRotation?.let { node.number(it.value) } ?: 0.0).toFloat() + styleRotation
+    val rotation by animatedDslFloat(rotationTarget, props?.transformRotation?.animation, styleRotation, node, "rotation")
     val blend = style?.blendMode?.toCompose()
 
     val material = env.material(style?.material, node)

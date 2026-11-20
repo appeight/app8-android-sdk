@@ -28,6 +28,8 @@ public data class TabBarScreenContent(
     val badgeTextColor: String? = null,
     /** How the bar is drawn; null (or `variant: system` without `component`) is the platform bar. */
     val barStyle: TabBarStyle? = null,
+    /** Platform bar: the selected item's highlight (M3 indicator pill). Null: black 10% on a light bar, white 10% on a dark one. Since 0.7.9. */
+    val selectionIndicatorColor: String? = null,
 ) : EntityContent {
     override val properties: Any? get() = null
     override val style: Any? get() = null
@@ -48,6 +50,7 @@ internal fun decodeTabBarScreenContent(c: Cursor): TabBarScreenContent {
         badgeTextColor = c.optString("badgeTextColor"),
         // Lenient: a bad barStyle falls back to the platform bar instead of failing the screen.
         barStyle = c.attempt { it.opt("barStyle", ::decodeTabBarStyle) },
+        selectionIndicatorColor = c.optString("selectionIndicatorColor"),
     )
 }
 
@@ -175,6 +178,8 @@ public data class CollectionLayout(
     val currentPageVariable: String? = null,
     /** `itemWidth: "fill"`: the collection's width minus horizontal insets ([itemWidth] stays null). */
     val itemWidthFill: Boolean = false,
+    /** `itemWidth: "auto"`: each item as wide as its content (hugging, one line); [itemWidth] stays null. Since 0.7.9. */
+    val itemWidthAuto: Boolean = false,
     /** `itemHeight: "fill"`: the collection's frame height minus vertical insets ([itemHeight] stays null). */
     val itemHeightFill: Boolean = false,
 ) {
@@ -274,9 +279,10 @@ internal fun decodeCollectionLayout(c: Cursor): CollectionLayout {
         columns = c.optInt("columns"),
         minItemWidth = c.optDouble("minItemWidth"),
         rows = c.optInt("rows"),
-        itemWidth = c.opt("itemWidth") { it.doubleOrNull() ?: if (it.stringOrNull() == "fill") null else it.double() },
+        itemWidth = c.opt("itemWidth") { it.doubleOrNull() ?: if (it.stringOrNull() == "fill" || it.stringOrNull() == "auto") null else it.double() },
         itemHeight = c.opt("itemHeight") { it.doubleOrNull() ?: if (it.stringOrNull() == "fill") null else it.double() },
         itemWidthFill = c.opt("itemWidth") { it.stringOrNull() } == "fill",
+        itemWidthAuto = c.opt("itemWidth") { it.stringOrNull() } == "auto",
         itemHeightFill = c.opt("itemHeight") { it.stringOrNull() } == "fill",
         aspectRatio = c.optDouble("aspectRatio"),
         estimatedItemHeight = c.optDouble("estimatedItemHeight"),
