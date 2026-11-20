@@ -16,13 +16,11 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.unit.Constraints
 import dev.app8.engine.core.layout.Frame
 import dev.app8.engine.core.layout.LayoutNode
 import dev.app8.engine.core.layout.Size
 import dev.app8.engine.core.layout.StackAxis
 import dev.app8.engine.core.model.Animation
-import kotlin.math.roundToInt
 
 /**
  * The shape of a solved tree that an animated `isHidden` change needs: parents, stack
@@ -328,7 +326,7 @@ internal fun Modifier.revealLayout(transition: LayoutTransition, key: String): M
         val p = measurable.measure(constraints)
         layout(p.width, p.height) { p.place(0, 0) }
     } else {
-        val p = measurable.measure(Constraints.fixed((full.width * density).roundToInt().coerceAtLeast(0), (full.height * density).roundToInt().coerceAtLeast(0)))
+        val p = measurable.measure(fixedConstraints(pxSize(full.width, density), pxSize(full.height, density)))
         val w = if (constraints.hasBoundedWidth) constraints.maxWidth else p.width
         val h = if (constraints.hasBoundedHeight) constraints.maxHeight else p.height
         layout(w, h) { p.place(0, 0) }

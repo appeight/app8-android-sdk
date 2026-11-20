@@ -26,7 +26,6 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Constraints
 import dev.app8.engine.core.layout.ScrollDirection
 import dev.app8.engine.core.layout.ScrollSpec
 import dev.app8.engine.core.model.ActionTrigger
@@ -37,7 +36,10 @@ import dev.app8.engine.render.LocalSolved
 import dev.app8.engine.render.NodeView
 import dev.app8.engine.render.RenderEnv
 import dev.app8.engine.render.RenderNode
+import dev.app8.engine.render.MAX_LAYOUT_PX
+import dev.app8.engine.render.fixedConstraints
 import dev.app8.engine.render.px
+import dev.app8.engine.render.pxSize
 import dev.app8.engine.render.coveredBottom
 import kotlin.math.roundToInt
 
@@ -130,13 +132,13 @@ internal object ScrollKind : ComponentKind {
                         bottom += (self.maxY - (root.maxY - s.safeArea.bottom)).coerceIn(0.0, self.height)
                     }
                 }
-                val viewportW = if (constraints.hasBoundedWidth) constraints.maxWidth else ((self?.width ?: 0.0) * d).roundToInt()
-                val viewportH = if (constraints.hasBoundedHeight) constraints.maxHeight else ((self?.height ?: 0.0) * d).roundToInt()
-                val contentW = if (vertical) viewportW else (((content?.width ?: 0.0) + left + right) * d).roundToInt()
-                val contentH = if (vertical) (((content?.height ?: 0.0) + top + bottom) * d).roundToInt() + keyboardPad else viewportH
+                val viewportW = if (constraints.hasBoundedWidth) constraints.maxWidth else pxSize(self?.width ?: 0.0, d)
+                val viewportH = if (constraints.hasBoundedHeight) constraints.maxHeight else pxSize(self?.height ?: 0.0, d)
+                val contentW = if (vertical) viewportW else pxSize((content?.width ?: 0.0) + left + right, d)
+                val contentH = if (vertical) (pxSize((content?.height ?: 0.0) + top + bottom, d) + keyboardPad).coerceAtMost(MAX_LAYOUT_PX) else viewportH
                 val placeables = measurables.map { m ->
                     val f = s.local[m.layoutId as? String]
-                    m.measure(Constraints.fixed(((f?.width ?: 0.0) * d).roundToInt().coerceAtLeast(0), ((f?.height ?: 0.0) * d).roundToInt().coerceAtLeast(0))) to f
+                    m.measure(fixedConstraints(pxSize(f?.width ?: 0.0, d), pxSize(f?.height ?: 0.0, d))) to f
                 }
                 val w = contentW.coerceAtLeast(if (vertical) 0 else viewportW)
                 // Every vertical scroll view stretches past its edges, also when its content
@@ -148,10 +150,12 @@ internal object ScrollKind : ComponentKind {
                 // One copy's length: the content extent (children may reach past the solved
                 // content size), so the marquee seam sits right after the last child.
                 val extent = placeables.maxOfOrNull { (_, f) -> if (f == null) 0.0 else if (vertical) f.y + f.height else f.x + f.width } ?: 0.0
-                contentLength.intValue = maxOf(if (vertical) contentH else contentW, ((extent + if (vertical) top + bottom else left + right) * d).roundToInt())
+                contentLength.intValue = maxOf(if (vertical) contentH else contentW, pxSize(extent + if (vertical) top + bottom else left + right, d))
                 // The marquee copy extends the scrollable range by one length + gap.
                 val extra = if (infinite) contentLength.intValue + loopGapPx.roundToInt() else 0
-                layout(if (vertical) w else maxOf(w, extra * 2), if (vertical) maxOf(h, extra * 2) else h) {
+                // An out-of-range content size (a DSL length like 999999) is clamped, not thrown on.
+                val loop = (extra.toLong() * 2).coerceAtMost(MAX_LAYOUT_PX.toLong()).toInt()
+                layout((if (vertical) w else maxOf(w, loop)).coerceAtMost(MAX_LAYOUT_PX), (if (vertical) maxOf(h, loop) else h).coerceAtMost(MAX_LAYOUT_PX)) {
                     for ((pl, f) in placeables) if (f != null) pl.place(px(f.x + left, d), px(f.y + top, d))
                 }
             }
@@ -197,9 +201,9 @@ internal object ScrollKind : ComponentKind {
                 // constraints solve against the content view, which zoom does not use).
                 val placeables = measurables.map { m ->
                     val f = s.local[m.layoutId as? String]?.takeIf { it.width > 0.0 && it.height > 0.0 }
-                    val w = f?.let { (it.width * density).roundToInt() } ?: constraints.maxWidth
-                    val h = f?.let { (it.height * density).roundToInt() } ?: constraints.maxHeight
-                    m.measure(Constraints.fixed(w.coerceAtLeast(0), h.coerceAtLeast(0))) to f
+                    val w = f?.let { pxSize(it.width, density) } ?: constraints.maxWidth
+                    val h = f?.let { pxSize(it.height, density) } ?: constraints.maxHeight
+                    m.measure(fixedConstraints(w, h)) to f
                 }
                 layout(constraints.maxWidth, constraints.maxHeight) {
                     for ((pl, f) in placeables) pl.place(f?.let { px(it.x, density) } ?: 0, f?.let { px(it.y, density) } ?: 0)

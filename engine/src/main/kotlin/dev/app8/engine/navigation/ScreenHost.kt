@@ -65,6 +65,8 @@ import dev.app8.engine.render.LocalRenderEnv
 import dev.app8.engine.render.Scope
 import dev.app8.engine.render.ScreenCanvas
 import dev.app8.engine.render.ScreenSession
+import dev.app8.engine.render.padDp
+import dev.app8.engine.render.warnNegativeInsets
 import dev.app8.engine.render.string
 import dev.app8.engine.style.App8BackdropSource
 import dev.app8.engine.style.rememberApp8Backdrop
@@ -282,6 +284,7 @@ private fun rememberBottomBar(
     DisposableEffect(cell) { onDispose { cell.dispose() } }
     val edge = remember(session, bar) { dev.app8.engine.render.BottomEdge() }
     val i = bar.insets
+    i?.let { session.root.warnNegativeInsets("bottomBar.insets", it.top, it.left, it.bottom, it.right) }
     val insets = EdgeInsets(
         top = i?.top ?: dev.app8.engine.core.model.BottomBar.DEFAULT_INSET_TOP,
         left = (i?.left ?: dev.app8.engine.core.model.BottomBar.DEFAULT_INSET_SIDE) + windowLeft,
@@ -328,7 +331,7 @@ private fun BottomBarView(session: ScreenSession, state: BottomBarState, safeBot
         }
         .pointerInput(Unit) { awaitPointerEventScope { while (true) awaitPointerEvent() } }
     m = if (material != null) m.dslMaterial(material) else m.background(surface)
-    Box(m.padding(start = state.insets.left.dp, end = state.insets.right.dp, top = state.insets.top.dp, bottom = (state.insets.bottom + safeBottom).dp)) {
+    Box(m.padding(start = state.insets.left.padDp, end = state.insets.right.padDp, top = state.insets.top.padDp, bottom = (state.insets.bottom + safeBottom).padDp)) {
         dev.app8.engine.render.collection.CellView(state.cell, state.solved, Modifier.fillMaxWidth())
     }
 }

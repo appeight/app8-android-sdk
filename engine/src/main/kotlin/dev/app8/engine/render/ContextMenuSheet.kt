@@ -169,7 +169,7 @@ internal fun ContextMenuSheet(node: RenderNode, menu: ContextMenu, state: Contex
                 ) {
                     // Not interactive: any tap inside runs `onPreviewTap`.
                     Box(
-                        Modifier.width(width.dp).height(height.dp)
+                        Modifier.width(width.sizeDp).height(height.sizeDp)
                             .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
                             .clickable(
                             interactionSource = remember { MutableInteractionSource() },

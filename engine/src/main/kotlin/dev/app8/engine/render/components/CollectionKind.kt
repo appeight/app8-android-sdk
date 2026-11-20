@@ -37,6 +37,9 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import dev.app8.engine.render.Coerce
+import dev.app8.engine.render.padDp
+import dev.app8.engine.render.sizeDp
+import dev.app8.engine.render.warnNegativeInsets
 import dev.app8.engine.render.resolve
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
@@ -166,6 +169,7 @@ internal object CollectionKind : ComponentKind {
 
     override fun traits(node: RenderNode, env: RenderEnv): LayoutTraits {
         val p = content(node).properties
+        p.layout?.contentInsets?.let { node.warnNegativeInsets("contentInsets", it.top, it.left, it.bottom, it.right) }
         if (!sizesToContent(node)) return LayoutTraits(opaque = true)
         val model = model(node)
         return LayoutTraits(
@@ -332,7 +336,7 @@ internal object CollectionKind : ComponentKind {
             top = bottom.also { bottom = top }
             autoTop = autoBottom.also { autoBottom = autoTop }
         }
-        val padding = PaddingValues(top = (top + autoTop).dp, bottom = (bottom + autoBottom).dp)
+        val padding = PaddingValues(top = (top + autoTop).padDp, bottom = (bottom + autoBottom).padDp)
         val state = rememberLazyListState()
         val sticky = p.stickyHeaders == true
         val dispatcher = LocalDispatcher.current
@@ -394,13 +398,13 @@ internal object CollectionKind : ComponentKind {
         Recompositions.Count("${model.node.key}#row")
         val st = styles.getOrNull(row.section) ?: return
         val s = sections.getOrNull(row.section) ?: return
-        val pad = Modifier.padding(top = row.padTop.dp, bottom = row.padBottom.dp)
+        val pad = Modifier.padding(top = row.padTop.padDp, bottom = row.padBottom.padDp)
         when (row) {
             is RowSpec.Header -> {
                 val template = model.headerTemplate(s.key) ?: return
                 val cell = model.header(row.section, s.key, template, s.items.map { it.value }) ?: return
                 val w = (width - st.insets.left - st.insets.right).coerceAtLeast(0.0)
-                Box(pad.padding(start = st.insets.left.dp)) { CellView(cell, cell.layout(env, w, null)) }
+                Box(pad.padding(start = st.insets.left.padDp)) { CellView(cell, cell.layout(env, w, null)) }
             }
             is RowSpec.Strip -> Box(pad) {
                 HorizontalStrip(model, s.items, s.keys, st, width, pageVariable = null)
@@ -433,7 +437,7 @@ internal object CollectionKind : ComponentKind {
             } else {
                 val i = row.items.first
                 val (w, fixed) = itemSize(st, width)
-                val cellModifier = Modifier.padding(start = st.insets.left.dp)
+                val cellModifier = Modifier.padding(start = st.insets.left.padDp)
                 if (swipe != null) {
                     val item = s.items[i]
                     SwipeActionsBox(
@@ -464,7 +468,7 @@ internal object CollectionKind : ComponentKind {
         val template = model.template(item)
         if (template == null) {
             // No template for this item: an empty cell (iOS dequeues the plain reuse cell).
-            Box(modifier.width(width.dp).height((fixedHeight ?: 0.0).dp))
+            Box(modifier.width(width.sizeDp).height((fixedHeight ?: 0.0).sizeDp))
             return
         }
         val cell = model.cell(key, item, template) ?: return
@@ -574,7 +578,7 @@ internal object CollectionKind : ComponentKind {
         val frame = if (height.isFinite()) height else 0.0
         val itemH = when {
             config?.itemHeightFill == true -> (frame - top - bottom).coerceAtLeast(1.0)
-            config?.itemHeight != null -> config.itemHeight!!
+            config?.itemHeight != null -> config.itemHeight!!.coerceAtLeast(1.0)
             else -> frame.coerceAtLeast(1.0)
         }
         val pageVariable = config?.currentPageVariable
@@ -591,8 +595,8 @@ internal object CollectionKind : ComponentKind {
         VerticalPager(
             state = state,
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(top = top.dp, bottom = bottom.dp),
-            pageSize = PageSize.Fixed(itemH.dp),
+            contentPadding = PaddingValues(top = top.padDp, bottom = bottom.padDp),
+            pageSize = PageSize.Fixed(itemH.sizeDp),
             pageSpacing = spacing.dp,
             beyondViewportPageCount = 1,
             userScrollEnabled = config?.scrollEnabled != false,
@@ -600,7 +604,7 @@ internal object CollectionKind : ComponentKind {
             key = { keys.getOrElse(it) { "$it" } },
         ) { page ->
             val item = items.getOrNull(page) ?: return@VerticalPager
-            Box(Modifier.fillMaxWidth().padding(start = left.dp)) {
+            Box(Modifier.fillMaxWidth().padding(start = left.padDp)) {
                 ItemCell(model, env, item, keys[page], w, itemH, Modifier)
             }
         }
@@ -617,7 +621,7 @@ internal object CollectionKind : ComponentKind {
         val items = remember(sections) { sections.flatMap { it.items } }
         val keys = remember(sections) { sections.flatMap { it.keys } }
         val top = config?.contentInsets?.top ?: 0.0
-        androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize().padding(top = top.dp)) {
+        androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize().padding(top = top.padDp)) {
             // `itemHeight: "fill"`: each item is as tall as the frame minus the vertical insets.
             val st = if (config?.itemHeightFill == true && constraints.hasBoundedHeight) {
                 base.copy(itemHeight = (maxHeight.value.toDouble() - (config.contentInsets?.bottom ?: 0.0)).coerceAtLeast(0.0))
@@ -651,7 +655,7 @@ internal object CollectionKind : ComponentKind {
             beyondViewportPageCount = 1,
         ) { page ->
             val item = items.getOrNull(page) ?: return@HorizontalPager
-            Box(Modifier.fillMaxSize().padding(start = st.insets.left.dp)) {
+            Box(Modifier.fillMaxSize().padding(start = st.insets.left.padDp)) {
                 ItemCell(model, env, item, keys[page], w, st.itemHeight, Modifier)
             }
         }
@@ -680,9 +684,9 @@ internal object CollectionKind : ComponentKind {
         val rows = st.rows.coerceAtLeast(1)
         val groups = remember(items, rows) { items.indices.chunked(rows) }
         val stripHeight = itemH?.let { rows * it + (rows - 1) * st.lineSpacing }
-        val contentPadding = PaddingValues(start = st.insets.left.dp, end = st.insets.right.dp)
+        val contentPadding = PaddingValues(start = st.insets.left.padDp, end = st.insets.right.padDp)
         var modifier = Modifier.fillMaxWidth()
-        modifier = if (stripHeight != null) modifier.height(stripHeight.dp) else modifier
+        modifier = if (stripHeight != null) modifier.height(stripHeight.sizeDp) else modifier
         val group: @Composable (Int) -> Unit = { g ->
             val indices = groups[g]
             if (indices.size == 1) {
