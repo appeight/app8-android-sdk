@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.BasicText
@@ -190,7 +191,9 @@ internal fun TextTabBar(
                     },
                 contentAlignment = Alignment.Center,
             ) {
-                BadgedBox(badge = { badge(index) }) {
+                // M3's BadgedBox overlaps an icon's corner; past a text label the badge
+                // sits clear of the last letter, right and up (as iOS and web draw it).
+                BadgedBox(badge = { Box(Modifier.offset(x = 12.dp, y = (-4).dp)) { badge(index) } }) {
                     BasicText(
                         tab.label,
                         style = if (isSelected) selectedLabelStyle else labelStyle,
