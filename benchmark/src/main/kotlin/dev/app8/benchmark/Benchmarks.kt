@@ -14,6 +14,7 @@ import dev.app8.benchmark.Journeys.openProductAndBack
 import dev.app8.benchmark.Journeys.openShop
 import dev.app8.benchmark.Journeys.scrollLongList
 import dev.app8.benchmark.Journeys.scrollShop
+import dev.app8.benchmark.Journeys.switchTabs
 import dev.app8.benchmark.Journeys.startSampleApp
 import dev.app8.benchmark.Journeys.startLongList
 import org.junit.Rule
