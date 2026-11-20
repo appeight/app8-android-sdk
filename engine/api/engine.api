@@ -44,6 +44,7 @@ public abstract interface class dev/app8/engine/App8DataSource {
 	public abstract fun getComponent (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun getComponents (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun getDatasource (Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getPersistenceId ()Ljava/lang/String;
 	public abstract fun getScreen (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun getStyles (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun getTranslations (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -57,6 +58,7 @@ public abstract interface class dev/app8/engine/App8DataSource {
 public final class dev/app8/engine/App8DataSource$DefaultImpls {
 	public static fun getAllScreenIds (Ldev/app8/engine/App8DataSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun getDatasource (Ldev/app8/engine/App8DataSource;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static fun getPersistenceId (Ldev/app8/engine/App8DataSource;)Ljava/lang/String;
 	public static fun getTranslations (Ldev/app8/engine/App8DataSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun prepareRequest (Ldev/app8/engine/App8DataSource;Ldev/app8/engine/App8HttpRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun reloadDatasource (Ldev/app8/engine/App8DataSource;Ljava/lang/String;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;

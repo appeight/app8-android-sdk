@@ -54,6 +54,14 @@ public interface App8DataSource {
      */
     public suspend fun prepareRequest(request: App8HttpRequest): App8HttpRequest = request
 
+    /**
+     * Names the storage of the app's persisted variables and photos, ahead of `app.id`,
+     * `bundleId` and `title` (iOS `App8DataSource.persistenceId`). Set it when one host opens
+     * several apps, so their persisted state stays apart; keep it stable across launches.
+     * Default: null (the app's own fields decide).
+     */
+    public val persistenceId: String? get() = null
+
     /** JSON `{ defaultLocale, locales: { <locale>: { key: value } } }`. */
     public suspend fun getTranslations(): ByteArray = """{"defaultLocale":"en","locales":{}}""".encodeToByteArray()
 }
