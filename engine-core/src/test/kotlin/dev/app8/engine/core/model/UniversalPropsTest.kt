@@ -38,6 +38,12 @@ class UniversalPropsTest {
     }
 
     @Test
+    fun accessibilityTabTraitAndUnknownTraitsAreIgnored() {
+        val a = decoder.decode("""{ "label": "Home", "traits": ["tab", "sparkle", 3, "button"] }""", ::decodeAccessibility)
+        assertEquals(listOf(Accessibility.Trait.TAB, Accessibility.Trait.BUTTON), a.traits)
+    }
+
+    @Test
     fun accessibilityTraitRawNames() {
         val a = decoder.decode("""{ "traits": ["disabled", "searchField"] }""", ::decodeAccessibility)
         assertEquals(listOf(Accessibility.Trait.NOT_ENABLED, Accessibility.Trait.SEARCH), a.traits)

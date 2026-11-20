@@ -2,6 +2,10 @@ package dev.app8.engine.core.model
 
 import dev.app8.engine.core.model.style.CollectionStyle
 import dev.app8.engine.core.model.style.MapStyle
+import dev.app8.engine.core.model.style.TextModel
+import dev.app8.engine.core.model.style.Wrapped
+import dev.app8.engine.core.model.style.decodeTextModel
+import dev.app8.engine.core.model.style.wrapped
 import dev.app8.engine.core.model.style.ViewStyle
 import dev.app8.engine.core.model.style.decodeCollectionStyle
 import dev.app8.engine.core.model.style.decodeMapStyle
@@ -22,6 +26,8 @@ public data class TabBarScreenContent(
     val badgeColor: String? = null,
     /** Badge text color (default white / Material onError). */
     val badgeTextColor: String? = null,
+    /** How the bar is drawn; null (or `variant: system` without `component`) is the platform bar. */
+    val barStyle: TabBarStyle? = null,
 ) : EntityContent {
     override val properties: Any? get() = null
     override val style: Any? get() = null
@@ -40,6 +46,67 @@ internal fun decodeTabBarScreenContent(c: Cursor): TabBarScreenContent {
         unselectedColor = c.optString("unselectedColor"),
         badgeColor = c.optString("badgeColor"),
         badgeTextColor = c.optString("badgeTextColor"),
+        // Lenient: a bad barStyle falls back to the platform bar instead of failing the screen.
+        barStyle = c.attempt { it.opt("barStyle", ::decodeTabBarStyle) },
+    )
+}
+
+/**
+ * `tabBarScreen.content.barStyle` (tab-bar-screen.md, "Bar style"): a text-only bar with a
+ * sliding (or cross-fading) selection, or a bar drawn by a component template. Every key is
+ * optional; unknown values fall back to their defaults.
+ */
+public data class TabBarStyle(
+    val variant: Variant = Variant.system,
+    /** `glass` (default), `solid`, or the id of a fill / material style. */
+    val background: String? = null,
+    /**
+     * As authored; null when unset (or unknown). A text bar then uses [Selection.capsule]
+     * ([effectiveSelection]); a component bar draws no host indicator.
+     */
+    val selection: Selection? = null,
+    val text: Wrapped<TextModel> = Wrapped.none(),
+    /** Selected label style; [text] when unset. */
+    val selectedText: Wrapped<TextModel> = Wrapped.none(),
+    /** Opacity of unselected labels with [Selection.opacity], 0–1. */
+    val unselectedOpacity: Double = DEFAULT_UNSELECTED_OPACITY,
+    /** Capsule / underline / box color; the bar's `tintColor` when unset. */
+    val indicatorColor: String? = null,
+    /** Bar height above the bottom safe area (at least [MIN_HEIGHT]); platform default when unset. */
+    val height: Double? = null,
+    /** A component template that draws the whole bar; [variant] is then ignored. */
+    val component: String? = null,
+) {
+    @Suppress("EnumEntryName")
+    public enum class Variant { system, text }
+
+    @Suppress("EnumEntryName")
+    public enum class Selection { capsule, underline, box, opacity }
+
+    /** The selection a text bar draws: [selection], else [Selection.capsule]. */
+    val effectiveSelection: Selection get() = selection ?: Selection.capsule
+
+    /** True when the platform bar is drawn, exactly as without a `barStyle`. */
+    val isSystem: Boolean get() = component == null && variant == Variant.system
+
+    public companion object {
+        public const val DEFAULT_UNSELECTED_OPACITY: Double = 0.5
+        public const val MIN_HEIGHT: Double = 44.0
+    }
+}
+
+internal fun decodeTabBarStyle(c: Cursor): TabBarStyle {
+    c.obj()
+    return TabBarStyle(
+        variant = c.attempt { it.optSafeEnum("variant", TabBarStyle.Variant.system) } ?: TabBarStyle.Variant.system,
+        background = c.attempt { it.optString("background") }?.trim()?.takeIf { it.isNotEmpty() },
+        selection = c.attempt { it.opt("selection") { s -> TabBarStyle.Selection.entries.firstOrNull { e -> e.name == s.stringOrNull() } } },
+        text = c.wrapped("text", ::decodeTextModel),
+        selectedText = c.wrapped("selectedText", ::decodeTextModel),
+        unselectedOpacity = (c.attempt { it.optDouble("unselectedOpacity") } ?: TabBarStyle.DEFAULT_UNSELECTED_OPACITY).coerceIn(0.0, 1.0),
+        indicatorColor = c.attempt { it.optString("indicatorColor") },
+        height = c.attempt { it.optDouble("height") }?.coerceAtLeast(TabBarStyle.MIN_HEIGHT),
+        component = c.attempt { it.optString("component") }?.trim()?.takeIf { it.isNotEmpty() },
     )
 }
 

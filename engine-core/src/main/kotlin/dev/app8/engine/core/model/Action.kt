@@ -330,6 +330,8 @@ public data class Accessibility(
         NOT_ENABLED("disabled"), ADJUSTABLE("adjustable"), SEARCH("searchField"), STATIC_TEXT("staticText"),
         SUMMARY_ELEMENT("summaryElement"), UPDATES_FREQUENTLY("updatesFrequently"),
         STARTS_MEDIA_SESSION("startsMediaSession"), ALLOWS_DIRECT_INTERACTION("allowsDirectInteraction"),
+        /** An item of a custom tab bar (`barStyle.component`): a button with the tab role (Role.Tab). */
+        TAB("tab"),
     }
 }
 
@@ -339,7 +341,8 @@ internal fun decodeAccessibility(c: Cursor): Accessibility {
         label = c.optString("label"),
         hint = c.optString("hint"),
         value = c.optString("value"),
-        traits = c.opt("traits") { a -> a.list { it.strictEnum<Accessibility.Trait> { t -> t.raw } } },
+        // Unknown trait names are ignored (a newer DSL may add traits); they never fail the component.
+        traits = c.opt("traits") { a -> a.list { t -> t.stringOrNull()?.let { raw -> Accessibility.Trait.entries.firstOrNull { it.raw == raw } } }.filterNotNull() },
         isElement = c.optScalar("isElement"),
         hidden = c.optScalar("hidden"),
     )
