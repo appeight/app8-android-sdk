@@ -268,10 +268,18 @@ internal fun ComponentTabBar(
         drawTabIndicator(selection, progress.value, count, color) { stand }
     }
     BoxWithConstraints(Modifier.fillMaxWidth().height(height.sizeDp).then(drawIndicator)) {
-        val solved = cell.layout(env, width = maxWidth.value.toDouble(), height = height)
+        val solved = cell.layout(env, width = maxWidth.value.toDouble(), height = height, edges = pinsToBar(cell))
         CellView(cell, solved, fixedHeight = height)
     }
 }
+
+/**
+ * Whether the bar template is pinned to the bar's edges. As on iOS (`StyledTabBarView.render`),
+ * only a template without a layout of its own is; one with constraints (say leading 12 and
+ * trailing -12 to its superview) lays out against the bar as written, without extra pins
+ * that would conflict with its insets.
+ */
+internal fun pinsToBar(cell: Cell): Boolean = cell.root.content.layout?.isEmpty != false
 
 /** A tab badge: the bar's `badgeColor` / the tab's own; text `badgeTextColor`, default white on a custom color. */
 @Composable
