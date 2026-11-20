@@ -15,6 +15,7 @@ import dev.app8.engine.core.layout.cassowary.Solver
 import dev.app8.engine.core.layout.cassowary.Strength
 import dev.app8.engine.core.layout.cassowary.UnsatisfiableConstraintException
 import dev.app8.engine.core.layout.cassowary.Variable
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.roundToLong
 
@@ -132,6 +133,9 @@ private class Measurements {
         return node.intrinsicSize!!.measure(maxWidth).also { byWidth[maxWidth] = it }
     }
 }
+
+/** Largest constant or multiplier the solver accepts (points); larger ones are ignored. NaN fails the check too. */
+private const val MAX_LAYOUT_VALUE = 1e7
 
 /** Priority of a broken required constraint: above every other priority, below required. */
 private const val BROKEN_REQUIRED = 999.5
@@ -395,6 +399,12 @@ private class LayoutPass(
             LayoutRelation.GREATER_OR_EQUAL -> RelationalOperator.GE
         }
         val strength = if (priority >= 1000.0) Strength.required else priority
+        // An out-of-range DSL number (`spacing: 1e308`) would overflow the simplex and fail the
+        // whole screen; that constraint is ignored instead and reported like a conflict.
+        if (!inRange(lhs) || !inRange(rhs)) {
+            conflicts += conflictOf(lhs, op, rhs)
+            return
+        }
         try {
             solver.addConstraint(Constraint(lhs, operator, rhs, strength))
         } catch (_: UnsatisfiableConstraintException) {
@@ -404,6 +414,9 @@ private class LayoutPass(
             solver.addConstraint(Constraint(lhs, operator, rhs, BROKEN_REQUIRED))
         }
     }
+
+    private fun inRange(e: Expression): Boolean =
+        abs(e.constant) <= MAX_LAYOUT_VALUE && e.terms.all { abs(it.coefficient) <= MAX_LAYOUT_VALUE }
 
     private fun conflictOf(lhs: Expression, op: LayoutRelation, rhs: Expression): LayoutConflict {
         fun view(name: String) = name.substringBeforeLast('.').removeSuffix("#content")
