@@ -88,12 +88,12 @@ internal fun StackHost(flow: FlowController, layer: Layer, stack: StackState, ta
             transitionSpec = stackTransitionSpec(stack, pop = false, predictive = false, platformPush),
             popTransitionSpec = stackTransitionSpec(stack, pop = true, predictive = false, platformPop),
             predictivePopTransitionSpec = { edge: Int ->
-                stackTransitionSpec<Route>(stack, pop = true, predictive = true) {
-                    // The top screen draws the Material back preview (TransitionFrame).
-                    stack.predictiveEdge = edge
-                    stack.predictiveRoute = initialState.entries.lastOrNull()?.contentKey as? Long
-                    platformPredictive(this, edge)
-                }(this)
+                // Any transition kind: the gesture seeks the pop (a native zoom shrinks with the
+                // finger instead of on its own clock); a `system` pop also draws the Material
+                // back preview (TransitionFrame).
+                stack.predictiveEdge = edge
+                stack.predictiveRoute = initialState.entries.lastOrNull()?.contentKey as? Long
+                stackTransitionSpec<Route>(stack, pop = true, predictive = true) { platformPredictive(this, edge) }(this)
             },
             entryProvider = { route ->
                 NavEntry(route, contentKey = route.id) {
