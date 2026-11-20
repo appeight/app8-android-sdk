@@ -594,7 +594,7 @@ public final class dev/app8/engine/nativecomponent/App8NativeContext {
 public final class dev/app8/engine/navigation/ComposableSingletons$FlowHostKt {
 	public static final field INSTANCE Ldev/app8/engine/navigation/ComposableSingletons$FlowHostKt;
 	public fun <init> ()V
-	public final fun getLambda$998946605$engine ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-2036739108$engine ()Lkotlin/jvm/functions/Function2;
 }
 
 public final class dev/app8/engine/render/components/ComposableSingletons$DatePickerKindKt {
