@@ -122,6 +122,12 @@ internal class Layer(
     val transition: ResolvedTransition? = null,
     /** Native zoom source (`zoom` + `sourceKey`). */
     val zoom: dev.app8.engine.navigation.transitions.ZoomOrigin? = null,
+    /**
+     * The appearance of the screen that presented this layer: its sheet or cover and the
+     * screens in it without their own `userInterfaceStyle` draw in it (iOS presented view
+     * controllers inherit the presenter's style). Null follows the app.
+     */
+    val appearance: dev.app8.engine.style.App8Appearance? = null,
 ) {
     /** A custom modal plays its exit animation first; the host removes the layer when done. */
     var dismissing: Boolean by androidx.compose.runtime.mutableStateOf(false)
@@ -185,6 +191,30 @@ internal class FlowController(
     /** Bumped when a screen's top bar turns opaque or transparent: status bar icons re-sample what is under them. */
     var chromeEpoch: Int by androidx.compose.runtime.mutableIntStateOf(0)
     val layers: SnapshotStateList<Layer> = mutableStateListOf(Layer(StackState(Route(startScreen, params), sessions), null))
+
+    /**
+     * For each screen on top of its stack in the top layer, by route id: its nesting depth (a
+     * tab's screen is deeper than its `tabBarScreen`) and the style it draws in, null when it
+     * follows the app.
+     */
+    private val topScreens = androidx.compose.runtime.mutableStateMapOf<Long, Pair<Int, dev.app8.engine.style.App8Appearance?>>()
+
+    /**
+     * The style of the screen on top (the deepest one claimed): its own `userInterfaceStyle`
+     * or its layer's, null when it follows the app (or before any screen has drawn). The
+     * system bar icons, alerts and newly presented layers follow it.
+     */
+    val topAppearance: dev.app8.engine.style.App8Appearance?
+        get() = topScreens.values.maxByOrNull { it.first }?.second
+
+    /** [route] is on top of its stack in the top layer, at [depth], styled [appearance] (null: the app's). */
+    fun claimTop(route: Long, depth: Int, appearance: dev.app8.engine.style.App8Appearance?) {
+        topScreens[route] = depth to appearance
+    }
+
+    fun releaseTop(route: Long) {
+        topScreens.remove(route)
+    }
 
     /** The base flow's tab bar while it is on screen (TabBarHost registers it). */
     private var tabs: Pair<TabState, List<StackState>>? = null
@@ -261,7 +291,7 @@ internal class FlowController(
         val resolved = ResolvedTransition.resolve(transition, app)?.takeIf { it.isAnimated || it.kind == ResolvedTransition.Kind.None }
         val route = Route(screenId, params)
         whenPrepared(route) {
-            layers += Layer(StackState(route, sessions), presentation, detents, grabber, resolved, zoom?.takeIf { resolved?.nativeZoom == true })
+            layers += Layer(StackState(route, sessions), presentation, detents, grabber, resolved, zoom?.takeIf { resolved?.nativeZoom == true }, topAppearance)
         }
     }
 

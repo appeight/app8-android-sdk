@@ -60,7 +60,8 @@ internal fun FlowHost(flow: FlowController, modifier: Modifier = Modifier) {
         Box(modifier.fillMaxSize()) {
             val layers = flow.layers.toList()
             layers.firstOrNull()?.let { base -> key(base) { StackHost(flow, base, base.stack, null, Chrome()) } }
-            for (layer in layers.drop(1)) key(layer) { ModalLayer(flow, layer) }
+            // A sheet or cover draws in the style of the screen that presented it.
+            for (layer in layers.drop(1)) key(layer) { dev.app8.engine.style.ProvideAppearance(layer.appearance) { ModalLayer(flow, layer) } }
         }
     }
 }

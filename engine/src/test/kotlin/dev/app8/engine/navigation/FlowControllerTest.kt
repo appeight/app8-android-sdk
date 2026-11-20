@@ -47,3 +47,30 @@ class StatusBarContrastTest {
         assertEquals(false, lightIconsUnreadable(0.08))
     }
 }
+
+/** Screen `userInterfaceStyle`: the screen on top drives the system bars, alerts and presented layers. */
+class TopAppearanceTest {
+    private val app = DslDecoder().decodeApp("""{"title":"T","navigation":{"startFlow":"main","flows":[{"id":"main","startScreen":"root"}]}}""")
+
+    @Test
+    fun theDeepestScreenOnTopWinsAndReleasingRestoresTheApp() {
+        val flow = FlowController(app, "root")
+        kotlin.test.assertNull(flow.topAppearance)
+        flow.claimTop(1L, depth = 1, appearance = null)
+        flow.claimTop(2L, depth = 2, appearance = dev.app8.engine.style.App8Appearance.Dark)
+        assertEquals(dev.app8.engine.style.App8Appearance.Dark, flow.topAppearance)
+        flow.releaseTop(2L)
+        kotlin.test.assertNull(flow.topAppearance, "back to a screen that follows the app")
+    }
+
+    @Test
+    fun aPresentedLayerTakesThePresentersStyle() {
+        val flow = FlowController(app, "root")
+        flow.claimTop(1L, depth = 1, appearance = dev.app8.engine.style.App8Appearance.Dark)
+        flow.present("sheet", emptyMap(), dev.app8.engine.core.model.Action.PresentationStyle.sheet, null, null)
+        assertEquals(dev.app8.engine.style.App8Appearance.Dark, flow.layers.last().appearance)
+        flow.releaseTop(1L)
+        flow.present("cover", emptyMap(), dev.app8.engine.core.model.Action.PresentationStyle.fullScreen, null, null)
+        kotlin.test.assertNull(flow.layers.last().appearance)
+    }
+}

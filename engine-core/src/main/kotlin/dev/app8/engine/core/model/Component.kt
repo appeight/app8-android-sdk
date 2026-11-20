@@ -145,6 +145,11 @@ public data class ComponentContent<P : Any, S : Any>(
     val additionalSafeAreaInsets: EdgeInsets? = null,
     /** Screens only (DSL 0.6.1): content pinned to the bottom edge. */
     val bottomBar: BottomBar? = null,
+    /**
+     * Screens only (DSL 0.7.10): `light` / `dark` for this screen (iOS
+     * `overrideUserInterfaceStyle`); null follows the app's appearance.
+     */
+    val userInterfaceStyle: App.UserInterfaceStyle? = null,
     override val onEvent: List<EventTrigger>? = null,
     override val children: List<Component> = emptyList(),
     /** Long-press preview and actions (view, stackView, image, button). */
@@ -223,6 +228,9 @@ internal fun <P : Any, S : Any> decodeContent(c: Cursor, spec: ContentSpec<P, S>
         additionalSafeAreaInsets = c.opt("additionalSafeAreaInsets", ::decodeEdgeInsets),
         // New in DSL 0.6.1: decoded leniently so a malformed bar never rejects the screen.
         bottomBar = c.attempt { it.opt("bottomBar", ::decodeBottomBar) },
+        // New in DSL 0.7.10: an unknown value or type is ignored (follows the app), never an error.
+        userInterfaceStyle = c.attempt { it.optString("userInterfaceStyle") }
+            ?.let { s -> App.UserInterfaceStyle.entries.firstOrNull { it.name == s } },
         onEvent = c.opt("onEvent") { a -> a.list(::decodeEventTrigger) },
         children = c.decodeChildren(),
         // New in DSL 0.5: decoded leniently so a malformed menu never rejects the component.
