@@ -16,7 +16,7 @@ class DegradingDecodeTest {
     @Test
     fun `a wrong type on the screen's own fields is dropped and the screen renders`() {
         val screen = """{"type":"screen","id":"s","content":{
-          "navigationBar":{"title":5,"hidden":"yes"},
+          "navigationBar":{"title":5,"backLabel":"Back","hidden":"yes"},
           "onEvent":[{"event":"appear","action":{"type":"dismiss"}},{"event":7}],
           "hidesTabBar":"no",
           "children":[{"type":"label","id":"t","content":{"properties":{"text":"Hi"}}}]}}"""
@@ -26,8 +26,22 @@ class DegradingDecodeTest {
         val content = s.content as ComponentContent<*, *>
         assertNull(content.hidesTabBar)
         assertNull(content.navigationBar?.title)
+        assertEquals("Back", content.navigationBar?.backLabel)
         assertEquals(1, content.onEvent?.size)
-        assertTrue(rt.diagnostics.snapshot().count { it.startsWith("decode.dropped") } >= 3, rt.diagnostics.snapshot().toString())
+        assertTrue(rt.diagnostics.snapshot().count { it.startsWith("value.ignored: 'content.") && "in screen 's'" in it } >= 3, rt.diagnostics.snapshot().toString())
+    }
+
+    @Test
+    fun `a child's mistyped property is ignored and logged with its path`() {
+        val rt = runtime(mapOf("s" to """{"type":"screen","id":"s","content":{"children":[
+          {"type":"label","id":"t","content":{"properties":{"text":"Hi","numberOfLines":"two"}}},
+          {"type":"noSuchThing","id":"x","content":{}}]}}"""))
+        val s = session(rt)
+        assertEquals("Hi", s.root.find("t")!!.string("Hi"))
+        assertNull(s.root.find("x"))
+        val warnings = rt.diagnostics.snapshot()
+        assertTrue(warnings.any { it.startsWith("value.ignored:") && "content.children[0].content.properties.numberOfLines" in it }, warnings.toString())
+        assertTrue(warnings.none { it.startsWith("decode.dropped") })
     }
 
     @Test

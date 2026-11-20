@@ -9,12 +9,12 @@ import kotlinx.serialization.json.JsonObject
 /**
  * Decodes a whole document (a screen, `app.json`) so that one bad value does not reject it.
  *
- * Elements inside lenient containers (children, material layers, …) are already dropped by
- * the decoder; a bad value on the document's own fields (`navigationBar.title: 5`, a
- * malformed `onEvent`) would fail the whole screen. Here the value at the failure's path is
- * removed and decoding retried, up to [MAX_DROPS] times; each drop is reported to [warn]. The
- * document still fails when its root is unusable (no `type`, not an object).
- * Android only: iOS rejects the document.
+ * Elements of lenient lists (children, material layers, actions, …) already ignore a bad value
+ * in the decoder (`decodeIgnoringValues` in engine-core); this does the same for the document's
+ * own fields (`navigationBar.title: 5`, a malformed `onEvent`): the value at the failure's path
+ * is removed and decoding retried, up to [MAX_DROPS] times; each drop is reported to [warn]
+ * (`value.ignored`). The document still fails when its root is unusable (no `type`, not an
+ * object). Unknown or mistyped values are ignored, never fatal (DSL rule, same on iOS and web).
  */
 internal object DegradingDecode {
     const val MAX_DROPS: Int = 32

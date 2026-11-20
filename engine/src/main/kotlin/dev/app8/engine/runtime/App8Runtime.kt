@@ -211,7 +211,7 @@ internal class App8Runtime(
         val appBytes = withContext(Dispatchers.IO) { dataSource.getApp() }
         val model = try {
             val element = decoder.parse(utf8(appBytes, "app.json"))
-            DegradingDecode.decode(element, { e -> diagnostics.warn("decode.dropped", "app.json: ${e.message}; value dropped") }) { decoder.decodeApp(it) }
+            DegradingDecode.decode(element, { e -> diagnostics.warn("value.ignored", "'${e.path}' in app.json: ${e.reason}; using the default") }) { decoder.decodeApp(it) }
         } catch (e: App8Error) {
             throw e
         } catch (e: Exception) {
@@ -290,7 +290,7 @@ internal class App8Runtime(
     private fun decodeScreen(screenId: String, bytes: ByteArray): Component {
         val raw = decoder.parse(utf8(bytes, "$screenId.json"))
         val element = templates?.let { dev.app8.engine.core.model.TemplatePreprocessor(it).process(raw) } ?: raw
-        return DegradingDecode.decode(element, { e -> diagnostics.warn("decode.dropped", "screen '$screenId': ${e.message}; value dropped") }) {
+        return DegradingDecode.decode(element, { e -> diagnostics.warn("value.ignored", "'${e.path}' in screen '$screenId': ${e.reason}; using the default") }) {
             decoder.decodeComponent(it)
         }
     }
@@ -336,7 +336,7 @@ internal class App8Runtime(
     private fun reportDecodeErrors() {
         val entries = decodeErrors.entries
         for (e in entries.drop(reportedErrors)) {
-            diagnostics.warn("decode.dropped", "${e.typeName} at ${e.jsonPath}: ${e.error.message}")
+            diagnostics.warn("value.ignored", "'${e.jsonPath}' in ${e.typeName}: ${(e.error as? dev.app8.engine.core.model.DslDecodingException)?.reason ?: e.error.message}")
         }
         reportedErrors = entries.size
     }
