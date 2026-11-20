@@ -179,6 +179,36 @@ internal fun TransitionFrame(route: Route, stack: StackState, shared: SharedTran
         }
     }
     val visible by visibleState
+    // Predictive back on a `system` pop: this (leaving) screen is the Material back preview.
+    // The seek fraction of the leaving side is the gesture progress; release continues from it.
+    val predictive = stack.predictiveRoute == route.id && role == null
+    val backRaw = t.animateFloat(
+        transitionSpec = { androidx.compose.animation.core.tween(MaterialTransitions.DURATION_MS, easing = androidx.compose.animation.core.LinearEasing) },
+        label = "a8-back",
+    ) { s -> if (s == EnterExitState.PostExit) 1f else 0f }
+    val backEased = androidx.compose.runtime.remember(backRaw) {
+        androidx.compose.runtime.derivedStateOf { dev.app8.engine.navigation.MotionSpecs.backEased(backRaw.value) }
+    }
+    if (predictive) {
+        androidx.compose.runtime.SideEffect { if (stack.backProgress !== backEased) stack.backProgress = backEased }
+        // Cancelled (settled back on screen): the preview ends.
+        androidx.compose.runtime.LaunchedEffect(t.currentState, t.targetState) {
+            if (t.currentState == EnterExitState.Visible && t.targetState == EnterExitState.Visible) {
+                stack.predictiveRoute = null
+                stack.backProgress = null
+            }
+        }
+    }
+    androidx.compose.runtime.DisposableEffect(route.id) {
+        onDispose {
+            if (stack.predictiveRoute == route.id) {
+                stack.predictiveRoute = null
+                stack.backProgress = null
+            }
+        }
+    }
+    val view = androidx.compose.ui.platform.LocalView.current
+    val displayCornerPx = androidx.compose.runtime.remember(view) { displayCornerRadiusPx(view) }
     val participant = role?.participant
     val active = role?.transition
     // Layering (`raise`): AnimatedContent gives both screens of a transition the same
@@ -203,7 +233,7 @@ internal fun TransitionFrame(route: Route, stack: StackState, shared: SharedTran
     val gesture = stack.predictiveRoute == route.id
     val ownClockOut = zoomOrigin != null && role?.pop == true && !gesture &&
         role.transition.animation == ResolvedTransition.NATIVE_ZOOM_ANIMATION
-    if (gesture) {
+    if (gesture && role != null) {
         // A cancelled gesture (settled back on screen) ends it.
         androidx.compose.runtime.LaunchedEffect(t.currentState, t.targetState) {
             if (t.currentState == EnterExitState.Visible && t.targetState == EnterExitState.Visible) stack.predictiveRoute = null
@@ -269,6 +299,20 @@ internal fun TransitionFrame(route: Route, stack: StackState, shared: SharedTran
                 applyNativeZoom(zoomProgress(), ownBounds, runtime.zoomSources.frame(zoomOrigin.session, zoomOrigin.key), zoomOrigin.alignmentRect())
             } else if (participant != null && role != null) {
                 applyKeyframes(participant, role.fraction(visible), size.width, size.height)
+            } else if (predictive) {
+                val e = backEased.value
+                val sign = if (stack.predictiveEdge == androidx.activity.BackEventCompat.EDGE_RIGHT) -1f else 1f
+                val s = dev.app8.engine.navigation.MotionSpecs.backScale(e)
+                scaleX = s
+                scaleY = s
+                translationX = sign * dev.app8.engine.navigation.MotionSpecs.backDriftPx(e, size.width, density)
+                val corner = dev.app8.engine.navigation.MotionSpecs.backCornerPx(
+                    e, displayCornerPx ?: (dev.app8.engine.navigation.MotionSpecs.BACK_CORNER_FALLBACK_DP * density),
+                )
+                if (corner > 0f) {
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(corner)
+                    clip = true
+                }
             }
         }
         val zoom = route.zoom
@@ -348,3 +392,11 @@ private fun timingRectSpec(a: dev.app8.engine.core.model.Animation.Inline): andr
     }
 }
 
+
+
+/** The display's top corner radius in px (API 31 `RoundedCorner`), null when it reports none. */
+internal fun displayCornerRadiusPx(view: android.view.View): Float? {
+    val insets = view.rootWindowInsets ?: return null
+    val corner = insets.getRoundedCorner(android.view.RoundedCorner.POSITION_TOP_LEFT) ?: return null
+    return corner.radius.toFloat().takeIf { it > 0f }
+}

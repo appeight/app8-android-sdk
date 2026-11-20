@@ -37,6 +37,7 @@ Frame percentiles come from `frameDurationCpuMs`. Jank % is the share of frames 
 - **scrollShop**: launch, then *Continue as guest*, then three flings down and three up on
   the shop's section list. 5 iterations.
 - **openProduct**: from the shop, tap the first product card, then go back. 5 iterations.
+- **switchTabs**: from the shop, Bag → Wishlist → Shop through the navigation bar (fade through; two first visits and a revisit). 5 iterations.
 - **scrollLongList**: the `longlist` fixture (1000 self-sizing rows, 8 nodes each, with
   wrapping text), four flings down and four up. 5 iterations.
 

@@ -48,6 +48,16 @@ object Journeys {
         device.waitForIdle()
     }
 
+    /** Shop → Bag → Wishlist → Shop through the navigation bar (the fade through, first visits and a revisit). */
+    fun MacrobenchmarkScope.switchTabs() {
+        for (label in listOf("Bag", "Wishlist", "Shop")) {
+            val tab = device.wait(Until.findObject(By.text(label)), TIMEOUT_MS) ?: error("no tab $label")
+            tab.click()
+            device.waitForIdle()
+        }
+        device.wait(Until.hasObject(By.res("sectionList")), TIMEOUT_MS)
+    }
+
     /** Cold start of the long list fixture (1000 self-sizing rows). */
     fun MacrobenchmarkScope.startLongList() {
         startActivityAndWait(Intent(Intent.ACTION_MAIN).setClassName(PACKAGE, ACTIVITY).putExtra("app", "longlist"))

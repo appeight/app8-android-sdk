@@ -147,15 +147,23 @@ copy it.
 
 ## Motion
 
+Numbers live in `MaterialTransitions` (push / pop) and `MotionSpecs` (everything else the
+engine owns). DSL-authored transitions (`scale`, `zoom`, `popup`, `cover`, `sheet`, `shared`,
+custom keyframes) keep their authored timing on both platforms; only `system` and engine chrome
+follow these rows.
+
 | Element | Spec | Ours | Source |
 |---|---|---|---|
-| `system` push / pop | Material shared axis X: 30 slide, outgoing fades over the first 35%, incoming over the rest | shared axis X, 450ms, emphasized `cubic(0.2, 0, 0, 1)` (`MaterialTransitions`) | M3 transition patterns, MDC `MaterialSharedAxis` (M3 `motionDurationLong1` 450) |
+| `system` push / pop | Material shared axis X: 30 slide, outgoing fades over the first 35%, incoming over the rest | shared axis X, 450ms, emphasized `cubic(0.2, 0, 0, 1)` (`MaterialTransitions`). The incoming screen is loaded before the transition starts (`SessionCache`, up to 300ms), so it draws on the first frame | M3 transition patterns, MDC `MaterialSharedAxis` (M3 `motionDurationLong1` 450) |
 | Navigation 3 default (replaced) | 700ms cross-fade; predictive: scale to 0.7 | not used | N3 |
-| Predictive back (in-app) | top screen scales to 90%, drifts 1/20 of its width away from the swipe edge, then commits | 0.9 scale, width/20 drift, fades only in the last third; screen below slides in 30 and fades in | M3 gestures, S `SearchBar.kt` predictive back (0.9, 8 margin, w/20) |
+| Tab switch | fade through: outgoing fades out 90ms, incoming fades in and scales 92% → 100% over 210ms | `MotionSpecs.tabFadeThrough()`: outgoing linear 90ms; incoming 210ms after it, emphasized decelerate; through the `surface` colour. Each tab's screens stay loaded and its saved state is kept, so a revisit draws at once and deferred sections are not rebuilt. Reselect keeps pop-to-root / scroll-to-top | M3 fade through, MDC `MaterialFadeThrough` |
+| Press feedback | bounded ripple / pressed state layer, clipped to the shape | bounded ripple in `onSurface` at 10% (`StateTokens.PressedStateLayerOpacity`), starting at 30% radius so it shows on the first frame, clipped to the view's corner radius; on every tappable view and collection cell. A DSL `touchDown` state replaces it, unless it changes only opacity | M3 states, compose-material3 `ripple` |
+| Predictive back (in-app) | top screen scales to 90%, drifts width/20 − 8dp, corners round toward the display radius, commit continues from the gesture | `MotionSpecs`: Material `PredictiveBack` easing `cubic(0.1, 0.1, 0, 1)` on the progress; scale 1 → 0.9, drift up to width/20 − 8dp away from the swipe edge, corners 0 → the display's `RoundedCorner` radius (28dp when it reports none); fades only in the last third; release continues from the gesture position. The screen below slides in 30 and fades in. A tab bar hidden by the popped screen follows the gesture back | M3 predictive back, compose-material3 `PredictiveBack`, `SearchBar.kt` (0.9, 8 margin, w/20) |
+| Full-screen cover (`fullScreen`, `crossDissolve` without a custom transition) | in: slide up; out: slide down and fade, emphasized accelerate ~250ms | in 400ms emphasized decelerate slide + 200ms fade; out 250ms emphasized accelerate slide + fade, then the layer is removed | M3 easing and duration tokens |
+| Bottom sheet | in ~300ms emphasized decelerate; out 200–250ms, scrim fades with the sheet | Material's own animation; the scrim is drawn by the engine under the sheet and fades with it (in 300ms emphasized decelerate, out 220ms emphasized accelerate); a close from code (`dismiss`, a button) hides the sheet first and removes the layer once the scrim has faded. Predictive back shrinks the sheet (Material `ModalBottomSheet`) | S `SheetDefaults` |
 | Top bar color change | effects spring | 200ms tween (`COLOR_MS`) for the search bar; Material's own for `TopAppBar` | S |
-| Bottom sheet | `tween(300, FastOutSlowIn)` | Material | S `SheetDefaults` |
-| Easing tokens | emphasized decelerate (0.05, 0.7, 0.1, 1), emphasized accelerate (0.3, 0, 0.8, 0.15), standard (0.2, 0, 0, 1) | standard / emphasized cubic | T `MotionTokens` |
-| Springs (standard scheme) | spatial default 0.9 / 700; expressive default 0.8 / 380 | Material defaults (standard scheme) | T |
+| Easing tokens | emphasized decelerate (0.05, 0.7, 0.1, 1), emphasized accelerate (0.3, 0, 0.8, 0.15), standard (0.2, 0, 0, 1) | `MotionSpecs.EmphasizedDecelerate` / `EmphasizedAccelerate`, `MaterialTransitions.Emphasized` | T `MotionTokens` |
+| Springs (standard scheme) | spatial default 0.9 / 700; effects 1.0 / 1600 (expressive 0.8 / 380) | `MotionSpecs.spatialSpring()` / `effectsSpring()` for engine chrome: tab bar hide / show, swipe-action settle. `MaterialTheme.motionScheme` is internal in the stable artifact, so the values are copied | T `MotionScheme.standard()` |
 
 ## Platform
 
@@ -171,8 +179,14 @@ copy it.
 
 - Status bar icons re-sample when a bar turns opaque or transparent, not
   continuously while a hero scrolls beneath them.
-- Predictive back has no rounded corners on the shrinking screen (Material rounds
-  them toward the display corner radius).
+- A native zoom pop (`zoom` + `sourceKey`) can lose most of its shrink on a slow
+  device: the pop's first frame composes the revealed screen again (Navigation 3 keeps
+  only the top entry composed), and on a debug build that frame takes ~500ms. The pop
+  now runs on its own clock after that frame, but the frame itself still stalls.
+- `system` pops share that first-frame cost (Navigation 3 animates them on its own
+  clock), so a heavy screen below can shorten the pop.
+- The search screen push uses shared axis X, not the M3 search view expand (the DSL
+  search field and the pushed search screen are separate screens).
 - The stacked search row (search under a title) does not hide on scroll.
 - Expressive-only styles (flexible top app bars with subtitles, Expressive shape
   morph on press, Expressive switches and 16dp sliders) wait for compose-material3

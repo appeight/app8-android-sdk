@@ -10,6 +10,7 @@ import dev.app8.engine.navigation.StackNavigator
 import dev.app8.engine.render.components.CollectionKind
 import dev.app8.engine.render.components.ComponentRegistry
 import dev.app8.engine.render.style.StyleResolver
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -90,7 +91,13 @@ class Dsl060RenderTest {
         val flow = FlowController(app, "home", startFlowId = "f")
         flow.present("sheet", emptyMap(), Action.PresentationStyle.sheet, null, null)
         val modal = flow.layers.last()
+        // The sheet host slides the sheet away, then removes the layer.
+        val host = launch {
+            while (!modal.dismissing) kotlinx.coroutines.delay(5)
+            flow.remove(modal)
+        }
         val next = StackNavigator(flow, modal, modal.stack, null).dismissAndAwait()
+        host.join()
         next.push("details", emptyMap())
         assertEquals(1, flow.layers.size)
         assertEquals(listOf("home", "details"), flow.layers.single().stack.entries.map { it.screenId })

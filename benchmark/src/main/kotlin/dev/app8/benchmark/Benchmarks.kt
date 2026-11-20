@@ -14,6 +14,7 @@ import dev.app8.benchmark.Journeys.openProductAndBack
 import dev.app8.benchmark.Journeys.openShop
 import dev.app8.benchmark.Journeys.scrollLongList
 import dev.app8.benchmark.Journeys.scrollShop
+import dev.app8.benchmark.Journeys.switchTabs
 import dev.app8.benchmark.Journeys.startSampleApp
 import dev.app8.benchmark.Journeys.startLongList
 import org.junit.Rule
@@ -40,6 +41,9 @@ class Benchmarks {
 
     @Test fun openProductNone() = openProduct(CompilationMode.None())
     @Test fun openProductBaselineProfile() = openProduct(BASELINE)
+
+    @Test fun switchTabsNone() = tabSwitch(CompilationMode.None())
+    @Test fun switchTabsBaselineProfile() = tabSwitch(BASELINE)
 
     @Test fun scrollLongListNone() = scrollLongList(CompilationMode.None())
     @Test fun scrollLongListBaselineProfile() = scrollLongList(BASELINE)
@@ -78,6 +82,19 @@ class Benchmarks {
             openShop()
         },
     ) { openProductAndBack() }
+
+    private fun tabSwitch(mode: CompilationMode) = rule.measureRepeated(
+        packageName = PACKAGE,
+        metrics = listOf(FrameTimingMetric()) + engineSections,
+        compilationMode = mode,
+        startupMode = null,
+        iterations = ITERATIONS,
+        setupBlock = {
+            killProcess()
+            startSampleApp()
+            openShop()
+        },
+    ) { switchTabs() }
 
     private fun scrollLongList(mode: CompilationMode) = rule.measureRepeated(
         packageName = PACKAGE,

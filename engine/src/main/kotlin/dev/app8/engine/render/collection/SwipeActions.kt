@@ -1,7 +1,6 @@
 package dev.app8.engine.render.collection
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
@@ -70,7 +69,7 @@ internal fun SwipeActionsBox(
     val limitLead = if (fullSwipe && leading.isNotEmpty()) rowWidth.toFloat() else maxLead
     val limitTrail = if (fullSwipe && trailing.isNotEmpty()) rowWidth.toFloat() else maxTrail
 
-    fun settle(target: Float) = scope.launch { offset.animateTo(target, spring(stiffness = 600f)) }
+    fun settle(target: Float) = scope.launch { offset.animateTo(target, dev.app8.engine.navigation.MotionSpecs.spatialSpring()) } // M3 standard spatial spring
     fun run(action: CollectionProperties.SwipeAction) {
         onAction(action)
         settle(0f)

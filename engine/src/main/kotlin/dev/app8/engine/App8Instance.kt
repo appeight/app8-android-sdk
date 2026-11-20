@@ -202,6 +202,14 @@ public class App8Instance internal constructor(
                     val content = (runtime.loadScreen(id) as? dev.app8.engine.core.model.ComponentEntity<*>)?.content
                     (content as? dev.app8.engine.core.model.ComponentContent<*, *>)?.transition?.screenOrNull
                 },
+                createSession = { route ->
+                    runtime.beginWork()
+                    try {
+                        dev.app8.engine.render.ScreenSession.create(runtime, appScope, route.screenId, route.params)
+                    } finally {
+                        runtime.endWork()
+                    }
+                },
             )
         }
         androidx.compose.runtime.DisposableEffect(flow) {

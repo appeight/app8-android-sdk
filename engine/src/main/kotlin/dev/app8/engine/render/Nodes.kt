@@ -128,9 +128,7 @@ internal fun NodeView(node: RenderNode) {
     m = m.elementTransition(element)
     // A keyed element is a possible source of a native zoom (`zoom` + `sourceKey`).
     if (element != null) {
-        val corner = (style?.material?.let { env.material(it, node) }?.layers
-            ?.firstNotNullOfOrNull { ((it as? dev.app8.engine.core.model.style.StyleEntity<*>)?.content as? dev.app8.engine.core.model.style.Corner)?.radius as? dev.app8.engine.core.model.style.Corner.Radius.Fixed }?.value
-            ?: props?.cornerRadius ?: 0.0).toFloat()
+        val corner = cornerOf(node, style, props, env).toFloat()
         val photo = if (kind == dev.app8.engine.render.components.ImageKind) dev.app8.engine.render.components.imageRef(node) else null
         m = m.zoomSource(node.runtime.zoomSources, node.session, node.string(element.key), corner * env.density.density, photo)
     }
@@ -160,12 +158,22 @@ internal fun NodeView(node: RenderNode) {
     val parentEnabled = LocalInteractionEnabled.current
     // Touches stop the moment a component starts disappearing.
     val enabled = parentEnabled && enabledHere && !hidden
-    if (enabled && !kind.handlesTaps) m = m.then(tapModifier(node, content, indication = null))
+    if (enabled && !kind.handlesTaps) {
+        // Android press feedback, clipped to the view's corners, unless the DSL has its own touch state.
+        val indication = if (PressFeedback.wanted(content)) pressIndication(cornerOf(node, style, props, env)) else null
+        m = m.then(tapModifier(node, content, indication = indication))
+    }
 
     CompositionLocalProvider(LocalInteractionEnabled provides enabled) {
         kind.Render(node, m)
     }
 }
+
+/** A view's corner radius in points: its material's fixed `corner`, else `cornerRadius`, else 0. */
+internal fun cornerOf(node: RenderNode, style: BaseStyle?, props: ViewProperties?, env: RenderEnv): Double =
+    style?.material?.let { env.material(it, node) }?.layers
+        ?.firstNotNullOfOrNull { ((it as? dev.app8.engine.core.model.style.StyleEntity<*>)?.content as? dev.app8.engine.core.model.style.Corner)?.radius as? dev.app8.engine.core.model.style.Corner.Radius.Fixed }?.value
+        ?: props?.cornerRadius ?: 0.0
 
 /**
  * Tap / long-press / press-state handling for a node, through the dispatcher. Null when
