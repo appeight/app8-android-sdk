@@ -28,6 +28,7 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.graphicsLayer
 import kotlinx.coroutines.launch
 import dev.app8.engine.core.model.style.ColorHex
@@ -45,8 +46,6 @@ internal const val TAB_BAR_HEIGHT = 64.0
 /** Window width (dp) from which tab items lay out icon-beside-label, centered (M3 medium width). */
 internal const val TAB_BAR_HORIZONTAL_ITEMS_WIDTH = 600
 
-/** The selected item's indicator pill: the tab tint at this alpha (the web renderer uses the same). */
-internal const val TAB_INDICATOR_ALPHA = 0.14f
 
 /**
  * `tabBarScreen` as a Material 3 Expressive `ShortNavigationBar`: each tab keeps its own back stack (and
@@ -106,6 +105,7 @@ internal fun TabBarHost(session: ScreenSession, flow: FlowController, layer: Lay
     val scheme = MaterialTheme.colorScheme
     val tint = accent ?: scheme.primary
     val unselected = dev.app8.engine.style.readableOn(authoredUnselected, scheme.surfaceContainer, scheme.onSurfaceVariant)
+    val selectionIndicator = selectionIndicatorColorFor(hex(content.selectionIndicatorColor), scheme.surfaceContainer)
     // The fade through passes through the surface color, never the black window behind.
     Box(Modifier.fillMaxSize().background(scheme.surface)) {
         val i = state.selected
@@ -199,7 +199,7 @@ internal fun TabBarHost(session: ScreenSession, flow: FlowController, layer: Lay
                     colors = ShortNavigationBarItemDefaults.colors(
                         selectedIconColor = tint,
                         selectedTextColor = tint,
-                        selectedIndicatorColor = tint.copy(alpha = TAB_INDICATOR_ALPHA),
+                        selectedIndicatorColor = selectionIndicator,
                         unselectedIconColor = unselected,
                         unselectedTextColor = unselected,
                     ),
@@ -285,3 +285,12 @@ private class LiveNavigator(private val flow: FlowController, private val layer:
     override fun selectTab(index: Int?, id: String?) = now.selectTab(index, id)
     override fun completeFlow(destination: String) = now.completeFlow(destination)
 }
+
+/**
+ * `selectionIndicatorColor` of the platform bar, else the spec default: black at 10% on a
+ * light bar, white at 10% on a dark one, so the pill never mixes the brand tint with grey.
+ */
+internal fun selectionIndicatorColorFor(authored: Color?, bar: Color): Color =
+    authored ?: if (bar.luminance() > 0.5f) Color.Black.copy(alpha = TAB_SELECTION_DEFAULT_ALPHA) else Color.White.copy(alpha = TAB_SELECTION_DEFAULT_ALPHA)
+
+internal const val TAB_SELECTION_DEFAULT_ALPHA = 0.10f

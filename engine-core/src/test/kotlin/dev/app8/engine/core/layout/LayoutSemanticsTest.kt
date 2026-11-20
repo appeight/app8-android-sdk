@@ -197,6 +197,22 @@ class LayoutSemanticsTest {
     }
 
     @Test
+    fun edgesOnTheSuperviewsCentre() {
+        // 0.7.9: leading/trailing → centerX and top/bottom → centerY (half-width panes).
+        val box = LayoutNode(
+            "box",
+            layout = Layout(leading = fixed(0), top = fixed(0), width = fixed(300), height = fixed(200)),
+            children = listOf(
+                LayoutNode("l", layout = Layout(constraints = listOf(c(TOP, "superview"), c(BOTTOM, "superview"), c(LEADING, "superview"), c(TRAILING, "superview", attribute = CENTER_X, constant = -6)))),
+                LayoutNode("r", layout = Layout(constraints = listOf(c(TOP, "superview"), c(BOTTOM, "superview", attribute = CENTER_Y), c(LEADING, "superview", attribute = CENTER_X, constant = 6), c(TRAILING, "superview")))),
+            ),
+        )
+        val r = solveLayout(screen(box), PHONE)
+        assertEquals(frame(0, 0, 144, 200), r["l"])
+        assertEquals(frame(156, 0, 144, 100), r["r"])
+    }
+
+    @Test
     fun centerAnchorsAgainstEdges() {
         val v = LayoutNode(
             "v",

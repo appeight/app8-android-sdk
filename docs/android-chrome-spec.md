@@ -122,11 +122,11 @@ copy it.
 |---|---|---|---|
 | Component | M3 Expressive short navigation bar | `ShortNavigationBar` | S, REF (Clock, Phone: 64dp) |
 | Height (without system nav inset) | 64 (baseline 80 is retired) | 64 (`TAB_BAR_HEIGHT`); 88 total with the gesture bar, identical to Clock | T `NavigationBarTokens`, REF |
-| Indicator | 56×32 pill | 56×32, tab tint at 14% | T `NavigationBarVerticalItemTokens` |
+| Indicator | 56×32 pill | 56×32, `selectionIndicatorColor`, else black at 10% (white at 10% on a dark bar); the tint at 14% up to 0.7.8 | T `NavigationBarVerticalItemTokens` |
 | Icon | 24 | 24 | T |
 | Label | labelMedium 12/16 medium | labelMedium | T |
 | Container | `surfaceContainer` | `surfaceContainer` of the app scheme | T |
-| Selected icon, label, indicator | `secondaryContainer` indicator, `onSurface` / `onSecondaryContainer` | `tintColor` (else the scheme's `primary`), indicator the tint at 14% | T, DSL |
+| Selected icon, label, indicator | `secondaryContainer` indicator, `onSurface` / `onSecondaryContainer` | `tintColor` (else the scheme's `primary`), indicator `selectionIndicatorColor` (default black or white at 10%) | T, DSL |
 | Unselected icon and label | `onSurfaceVariant` | `unselectedColor` while it reaches 4.5:1 on the container (alpha composited), else `onSurfaceVariant`. The iOS gray defaults read 2.3–3:1 there | T, WCAG 1.4.3 |
 | Wide windows (≥ 600) | horizontal items (icon beside label), centered | `Centered` + `NavigationItemIconPosition.Start` from 600dp | S, M3 |
 

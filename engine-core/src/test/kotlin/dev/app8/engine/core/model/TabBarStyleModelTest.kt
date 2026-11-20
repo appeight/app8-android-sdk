@@ -140,4 +140,30 @@ class TabBarStyleModelTest {
         val entity = assertIs<ComponentEntity<*>>(c)
         return assertNotNull(entity.content.actions?.get(ActionTrigger.tap)?.single())
     }
+
+    @Test
+    fun selectionIndicatorColorDecodes() {
+        // 0.7.9: the platform bar's selected-item highlight.
+        val json = """
+            { "type": "tabBarScreen", "id": "tabs", "content": {
+              "tabs": [{ "id": "home", "label": "HOME", "icon": "house", "screen": "homeScreen" }],
+              "selectionIndicatorColor": "#E0A10040" } }
+        """
+        val c = assertIs<TabBarScreenContent>(assertIs<ComponentEntity<*>>(DslDecoder().decodeComponent(json)).content)
+        assertEquals("#E0A10040", c.selectionIndicatorColor)
+        assertNull(tabBar(null).selectionIndicatorColor)
+    }
+
+    @Test
+    fun collectionItemWidthAuto() {
+        val json = """
+            { "type": "collection", "id": "chips", "content": { "properties": { "data": "{{chips}}",
+              "layout": { "type": "horizontal", "itemWidth": "auto", "itemHeight": 36 } } } }
+        """
+        val entity = assertIs<ComponentEntity<*>>(DslDecoder().decodeComponent(json))
+        val layout = assertNotNull((entity.content.properties as? CollectionProperties)?.layout)
+        assertTrue(layout.itemWidthAuto)
+        assertNull(layout.itemWidth)
+        assertFalse(layout.itemWidthFill)
+    }
 }

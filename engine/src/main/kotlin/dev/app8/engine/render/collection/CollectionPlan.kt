@@ -103,7 +103,7 @@ internal object CollectionPlan {
     fun usesNativePaging(config: CollectionLayout?): Boolean =
         config?.type == CollectionLayout.LayoutType.horizontal &&
             config.pagingStyle == CollectionLayout.PagingStyle.paging &&
-            config.itemWidth == null && config.estimatedItemWidth == null && (config.rows ?: 1) <= 1
+            config.itemWidth == null && config.estimatedItemWidth == null && !config.itemWidthAuto && (config.rows ?: 1) <= 1
 
     /** A plain vertical list (no per-section layouts or headers, no swipe actions). */
     private fun plainVertical(config: CollectionLayout?, mixed: Boolean, swipe: Boolean): Boolean =
@@ -142,7 +142,7 @@ internal object CollectionPlan {
                 lineSpacing = config.lineSpacing ?: config.itemSpacing ?: 0.0,
                 itemWidth = config.itemWidth,
                 itemHeight = config.itemHeight ?: 100.0,
-                selfSizingWidth = config.itemWidth == null && config.estimatedItemWidth != null,
+                selfSizingWidth = config.itemWidth == null && (config.estimatedItemWidth != null || config.itemWidthAuto),
                 paging = paging(config),
             )
             else -> SectionStyle(
