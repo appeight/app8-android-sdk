@@ -123,6 +123,23 @@ internal fun ScreenHost(route: Route, navigator: StackNavigator, flow: FlowContr
         // A covered screen or an unselected tab keeps its session for the return.
         onDispose { sessions.release(route.id, stillOnStack = route in stack.entries && stack.isLive) }
     }
+    // `userInterfaceStyle` (iOS `overrideUserInterfaceStyle` on the screen's view controller):
+    // the screen's content, top app bar and dialogs draw in it. A `tabBarScreen` and its tab
+    // bar keep the app's style; the screens in its tabs set their own.
+    val own = if (session?.tabBar != null) null else
+        dev.app8.engine.style.appearanceOf((session?.content as? dev.app8.engine.core.model.ComponentContent<*, *>)?.userInterfaceStyle)
+    val depth = LocalScreenDepth.current + 1
+    // The system bar icons, alerts and presented layers follow the screen on top.
+    val onTop by remember(flow, layer, stack, route) {
+        androidx.compose.runtime.derivedStateOf { flow.layers.lastOrNull() === layer && stack.entries.lastOrNull() == route }
+    }
+    val styled = own ?: layer.appearance
+    DisposableEffect(flow, route.id, onTop, depth, styled) {
+        if (onTop) flow.claimTop(route.id, depth, styled)
+        onDispose { flow.releaseTop(route.id) }
+    }
+    CompositionLocalProvider(LocalScreenDepth provides depth) {
+    dev.app8.engine.style.ProvideAppearance(own) {
     // Default screen background: the app scheme's `surface`; in a bottom sheet the sheet's own
     // `surfaceContainerLow`, so the drag handle strip and the screen are one surface (M3).
     // A screen's own `backgroundColor` (brand content) draws over it.
@@ -155,7 +172,12 @@ internal fun ScreenHost(route: Route, navigator: StackNavigator, flow: FlowContr
         }
     }
     }
+    }
+    }
 }
+
+/** How many screens enclose this one (a `tabBarScreen`'s tab screens are one deeper). */
+internal val LocalScreenDepth = staticCompositionLocalOf { 0 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

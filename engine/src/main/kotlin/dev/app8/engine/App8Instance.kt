@@ -6,8 +6,6 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -45,7 +43,9 @@ import dev.app8.engine.style.LocalApp8Appearance
 import dev.app8.engine.style.LocalApp8FontProvider
 import dev.app8.engine.style.LocalApp8TextScaling
 import dev.app8.engine.style.TextSizer
-import dev.app8.engine.style.systemColorScheme
+import dev.app8.engine.style.ProvideAppearance
+import dev.app8.engine.style.appAppearance
+import dev.app8.engine.style.appColorScheme
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -171,16 +171,8 @@ public class App8Instance internal constructor(
             return Box(modifier.fillMaxSize())
         }
 
-        val dark = when (userInterfaceStyle) {
-            UserInterfaceStyle.LIGHT -> false
-            UserInterfaceStyle.DARK -> true
-            UserInterfaceStyle.UNSPECIFIED -> when (app.defaultUserInterfaceStyle) {
-                App.UserInterfaceStyle.light -> false
-                App.UserInterfaceStyle.dark -> true
-                null -> isSystemInDarkTheme()
-            }
-        }
-        val appearance = if (dark) App8Appearance.Dark else App8Appearance.Light
+        val appearance = appAppearance(userInterfaceStyle, app.defaultUserInterfaceStyle, isSystemInDarkTheme())
+        val dark = appearance.isDark
         val density = LocalDensity.current
         val measurer = rememberTextMeasurer(cacheSize = 128)
         val fonts = fontProvider
@@ -220,11 +212,7 @@ public class App8Instance internal constructor(
         }
         // System chrome takes the app's colors, never Material's baseline purple
         // (app8-dsl platforms.md, "Android system colors"); wallpaper colors only on opt-in.
-        val scheme = if (runtime.dynamicColor) {
-            if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        } else {
-            systemColorScheme(runtime.chromeAccent, dark)
-        }
+        val scheme = appColorScheme(runtime, dark)
         MaterialTheme(colorScheme = scheme) {
             CompositionLocalProvider(
                 LocalApp8Appearance provides appearance,
@@ -235,11 +223,15 @@ public class App8Instance internal constructor(
                 LocalHostEffects provides effects,
             ) {
                 FlowHost(flow, modifier)
-                AlertHost(effects)
+                // Alerts and the photo source chooser take the style of the screen on top
+                // (presented from it), like iOS `overrideUserInterfaceStyle`.
+                ProvideAppearance(flow.topAppearance) {
+                    AlertHost(effects)
+                    PhotoCaptureHost(effects)
+                }
                 NotificationPermissionHost(effects)
-                PhotoCaptureHost(effects)
-                // Readable system bar icons over DSL content.
-                AdaptiveSystemBars(flow, dark, runtime.pending)
+                // Readable system bar icons over DSL content; they follow the screen on top.
+                AdaptiveSystemBars(flow, flow.topAppearance?.isDark ?: dark, runtime.pending)
             }
         }
     }

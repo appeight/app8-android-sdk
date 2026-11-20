@@ -44,6 +44,10 @@ internal class RenderEnv(
     private val sizer: TextSizer,
 ) {
     val styles = StyleResolver(runtime.styles)
+
+    /** This environment for [appearance] (a screen with its own `userInterfaceStyle`). */
+    fun withAppearance(appearance: App8Appearance): RenderEnv =
+        if (appearance == this.appearance) this else RenderEnv(runtime, appearance, density, measurer, fonts, sizer)
     val isDark: Boolean get() = appearance.isDark
 
     /** UIColor.label. */
