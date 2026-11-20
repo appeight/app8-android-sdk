@@ -1,0 +1,8 @@
+{"type": "tabBarScreen", "id": "tabsEdge", "content": {
+  "tabs": [
+    {"id": "home", "label": "Home", "icon": "house.fill", "screen": "edgeCases"},
+    {"id": "missing", "label": "Missing", "icon": "no.such.symbol", "screen": "missingScreen"}
+  ],
+  "initialTab": "nope",
+  "tintColor": "#GG0000"
+}}

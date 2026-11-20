@@ -20,6 +20,8 @@ android {
     testOptions { unitTests.isReturnDefaultValues = true }
     // Pipeline tests run on the JVM; android.jar stubs return defaults instead of throwing.
     testOptions { unitTests.isReturnDefaultValues = true }
+    // Robustness corpus and JSON mutator, shared with :engine-core's tests.
+    sourceSets["test"].kotlin.srcDir("../engine-core/src/testShared/kotlin")
     publishing {
         singleVariant("release") { withSourcesJar() }
     }

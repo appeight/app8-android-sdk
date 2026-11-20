@@ -1,0 +1,37 @@
+{
+ "type": "screen",
+ "content": {
+  "navigationBar": {
+   "title": "Profile",
+   "rightAction": {
+    "label": "Edit",
+    "action": {
+     "type": "navigation",
+     "nextScreen": "editProfile"
+    }
+   }
+  },
+  "variables": {
+   "userName": {
+    "type": "string",
+    "initialValue": ""
+   }
+  },
+  "inputParameters": {
+   "userId": {
+    "type": "string",
+    "required": true
+   }
+  },
+  "onEvent": [
+   {
+    "event": "appear",
+    "action": {
+     "type": "executeFunction",
+     "function": "loadUser"
+    }
+   }
+  ],
+  "children": []
+ }
+}

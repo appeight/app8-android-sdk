@@ -1,0 +1,66 @@
+{
+ "type": "screen",
+ "content": {
+  "variables": {
+   "name": {
+    "type": "string",
+    "initialValue": ""
+   }
+  },
+  "children": [
+   {
+    "id": "nameField",
+    "type": "textField",
+    "content": {
+     "properties": {
+      "placeholder": "Your name",
+      "bindVariable": "name"
+     },
+     "layout": {
+      "height": 48,
+      "constraints": [
+       {
+        "type": "leading",
+        "target": "superview",
+        "constant": 24
+       },
+       {
+        "type": "trailing",
+        "target": "superview",
+        "constant": -24
+       },
+       {
+        "type": "top",
+        "target": "superview",
+        "constant": 120
+       }
+      ]
+     }
+    }
+   },
+   {
+    "id": "greeting",
+    "type": "label",
+    "content": {
+     "properties": {
+      "text": "Hello, {{name}}!"
+     },
+     "layout": {
+      "constraints": [
+       {
+        "type": "top",
+        "target": "nameField",
+        "attribute": "bottom",
+        "constant": 16
+       },
+       {
+        "type": "centerX",
+        "target": "superview"
+       }
+      ]
+     }
+    }
+   }
+  ]
+ }
+}

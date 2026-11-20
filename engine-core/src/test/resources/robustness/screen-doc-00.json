@@ -1,0 +1,141 @@
+{
+ "type": "screen",
+ "content": {
+  "additionalSafeAreaInsets": {
+   "top": 60,
+   "bottom": 60
+  },
+  "children": [
+   {
+    "id": "list",
+    "type": "collection",
+    "content": {
+     "layout": {
+      "constraints": [
+       {
+        "type": "top",
+        "target": "superview"
+       },
+       {
+        "type": "leading",
+        "target": "superview"
+       },
+       {
+        "type": "trailing",
+        "target": "superview"
+       },
+       {
+        "type": "bottom",
+        "target": "superview"
+       }
+      ]
+     }
+    }
+   },
+   {
+    "id": "topbar",
+    "type": "view",
+    "content": {
+     "layout": {
+      "constraints": [
+       {
+        "type": "top",
+        "target": "superview"
+       },
+       {
+        "type": "leading",
+        "target": "superview"
+       },
+       {
+        "type": "trailing",
+        "target": "superview"
+       },
+       {
+        "type": "bottom",
+        "target": "safeArea",
+        "attribute": "top"
+       }
+      ]
+     },
+     "children": [
+      {
+       "id": "topbar-content",
+       "type": "view",
+       "content": {
+        "layout": {
+         "height": 60,
+         "constraints": [
+          {
+           "type": "leading",
+           "target": "superview"
+          },
+          {
+           "type": "trailing",
+           "target": "superview"
+          },
+          {
+           "type": "bottom",
+           "target": "superview"
+          }
+         ]
+        }
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "bottombar",
+    "type": "view",
+    "content": {
+     "layout": {
+      "constraints": [
+       {
+        "type": "top",
+        "target": "safeArea",
+        "attribute": "bottom"
+       },
+       {
+        "type": "leading",
+        "target": "superview"
+       },
+       {
+        "type": "trailing",
+        "target": "superview"
+       },
+       {
+        "type": "bottom",
+        "target": "superview"
+       }
+      ]
+     },
+     "children": [
+      {
+       "id": "bottombar-content",
+       "type": "view",
+       "content": {
+        "layout": {
+         "height": 60,
+         "constraints": [
+          {
+           "type": "top",
+           "target": "superview"
+          },
+          {
+           "type": "leading",
+           "target": "superview"
+          },
+          {
+           "type": "trailing",
+           "target": "superview"
+          }
+         ]
+        }
+       }
+      }
+     ]
+    }
+   }
+  ]
+ }
+}

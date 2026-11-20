@@ -1,0 +1,8 @@
+{"id": "Card", "type": "view", "content": {
+  "variables": {"title": {"type": "string", "initialValue": "Card"}},
+  "style": {"material": [{"id": "cardFill", "type": "fill", "content": {"solid": "#FFFFFF"}}]},
+  "children": [
+    {"type": "label", "id": "cardTitle", "content": {"properties": {"text": "{{title}}"},
+      "style": {"text": {"id": "cardText", "type": "text", "content": {"font": {"family": "NoSuchFont", "size": 15, "weight": "semibold"}, "color": "#111111"}}},
+      "layout": {"leading": 12, "trailing": 12, "top": 8, "bottom": 8}}}
+  ]}}

@@ -1,0 +1,131 @@
+{
+ "type": "screen",
+ "id": "brightness-demo",
+ "content": {
+  "variables": {
+   "dragY": {
+    "type": "number",
+    "initialValue": 100
+   },
+   "brightness": {
+    "type": "number",
+    "computed": "{{ max(0, min(100, (200 - dragY) / 2)) }}"
+   }
+  },
+  "children": [
+   {
+    "id": "capsule",
+    "type": "view",
+    "content": {
+     "gestures": {
+      "pan": {
+       "locationY": "dragY"
+      }
+     },
+     "style": {
+      "material": [
+       {
+        "id": "g",
+        "type": "visualEffect",
+        "content": {
+         "glass": "normal",
+         "container": true
+        }
+       },
+       {
+        "id": "c",
+        "type": "corner",
+        "content": {
+         "radius": "capsule"
+        }
+       }
+      ]
+     },
+     "layout": {
+      "constraints": [
+       {
+        "type": "centerX",
+        "target": "superview"
+       },
+       {
+        "type": "centerY",
+        "target": "superview"
+       },
+       {
+        "type": "width",
+        "constant": 90
+       },
+       {
+        "type": "height",
+        "constant": 200
+       }
+      ]
+     },
+     "children": [
+      {
+       "id": "fill",
+       "type": "view",
+       "content": {
+        "style": {
+         "material": [
+          {
+           "id": "f",
+           "type": "fill",
+           "content": {
+            "solid": "#EAF4FFE6"
+           }
+          }
+         ]
+        },
+        "layout": {
+         "height": "{{ brightness * 2 }}",
+         "constraints": [
+          {
+           "type": "leading",
+           "target": "superview"
+          },
+          {
+           "type": "trailing",
+           "target": "superview"
+          },
+          {
+           "type": "bottom",
+           "target": "superview"
+          }
+         ]
+        }
+       }
+      },
+      {
+       "id": "sun",
+       "type": "icon",
+       "content": {
+        "properties": {
+         "type": "symbol",
+         "name": "sun.max.fill"
+        },
+        "style": {
+         "symbolFontSize": 28,
+         "color": "#FFC400"
+        },
+        "layout": {
+         "constraints": [
+          {
+           "type": "centerX",
+           "target": "superview"
+          },
+          {
+           "type": "bottom",
+           "target": "superview",
+           "constant": -24
+          }
+         ]
+        }
+       }
+      }
+     ]
+    }
+   }
+  ]
+ }
+}

@@ -1,0 +1,76 @@
+{
+ "app": {
+  "name": "MyApp"
+ },
+ "navigation": {
+  "startFlow": "main",
+  "flows": [
+   {
+    "id": "main",
+    "startScreen": "home"
+   }
+  ]
+ },
+ "screens": {
+  "home": {
+   "type": "screen",
+   "content": {
+    "navigationBar": {
+     "title": "Home"
+    },
+    "variables": {
+     "count": {
+      "type": "number",
+      "initialValue": 0
+     }
+    },
+    "children": [
+     {
+      "type": "label",
+      "content": {
+       "properties": {
+        "text": "Count: {{count}}"
+       },
+       "style": {
+        "text": {
+         "id": "countLabel",
+         "type": "text",
+         "content": {
+          "fontSize": 24,
+          "alignment": "center"
+         }
+        }
+       },
+       "layout": {
+        "leading": 20,
+        "trailing": 20,
+        "top": 100
+       }
+      }
+     },
+     {
+      "type": "button",
+      "content": {
+       "properties": {
+        "text": "Increment"
+       },
+       "layout": {
+        "centerX": 0,
+        "top": 160,
+        "width": 200,
+        "height": 50
+       },
+       "actions": {
+        "tap": {
+         "type": "incrementVariable",
+         "variableName": "count",
+         "by": 1
+        }
+       }
+      }
+     }
+    ]
+   }
+  }
+ }
+}

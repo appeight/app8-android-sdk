@@ -1,0 +1,136 @@
+[
+ {
+  "id": "f",
+  "type": "fill",
+  "content": {
+   "solid": "#E5E5EA"
+  }
+ },
+ {
+  "id": "f2",
+  "type": "fill",
+  "content": {
+   "solid": "#E5E5EA"
+  }
+ },
+ {
+  "id": "f",
+  "type": "fill",
+  "content": {
+   "solid": "#EAF4FFE6"
+  }
+ },
+ {
+  "id": "cardFill",
+  "type": "fill",
+  "content": {
+   "solid": "#FFFFFF"
+  }
+ },
+ {
+  "id": "c",
+  "type": "corner",
+  "content": {
+   "radius": "50%"
+  }
+ },
+ {
+  "id": "c2",
+  "type": "corner",
+  "content": {
+   "radius": 6
+  }
+ },
+ {
+  "id": "c",
+  "type": "corner",
+  "content": {
+   "radius": "capsule"
+  }
+ },
+ {
+  "id": "cardCorner",
+  "type": "corner",
+  "content": {
+   "radius": 12,
+   "curve": "continuous"
+  }
+ },
+ {
+  "id": "destructive",
+  "type": "text",
+  "content": {
+   "color": "#FF3B30"
+  }
+ },
+ {
+  "id": "countLabel",
+  "type": "text",
+  "content": {
+   "fontSize": 24,
+   "alignment": "center"
+  }
+ },
+ {
+  "id": "headingText",
+  "type": "text",
+  "content": {
+   "fontSize": 24,
+   "fontWeight": "bold",
+   "alignment": "center"
+  }
+ },
+ {
+  "id": "helloText",
+  "type": "text",
+  "content": {
+   "fontSize": 24,
+   "alignment": "center"
+  }
+ },
+ {
+  "id": "cardOutline",
+  "type": "outline",
+  "content": {
+   "lineWidth": 1,
+   "fill": {
+    "solid": "#E5E5E5"
+   }
+  }
+ },
+ {
+  "id": "outlinedCardOutline",
+  "type": "outline",
+  "content": {
+   "lineWidth": 1,
+   "fill": {
+    "solid": "#E5E5E5"
+   }
+  }
+ },
+ {
+  "id": "formInputNormalOutline",
+  "type": "outline",
+  "content": {
+   "lineWidth": 0
+  }
+ },
+ {
+  "id": "formInputFocusedOutline",
+  "type": "outline",
+  "content": {
+   "lineWidth": 2,
+   "fill": {
+    "solid": "#007AFF"
+   }
+  }
+ },
+ {
+  "id": "g",
+  "type": "visualEffect",
+  "content": {
+   "glass": "normal",
+   "container": true
+  }
+ }
+]
