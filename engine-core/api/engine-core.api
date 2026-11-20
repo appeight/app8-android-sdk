@@ -954,6 +954,7 @@ public final class dev/app8/engine/core/model/Accessibility$Trait : java/lang/En
 	public static final field STARTS_MEDIA_SESSION Ldev/app8/engine/core/model/Accessibility$Trait;
 	public static final field STATIC_TEXT Ldev/app8/engine/core/model/Accessibility$Trait;
 	public static final field SUMMARY_ELEMENT Ldev/app8/engine/core/model/Accessibility$Trait;
+	public static final field TAB Ldev/app8/engine/core/model/Accessibility$Trait;
 	public static final field UPDATES_FREQUENTLY Ldev/app8/engine/core/model/Accessibility$Trait;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public final fun getRaw ()Ljava/lang/String;

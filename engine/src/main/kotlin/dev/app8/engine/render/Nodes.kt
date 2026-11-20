@@ -216,9 +216,12 @@ internal fun tapModifier(node: RenderNode, content: EntityContent, indication: I
         }
     }
     if (hasTap || hasLong) {
+        // `accessibility.traits: ["tab"]` (custom tab bar items) reads as a tab.
+        val tab = node.content.accessibility?.traits?.contains(dev.app8.engine.core.model.Accessibility.Trait.TAB) == true
         m = m.combinedClickable(
             interactionSource = source,
             indication = indication,
+            role = if (tab) androidx.compose.ui.semantics.Role.Tab else null,
             onLongClick = when {
                 menu != null -> openMenu
                 hasLong -> ({ dispatcher.dispatchTrigger(node, ActionTrigger.longPress) })
