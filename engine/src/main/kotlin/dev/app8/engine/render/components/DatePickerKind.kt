@@ -156,7 +156,10 @@ internal object DatePickerKind : ComponentKind {
         val enabled = (node.bool(p.isEnabled) ?: true) && LocalInteractionEnabled.current
         val tint = node.hexColor((node.content.style as? DatePickerStyle)?.tintColor) ?: MaterialTheme.colorScheme.primary
         val min = DateValues.parse(node.string(p.minimumDate))
-        val max = DateValues.parse(node.string(p.maximumDate))
+        // A maximum before the minimum is ignored: clamping to an empty range would throw.
+        val rawMax = DateValues.parse(node.string(p.maximumDate))
+        val max = rawMax?.takeIf { min == null || it >= min }
+        if (rawMax != null && max == null) node.runtime.diagnostics.warn("datePicker.range", "maximumDate of ${node.key} is before minimumDate; ignored")
         val set: (Long) -> Unit = { raw ->
             val v = raw.coerceIn(min ?: Long.MIN_VALUE, max ?: Long.MAX_VALUE)
             if (v != ms) {

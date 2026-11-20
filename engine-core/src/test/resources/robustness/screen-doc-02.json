@@ -1,0 +1,88 @@
+{
+ "type": "screen",
+ "content": {
+  "navigationBar": {
+   "title": "Sign up"
+  },
+  "variables": {
+   "email": {
+    "type": "string",
+    "initialValue": ""
+   },
+   "agreed": {
+    "type": "boolean",
+    "initialValue": false
+   },
+   "isSubmitting": {
+    "type": "boolean",
+    "initialValue": false
+   },
+   "emailValid": {
+    "type": "boolean",
+    "computed": "{{match(email, '^[^@]+@[^@]+\\.[^@]+$')}}"
+   },
+   "canSubmit": {
+    "type": "boolean",
+    "computed": "{{emailValid && agreed && !isSubmitting}}"
+   }
+  },
+  "children": [
+   {
+    "type": "textField",
+    "content": {
+     "properties": {
+      "placeholder": "Email",
+      "bindVariable": "email",
+      "keyboardType": "emailAddress",
+      "textContentType": "emailAddress"
+     },
+     "layout": {
+      "leading": 20,
+      "trailing": 20,
+      "top": 24,
+      "height": 48
+     }
+    }
+   },
+   {
+    "type": "toggle",
+    "content": {
+     "properties": {
+      "bindVariable": "agreed"
+     },
+     "layout": {
+      "leading": 20,
+      "top": 88
+     }
+    }
+   },
+   {
+    "type": "button",
+    "content": {
+     "properties": {
+      "text": "Create account"
+     },
+     "style": {
+      "alpha": "{{canSubmit ? 1.0 : 0.5}}"
+     },
+     "actions": {
+      "tap": {
+       "type": "emit",
+       "name": "signup.submit",
+       "payload": {
+        "email": "{{email}}",
+        "valid": "{{canSubmit}}"
+       }
+      }
+     },
+     "layout": {
+      "leading": 20,
+      "trailing": 20,
+      "top": 140,
+      "height": 50
+     }
+    }
+   }
+  ]
+ }
+}

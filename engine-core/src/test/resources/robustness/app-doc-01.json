@@ -1,0 +1,12 @@
+{
+ "app": {
+  "name": "AppName",
+  "variables": {}
+ },
+ "navigation": {
+  "startFlow": "flowId",
+  "flows": []
+ },
+ "screens": {},
+ "templates": []
+}

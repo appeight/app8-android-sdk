@@ -1,0 +1,34 @@
+{
+ "type": "screen",
+ "content": {
+  "variables": {
+   "ringProgress": {
+    "type": "number",
+    "initialValue": 0.75
+   }
+  },
+  "children": [
+   {
+    "id": "my-ring",
+    "type": "shape",
+    "content": {
+     "properties": {
+      "kind": "arc",
+      "progress": "{{ringProgress}}",
+      "startAngle": -90,
+      "lineWidth": 14,
+      "lineCap": "round",
+      "strokeColor": "#FF2D55",
+      "trackColor": "#FF2D5533",
+      "animationDuration": 1.0,
+      "animationCurve": "easeOut"
+     },
+     "layout": {
+      "width": 120,
+      "height": 120
+     }
+    }
+   }
+  ]
+ }
+}

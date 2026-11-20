@@ -210,7 +210,8 @@ internal class App8Runtime(
         app?.let { return it }
         val appBytes = withContext(Dispatchers.IO) { dataSource.getApp() }
         val model = try {
-            decoder.decodeApp(utf8(appBytes, "app.json"))
+            val element = decoder.parse(utf8(appBytes, "app.json"))
+            DegradingDecode.decode(element, { e -> diagnostics.warn("value.ignored", "'${e.path}' in app.json: ${e.reason}; using the default") }) { decoder.decodeApp(it) }
         } catch (e: App8Error) {
             throw e
         } catch (e: Exception) {
@@ -265,7 +266,7 @@ internal class App8Runtime(
             throw App8Error.ScreenNotFound(screenId)
         }
         val component = try {
-            decoder.decodeScreen(utf8(bytes, "$screenId.json"), templates)
+            decodeScreen(screenId, bytes)
         } catch (e: Exception) {
             throw App8Error.ScreenDecodeFailed(screenId, e)
         }
@@ -279,10 +280,19 @@ internal class App8Runtime(
      * later push of the same screen shows the latest version.
      */
     fun decodeScreenUpdate(screenId: String, bytes: ByteArray): Component {
-        val component = decoder.decodeScreen(utf8(bytes, "$screenId.json"), templates)
+        val component = decodeScreen(screenId, bytes)
         reportDecodeErrors()
         screens[screenId] = component
         return component
+    }
+
+    /** A screen document, templates expanded; a bad value on the screen's own fields is dropped (see [DegradingDecode]). */
+    private fun decodeScreen(screenId: String, bytes: ByteArray): Component {
+        val raw = decoder.parse(utf8(bytes, "$screenId.json"))
+        val element = templates?.let { dev.app8.engine.core.model.TemplatePreprocessor(it).process(raw) } ?: raw
+        return DegradingDecode.decode(element, { e -> diagnostics.warn("value.ignored", "'${e.path}' in screen '$screenId': ${e.reason}; using the default") }) {
+            decoder.decodeComponent(it)
+        }
     }
 
     /** A streamed stylesheet (`streamStyles`): its styles replace the ones with the same id. */
@@ -326,7 +336,7 @@ internal class App8Runtime(
     private fun reportDecodeErrors() {
         val entries = decodeErrors.entries
         for (e in entries.drop(reportedErrors)) {
-            diagnostics.warn("decode.dropped", "${e.typeName} at ${e.jsonPath}: ${e.error.message}")
+            diagnostics.warn("value.ignored", "'${e.jsonPath}' in ${e.typeName}: ${(e.error as? dev.app8.engine.core.model.DslDecodingException)?.reason ?: e.error.message}")
         }
         reportedErrors = entries.size
     }

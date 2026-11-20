@@ -138,7 +138,9 @@ internal class ScreenSession private constructor(
             val scope = Scope(store, appScope)
             val session = ScreenSession(runtime, screenId, component, scope)
             session.root = RenderNode.build(session, component, screenId, scope, null, session.scopes)
-                ?: throw IllegalStateException("screen '$screenId' has no content")
+                ?: throw dev.app8.engine.App8Error.ScreenDecodeFailed(
+                    screenId, dev.app8.engine.core.model.DslDecodingException("content", "the screen has no content"),
+                )
             return session
         }
 

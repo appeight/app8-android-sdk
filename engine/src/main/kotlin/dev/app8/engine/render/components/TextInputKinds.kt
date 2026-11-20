@@ -65,6 +65,8 @@ import dev.app8.engine.render.RenderNode
 import dev.app8.engine.render.controls.FocusManager
 import dev.app8.engine.render.controls.TextInputValidation
 import dev.app8.engine.render.resolve
+import dev.app8.engine.render.padDp
+import dev.app8.engine.render.warnNegativeInsets
 import dev.app8.engine.render.string
 import dev.app8.engine.style.IosSystemColors
 import dev.app8.engine.style.ResolvedText
@@ -127,6 +129,7 @@ private fun look(node: RenderNode, env: RenderEnv, multiline: Boolean): InputLoo
     val placeholder = env.text(env.textModel(style?.placeholder, node), 17f, IosSystemColors.of("placeholderText", env.appearance), lines)
     val cursor = env.color(style?.tintColor, node) ?: IosSystemColors.of("systemBlue", env.appearance)
     val padding = if (multiline) style?.padding.resolve(12.0, 12.0, 12.0, 12.0) else style?.padding.resolve(0.0, 12.0, 0.0, 12.0)
+    style?.padding?.let { node.warnNegativeInsets("style.padding", it.top, it.left, it.bottom, it.right) }
     return InputLook(text, placeholder, cursor, padding)
 }
 
@@ -209,7 +212,9 @@ internal class TextInputKind(private val multiline: Boolean) : ComponentKind {
         if (multiline) {
             if (tv?.autoGrow != true) return LayoutTraits.NONE
             val min = tv.minHeight ?: 44.0
-            val max = tv.maxHeight ?: 200.0
+            // A maxHeight below minHeight is ignored (coerceIn would throw on the empty range).
+            val max = (tv.maxHeight ?: 200.0).coerceAtLeast(min)
+            if (tv.maxHeight != null && tv.maxHeight!! < min) node.runtime.diagnostics.warn("textView.height", "maxHeight of ${node.key} is below minHeight; ignored")
             return LayoutTraits(
                 intrinsic = IntrinsicMeasure { maxWidth ->
                     val inner = maxWidth?.let { (it - l.padding.left - l.padding.right).coerceAtLeast(1.0) }
@@ -324,7 +329,7 @@ internal class TextInputKind(private val multiline: Boolean) : ComponentKind {
         } && value.text.isNotEmpty() && enabled
 
         Box(modifier.bringIntoViewAboveKeyboard(focused)) {
-            val pad = Modifier.padding(start = l.padding.left.dp, top = l.padding.top.dp, end = l.padding.right.dp, bottom = l.padding.bottom.dp)
+            val pad = Modifier.padding(start = l.padding.left.padDp, top = l.padding.top.padDp, end = l.padding.right.padDp, bottom = l.padding.bottom.padDp)
             Row(Modifier.fillMaxSize().then(pad), verticalAlignment = if (multiline) Alignment.Top else Alignment.CenterVertically) {
                 BasicTextField(
                     value = value,

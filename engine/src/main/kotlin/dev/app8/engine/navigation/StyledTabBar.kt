@@ -50,6 +50,7 @@ import dev.app8.engine.core.vars.ScopedVariableStore
 import dev.app8.engine.core.vars.VariableDefinition
 import dev.app8.engine.core.vars.VariableType
 import dev.app8.engine.render.RenderEnv
+import dev.app8.engine.render.sizeDp
 import dev.app8.engine.render.ScreenSession
 import dev.app8.engine.render.collection.Cell
 import dev.app8.engine.render.collection.CellView
@@ -170,7 +171,7 @@ internal fun TextTabBar(
     Row(
         Modifier
             .fillMaxWidth()
-            .height(height.dp)
+            .height(height.sizeDp)
             .selectableGroup()
             .drawBehind {
                 if (selection == TabBarStyle.Selection.opacity || count == 0) return@drawBehind
@@ -266,11 +267,19 @@ internal fun ComponentTabBar(
         val stand = Size((slot - COMPONENT_LABEL_MARGIN.dp.toPx()).coerceAtLeast(0f), COMPONENT_LABEL_HEIGHT.dp.toPx())
         drawTabIndicator(selection, progress.value, count, color) { stand }
     }
-    BoxWithConstraints(Modifier.fillMaxWidth().height(height.dp).then(drawIndicator)) {
-        val solved = cell.layout(env, width = maxWidth.value.toDouble(), height = height)
+    BoxWithConstraints(Modifier.fillMaxWidth().height(height.sizeDp).then(drawIndicator)) {
+        val solved = cell.layout(env, width = maxWidth.value.toDouble(), height = height, edges = pinsToBar(cell))
         CellView(cell, solved, fixedHeight = height)
     }
 }
+
+/**
+ * Whether the bar template is pinned to the bar's edges. As on iOS (`StyledTabBarView.render`),
+ * only a template without a layout of its own is; one with constraints (say leading 12 and
+ * trailing -12 to its superview) lays out against the bar as written, without extra pins
+ * that would conflict with its insets.
+ */
+internal fun pinsToBar(cell: Cell): Boolean = cell.root.content.layout?.isEmpty != false
 
 /** A tab badge: the bar's `badgeColor` / the tab's own; text `badgeTextColor`, default white on a custom color. */
 @Composable

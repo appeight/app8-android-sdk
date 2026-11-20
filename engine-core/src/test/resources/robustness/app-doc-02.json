@@ -1,0 +1,24 @@
+{
+ "app": {
+  "name": "MyApp",
+  "variables": {}
+ },
+ "navigation": {
+  "startFlow": "onboarding",
+  "flows": [
+   {
+    "id": "onboarding",
+    "startScreen": "welcome"
+   },
+   {
+    "id": "main",
+    "startScreen": "home"
+   }
+  ]
+ },
+ "screens": {
+  "welcome": {},
+  "home": {}
+ },
+ "templates": []
+}

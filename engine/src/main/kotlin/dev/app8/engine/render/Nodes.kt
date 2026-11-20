@@ -311,9 +311,9 @@ internal fun ChildrenLayout(node: RenderNode, modifier: Modifier = Modifier) {
         val d = density
         val placeables = measurables.map { m ->
             val f = frames[m.layoutId as? String]
-            val w = f?.let { (it.width * d).roundToInt().coerceAtLeast(0) } ?: 0
-            val h = f?.let { (it.height * d).roundToInt().coerceAtLeast(0) } ?: 0
-            m.measure(Constraints.fixed(w, h)) to f
+            val w = f?.let { pxSize(it.width, d) } ?: 0
+            val h = f?.let { pxSize(it.height, d) } ?: 0
+            m.measure(fixedConstraints(w, h)) to f
         }
         val width = if (constraints.hasBoundedWidth) constraints.maxWidth else constraints.minWidth
         val height = if (constraints.hasBoundedHeight) constraints.maxHeight else constraints.minHeight
@@ -326,8 +326,44 @@ internal fun ChildrenLayout(node: RenderNode, modifier: Modifier = Modifier) {
     }
 }
 
-/** Snap a point coordinate to the pixel grid the solver snapped to. */
-internal fun px(points: Double, density: Float): Int = (points * density).roundToInt()
+/** Snap a point coordinate to the pixel grid the solver snapped to (a NaN frame places at 0). */
+internal fun px(points: Double, density: Float): Int = (points * density).let { if (it.isNaN()) 0 else it.roundToInt() }
+
+/** A solved length in whole pixels for measuring: never negative, NaN as 0, at most [MAX_LAYOUT_PX]. */
+internal fun pxSize(points: Double, density: Float): Int = px(points, density).coerceIn(0, MAX_LAYOUT_PX)
+
+/**
+ * A DSL inset or padding in dp. Compose rejects negative padding (it throws), so a negative
+ * (or NaN) value pads nothing; iOS would shift the content instead.
+ */
+internal val Double.padDp: androidx.compose.ui.unit.Dp get() = androidx.compose.ui.unit.Dp(if (this > 0.0) toFloat() else 0f)
+
+/**
+ * A DSL length for a size modifier, in dp: never negative (NaN as 0) and at most
+ * [MAX_SIZE_DP]. Compose throws for a size it cannot pack into its constraints (about
+ * 262,000 px), which an out-of-range DSL value like `itemHeight: 999999` would reach.
+ */
+internal val Double.sizeDp: androidx.compose.ui.unit.Dp get() = androidx.compose.ui.unit.Dp(if (this > 0.0) minOf(this, MAX_SIZE_DP).toFloat() else 0f)
+
+/** Largest size modifier [sizeDp] produces: 262,000 px at 5x density. */
+internal const val MAX_SIZE_DP: Double = 50_000.0
+
+/** Warns (once per message) when an inset [what] of this node has a negative side, padded as 0 ([padDp]). */
+internal fun RenderNode.warnNegativeInsets(what: String, vararg sides: Double?) {
+    if (sides.any { it != null && it < 0.0 }) runtime.diagnostics.warn("layout.negativeInset", "$what of $key is negative; Android pads 0 there")
+}
+
+/** The largest width or height Compose's `layout(width, height)` accepts. */
+internal const val MAX_LAYOUT_PX: Int = (1 shl 24) - 1
+
+/**
+ * Fixed constraints for a solved frame. Compose packs constraints into 64 bits and throws for a
+ * size it cannot represent (an out-of-range DSL length like `height: 999999`); such a frame is
+ * clamped to the largest representable size instead, keeping the longer side.
+ */
+internal fun fixedConstraints(width: Int, height: Int): Constraints =
+    if (width >= height) Constraints.fitPrioritizingWidth(width, width, height, height)
+    else Constraints.fitPrioritizingHeight(width, width, height, height)
 
 internal fun Frame.pxWidth(density: Float) = (width * density).roundToInt()
 

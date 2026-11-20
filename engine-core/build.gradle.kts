@@ -49,3 +49,6 @@ tasks.register<Test>("layoutBenchmark") {
     outputs.upToDateWhen { false }
     testLogging { showStandardStreams = true }
 }
+
+// Robustness corpus and JSON mutator, shared with :engine's tests.
+sourceSets["test"].kotlin.srcDir("src/testShared/kotlin")

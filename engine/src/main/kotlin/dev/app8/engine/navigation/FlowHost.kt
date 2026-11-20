@@ -41,6 +41,7 @@ import dev.app8.engine.navigation.transitions.TransitionFrame
 import dev.app8.engine.navigation.transitions.stackTransitionSpec
 import dev.app8.engine.core.model.Action
 import dev.app8.engine.render.LocalRenderEnv
+import dev.app8.engine.render.sizeDp
 import androidx.compose.material3.MaterialTheme
 
 /**
@@ -167,7 +168,7 @@ private fun ModalLayer(flow: FlowController, layer: Layer) {
             val screenHeight = windowHeight
             val single = detents.singleOrNull()
             val height = when (single) {
-                is Action.SheetDetent.Fixed -> Modifier.height(single.points.dp)
+                is Action.SheetDetent.Fixed -> Modifier.height(single.points.sizeDp)
                 is Action.SheetDetent.Fraction -> Modifier.height((screenHeight * single.fraction).dp)
                 // The M3 drag handle block (32x4dp handle, 22dp above and below) sits above the content.
                 else -> Modifier.height((windowHeight - statusTop - (if (layer.grabber != false) SHEET_HANDLE_BLOCK else 0f)).coerceAtLeast(0f).dp)

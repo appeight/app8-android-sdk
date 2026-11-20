@@ -225,10 +225,103 @@ internal inline fun <T> Cursor.failableList(typeName: String, decode: (Cursor) -
         } catch (ex: PlatformExcludedException) {
             // Not an error: the node simply does not exist on this platform.
         } catch (ex: Exception) {
-            c.record(typeName, ex)
+            c.decodeIgnoringValues(typeName, ex, decode)?.let { out.add(it) }
         }
     }
     return out
+}
+
+/**
+ * An element of a lenient list failed to decode with [first]: retries it with the offending
+ * value removed (its default applies), up to [JsonPathEdit.MAX_DROPS] values, recording each
+ * ignored value. The element is skipped whole (and recorded) only when its own root is
+ * unusable: not an object, no or an unknown `type`, a required key missing on the element itself.
+ * Unknown or mistyped values are ignored, never fatal (DSL rule, same on iOS and web).
+ */
+internal inline fun <T> Cursor.decodeIgnoringValues(typeName: String, first: Exception, decode: (Cursor) -> T): T? {
+    var current = element
+    var error: Exception = first
+    val ignored = ArrayList<Exception>()
+    repeat(JsonPathEdit.MAX_DROPS) {
+        val relative = (error as? DslDecodingException)?.takeIf { it !is PlatformExcludedException }
+            ?.let { JsonPathEdit.relative(it.path, path) }
+        val pruned = relative?.takeIf { it.isNotEmpty() }?.let { JsonPathEdit.remove(current, it) }
+        if (pruned == null) {
+            record(typeName, first)
+            return null
+        }
+        ignored += error
+        current = pruned
+        try {
+            val value = decode(Cursor(current, path, options, componentDepth))
+            for (e in ignored) record(typeName, e)
+            return value
+        } catch (ex: PlatformExcludedException) {
+            return null
+        } catch (ex: Exception) {
+            error = ex
+        }
+    }
+    record(typeName, first)
+    return null
+}
+
+/** Removing values from a JSON tree by decoder path (`content.children[2].style`). */
+internal object JsonPathEdit {
+    const val MAX_DROPS: Int = 32
+
+    /** [path] relative to [base] (`""` for [base] itself); null when [path] is not inside [base]. */
+    fun relative(path: String, base: String): String? = when {
+        base.isEmpty() -> path
+        path == base -> ""
+        path.startsWith(base) && path[base.length] == '.' -> path.substring(base.length + 1)
+        path.startsWith(base) && path[base.length] == '[' -> path.substring(base.length)
+        else -> null
+    }
+
+    /** [root] without the value at [path]; null when the path is the root, malformed or not found. */
+    fun remove(root: JsonElement, path: String): JsonElement? {
+        val steps = parse(path) ?: return null
+        if (steps.isEmpty()) return null
+        return removeAt(root, steps)
+    }
+
+    private fun removeAt(e: JsonElement, steps: List<Any>): JsonElement? {
+        val head = steps.first()
+        val last = steps.size == 1
+        return when {
+            e is JsonObject && head is String -> {
+                val child = e[head] ?: return null
+                if (last) JsonObject(e - head) else removeAt(child, steps.drop(1))?.let { JsonObject(e + (head to it)) }
+            }
+            e is JsonArray && head is Int -> {
+                val child = e.getOrNull(head) ?: return null
+                if (last) JsonArray(e.filterIndexed { i, _ -> i != head })
+                else removeAt(child, steps.drop(1))?.let { JsonArray(e.mapIndexed { i, v -> if (i == head) it else v }) }
+            }
+            else -> null
+        }
+    }
+
+    /** `a.b[2].c` → `["a", "b", 2, "c"]`; null when malformed. */
+    private fun parse(path: String): List<Any>? {
+        if (path.isEmpty()) return emptyList()
+        val out = mutableListOf<Any>()
+        for (segment in path.split('.')) {
+            if (segment.isEmpty()) return null
+            val key = segment.substringBefore('[')
+            if (key.isNotEmpty()) out += key
+            var rest = segment.substring(key.length)
+            while (rest.isNotEmpty()) {
+                if (!rest.startsWith("[")) return null
+                val close = rest.indexOf(']')
+                if (close < 0) return null
+                out += rest.substring(1, close).toIntOrNull() ?: return null
+                rest = rest.substring(close + 1)
+            }
+        }
+        return out
+    }
 }
 
 /**

@@ -1,0 +1,1304 @@
+{
+ "type": "screen",
+ "id": "docComponents",
+ "content": {
+  "children": [
+   {
+    "type": "scrollView",
+    "id": "page",
+    "content": {
+     "children": [
+      {
+       "type": "stackView",
+       "id": "stack",
+       "content": {
+        "properties": {
+         "axis": "vertical",
+         "spacing": 8
+        },
+        "children": [
+         {
+          "type": "activityIndicator",
+          "id": "spinner",
+          "content": {
+           "properties": {
+            "isAnimating": "{{isLoading}}"
+           },
+           "style": {
+            "indicatorStyle": "large",
+            "color": "#8E8E93"
+           },
+           "layout": {
+            "centerX": 0,
+            "centerY": 0
+           }
+          }
+         },
+         {
+          "type": "button",
+          "content": {
+           "properties": {
+            "text": "Sign In",
+            "isEnabled": "{{email.length > 0 && password.length > 0}}"
+           },
+           "actions": {
+            "tap": [
+             {
+              "type": "dismissKeyboard"
+             },
+             {
+              "type": "updateVariable",
+              "variableName": "isLoading",
+              "value": true
+             },
+             {
+              "type": "executeFunction",
+              "function": "signIn",
+              "params": {
+               "email": "{{email}}",
+               "password": "{{password}}"
+              }
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "button",
+          "content": {
+           "properties": {
+            "icon": "{{likedIds.includes(item.id) ? 'heart.fill' : 'heart'}}"
+           },
+           "actions": {
+            "tap": {
+             "type": "toggleArrayValue",
+             "variableName": "likedIds",
+             "value": "{{item.id}}"
+            }
+           }
+          }
+         },
+         {
+          "type": "button",
+          "content": {
+           "properties": {
+            "text": "Submit"
+           },
+           "actions": {
+            "tap": [
+             {
+              "type": "dismissKeyboard"
+             },
+             {
+              "type": "executeFunction",
+              "function": "submit"
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "collection",
+          "content": {
+           "actions": {
+            "onItemTap": {
+             "type": "navigation",
+             "nextScreen": "user-detail"
+            }
+           },
+           "analytics": {
+            "onItemTap": {
+             "name": "userListItemTapped",
+             "properties": {
+              "user_id": "{{item.id}}",
+              "rank": "{{$index}}"
+             }
+            }
+           }
+          }
+         },
+         {
+          "type": "collection",
+          "content": {
+           "properties": {
+            "data": "{{item.photos}}"
+           },
+           "layout": {
+            "leading": 0,
+            "trailing": 0,
+            "height": 136
+           }
+          }
+         },
+         {
+          "type": "collection",
+          "content": {
+           "properties": {
+            "data": "{{items}}"
+           },
+           "layout": {
+            "type": "vertical",
+            "itemSpacing": 8
+           },
+           "template": {}
+          }
+         },
+         {
+          "type": "datePicker",
+          "id": "startDate",
+          "content": {
+           "properties": {
+            "datePickerMode": "date",
+            "displayStyle": "compact",
+            "bindVariable": "startDate",
+            "minimumDate": "2026-01-01",
+            "maximumDate": "2026-12-31"
+           },
+           "style": {
+            "tintColor": "#007AFF"
+           },
+           "layout": {
+            "trailing": 20,
+            "centerY": 0
+           }
+          }
+         },
+         {
+          "type": "icon",
+          "content": {
+           "properties": {
+            "name": "tray"
+           },
+           "style": {
+            "tintColor": "#999999"
+           }
+          }
+         },
+         {
+          "type": "icon",
+          "content": {
+           "properties": {
+            "name": "chevron.right"
+           },
+           "style": {
+            "tintColor": "#C7C7CC"
+           },
+           "layout": {
+            "trailing": 16,
+            "centerY": 0
+           }
+          }
+         },
+         {
+          "type": "icon",
+          "content": {
+           "properties": {
+            "type": "symbol",
+            "name": "heart.fill",
+            "tintColor": "{{isLiked ? '#FF3B30' : '#C7C7CC'}}"
+           },
+           "style": {
+            "symbolFontSize": 24
+           },
+           "layout": {
+            "width": 44,
+            "height": 44
+           }
+          }
+         },
+         {
+          "type": "image",
+          "content": {
+           "properties": {
+            "url": "{{item.imageUrl}}"
+           },
+           "style": {
+            "contentMode": "scaleAspectFill"
+           },
+           "layout": {
+            "leading": 0,
+            "trailing": 0,
+            "top": 0,
+            "height": 150
+           }
+          }
+         },
+         {
+          "type": "image",
+          "content": {
+           "properties": {
+            "url": "{{item.thumbnailUrl}}"
+           },
+           "style": {
+            "contentMode": "scaleAspectFill"
+           }
+          }
+         },
+         {
+          "type": "image",
+          "content": {
+           "properties": {
+            "url": "{{item.imageUrl}}"
+           },
+           "style": {
+            "contentMode": "scaleAspectFill"
+           },
+           "layout": {
+            "leading": 0,
+            "trailing": 0,
+            "top": 0,
+            "bottom": 0
+           }
+          }
+         },
+         {
+          "type": "label",
+          "content": {
+           "properties": {
+            "text": "{{section.key}}"
+           },
+           "style": {
+            "text": {
+             "fontSize": 13,
+             "fontWeight": "semibold",
+             "color": "#6D6D72"
+            }
+           },
+           "layout": {
+            "leading": 16,
+            "centerY": 0
+           }
+          }
+         },
+         {
+          "type": "label",
+          "content": {
+           "properties": {
+            "text": "Featured"
+           },
+           "style": {
+            "text": {
+             "fontSize": 20,
+             "fontWeight": "bold"
+            }
+           },
+           "layout": {
+            "leading": 16,
+            "centerY": 0
+           }
+          }
+         },
+         {
+          "type": "label",
+          "content": {
+           "properties": {
+            "text": "{{item.name}}"
+           },
+           "layout": {
+            "leading": 16,
+            "centerY": 0
+           }
+          }
+         },
+         {
+          "type": "map",
+          "content": {
+           "properties": {
+            "mapType": "mutedStandard",
+            "zoomEnabled": false,
+            "scrollEnabled": false,
+            "center": {
+             "latitude": 37.7749,
+             "longitude": -122.4194
+            },
+            "span": {
+             "latitudeDelta": 0.01,
+             "longitudeDelta": 0.01
+            },
+            "annotations": [
+             {
+              "id": "hq",
+              "coordinate": {
+               "latitude": 37.7749,
+               "longitude": -122.4194
+              },
+              "title": "Headquarters",
+              "color": "#FF6B6B"
+             }
+            ]
+           },
+           "layout": {
+            "width": 320,
+            "height": 200,
+            "constraints": [
+             {
+              "type": "centerX",
+              "target": "superview"
+             },
+             {
+              "type": "centerY",
+              "target": "superview"
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "map",
+          "content": {
+           "properties": {
+            "center": {
+             "latitude": 37.7749,
+             "longitude": -122.4194
+            },
+            "span": {
+             "latitudeDelta": 0.05,
+             "longitudeDelta": 0.05
+            },
+            "annotationsExpression": "{{locations}}"
+           },
+           "layout": {
+            "width": 320,
+            "height": 300,
+            "constraints": [
+             {
+              "type": "centerX",
+              "target": "superview"
+             },
+             {
+              "type": "top",
+              "target": "superview",
+              "constant": 20
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "map",
+          "content": {
+           "properties": {
+            "center": {
+             "latitude": 37.7749,
+             "longitude": -122.4194
+            },
+            "span": {
+             "latitudeDelta": 0.05,
+             "longitudeDelta": 0.05
+            },
+            "showUserLocation": true,
+            "annotationsExpression": "{{locations}}",
+            "selectedAnnotationBinding": "{{selectedId}}"
+           },
+           "actions": {
+            "onAnnotationTap": [
+             {
+              "type": "updateVariable",
+              "variableName": "selectedId",
+              "value": "{{item.id}}"
+             }
+            ]
+           },
+           "layout": {
+            "width": 320,
+            "height": 400,
+            "constraints": [
+             {
+              "type": "centerX",
+              "target": "superview"
+             },
+             {
+              "type": "centerY",
+              "target": "superview"
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "pageControl",
+          "id": "photoDots",
+          "content": {
+           "properties": {
+            "numberOfPages": "{{photos.length}}",
+            "currentPage": "{{currentPhotoIndex}}",
+            "bindVariable": "currentPhotoIndex"
+           },
+           "style": {
+            "pageIndicatorTintColor": "#D1D1D6",
+            "currentPageIndicatorTintColor": "#007AFF"
+           },
+           "layout": {
+            "centerX": 0,
+            "bottom": 16
+           }
+          }
+         },
+         {
+          "type": "picker",
+          "id": "sortPicker",
+          "content": {
+           "properties": {
+            "displayMode": "segmented",
+            "options": [
+             {
+              "value": "new",
+              "label": "Newest"
+             },
+             {
+              "value": "top",
+              "label": "Top"
+             },
+             {
+              "value": "hot",
+              "label": "Trending"
+             }
+            ],
+            "selectedValue": "{{sortOrder}}",
+            "bindVariable": "sortOrder"
+           },
+           "layout": {
+            "leading": 20,
+            "trailing": 20,
+            "top": 16
+           }
+          }
+         },
+         {
+          "type": "picker",
+          "content": {
+           "properties": {
+            "displayMode": "menu",
+            "placeholder": "Choose a color",
+            "options": [
+             {
+              "value": "red",
+              "label": "Red",
+              "icon": "circle.fill"
+             },
+             {
+              "value": "blue",
+              "label": "Blue",
+              "icon": "circle.fill"
+             }
+            ],
+            "bindVariable": "selectedColor"
+           }
+          }
+         },
+         {
+          "type": "scrollView",
+          "content": {
+           "properties": {
+            "direction": "horizontal",
+            "showsIndicator": false,
+            "pagingEnabled": true,
+            "bounces": false,
+            "autoScroll": {
+             "speed": 30,
+             "infinite": true,
+             "loopGap": 30
+            }
+           },
+           "children": []
+          }
+         },
+         {
+          "type": "scrollView",
+          "content": {
+           "properties": {
+            "direction": "vertical",
+            "showsIndicator": true
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "top",
+              "target": "superview"
+             },
+             {
+              "type": "leading",
+              "target": "superview"
+             },
+             {
+              "type": "trailing",
+              "target": "superview"
+             },
+             {
+              "type": "bottom",
+              "target": "superview"
+             }
+            ]
+           },
+           "children": []
+          }
+         },
+         {
+          "type": "shape",
+          "content": {
+           "properties": {
+            "kind": "polyline",
+            "smooth": true,
+            "strokeColor": "#34C759",
+            "lineWidth": 2,
+            "points": [
+             {
+              "x": "0",
+              "y": "0.8"
+             },
+             {
+              "x": "0.25",
+              "y": "0.4"
+             },
+             {
+              "x": "0.5",
+              "y": "0.6"
+             },
+             {
+              "x": "0.75",
+              "y": "0.2"
+             },
+             {
+              "x": "1",
+              "y": "0.5"
+             }
+            ]
+           },
+           "layout": {
+            "leading": 20,
+            "trailing": 20,
+            "height": 60
+           }
+          }
+         },
+         {
+          "id": "my-ring",
+          "type": "shape",
+          "content": {
+           "properties": {
+            "kind": "arc",
+            "progress": "{{ringProgress}}",
+            "startAngle": -90,
+            "lineWidth": 14,
+            "lineCap": "round",
+            "strokeColor": "#FF2D55",
+            "trackColor": "#FF2D5533",
+            "animationDuration": 1.0,
+            "animationCurve": "easeOut"
+           },
+           "layout": {
+            "width": 120,
+            "height": 120
+           }
+          }
+         },
+         {
+          "id": "move-ring",
+          "type": "shape",
+          "content": {
+           "properties": {
+            "kind": "arc",
+            "progress": "{{moveP}}",
+            "startAngle": -90,
+            "lineWidth": 14,
+            "lineCap": "round",
+            "strokeColor": "#FF2D55",
+            "trackColor": "#FF2D5533",
+            "animationDuration": 1.0
+           },
+           "layout": {
+            "width": 130,
+            "height": 130
+           }
+          }
+         },
+         {
+          "type": "shimmer",
+          "id": "profileSkeleton",
+          "content": {
+           "properties": {
+            "isAnimating": "{{isLoading}}",
+            "direction": "leftToRight"
+           },
+           "hidden": "{{!isLoading}}",
+           "children": [
+            {
+             "type": "view",
+             "content": {
+              "style": {
+               "material": {
+                "id": "avatarSkeleton",
+                "type": "material",
+                "content": [
+                 {
+                  "id": "f",
+                  "type": "fill",
+                  "content": {
+                   "solid": "#E5E5EA"
+                  }
+                 },
+                 {
+                  "id": "c",
+                  "type": "corner",
+                  "content": {
+                   "radius": "50%"
+                  }
+                 }
+                ]
+               }
+              },
+              "layout": {
+               "leading": 20,
+               "top": 20,
+               "width": 56,
+               "height": 56
+              }
+             }
+            },
+            {
+             "type": "view",
+             "content": {
+              "style": {
+               "material": {
+                "id": "lineSkeleton",
+                "type": "material",
+                "content": [
+                 {
+                  "id": "f2",
+                  "type": "fill",
+                  "content": {
+                   "solid": "#E5E5EA"
+                  }
+                 },
+                 {
+                  "id": "c2",
+                  "type": "corner",
+                  "content": {
+                   "radius": 6
+                  }
+                 }
+                ]
+               }
+              },
+              "layout": {
+               "leading": 88,
+               "top": 28,
+               "width": 160,
+               "height": 14
+              }
+             }
+            }
+           ]
+          }
+         },
+         {
+          "type": "slider",
+          "id": "volumeSlider",
+          "content": {
+           "properties": {
+            "value": "{{volume}}",
+            "minimumValue": 0,
+            "maximumValue": 100,
+            "step": 5,
+            "bindVariable": "volume"
+           },
+           "style": {
+            "minimumTrackTintColor": "#007AFF"
+           },
+           "layout": {
+            "leading": 20,
+            "trailing": 20,
+            "centerY": 0
+           }
+          }
+         },
+         {
+          "type": "stackView",
+          "content": {
+           "properties": {
+            "axis": "vertical",
+            "spacing": 12
+           },
+           "layout": {
+            "width": 280,
+            "constraints": [
+             {
+              "type": "centerX",
+              "target": "superview"
+             },
+             {
+              "type": "centerY",
+              "target": "superview"
+             }
+            ]
+           },
+           "children": [
+            {
+             "id": "row1",
+             "type": "label",
+             "content": {
+              "properties": {
+               "text": "First Item"
+              }
+             }
+            },
+            {
+             "id": "row2",
+             "type": "label",
+             "content": {
+              "properties": {
+               "text": "Second Item"
+              }
+             }
+            }
+           ]
+          }
+         },
+         {
+          "type": "stackView",
+          "content": {
+           "properties": {
+            "axis": "horizontal",
+            "spacing": 16,
+            "alignment": "center",
+            "distribution": "equalSpacing"
+           },
+           "layout": {
+            "width": 300,
+            "height": 60,
+            "constraints": [
+             {
+              "type": "centerX",
+              "target": "superview"
+             },
+             {
+              "type": "centerY",
+              "target": "superview"
+             }
+            ]
+           },
+           "children": [
+            {
+             "id": "icon",
+             "type": "icon",
+             "content": {
+              "properties": {
+               "type": "symbol",
+               "name": "star.fill"
+              },
+              "layout": {
+               "width": 24,
+               "height": 24
+              }
+             }
+            },
+            {
+             "id": "label",
+             "type": "label",
+             "content": {
+              "properties": {
+               "text": "Horizontal Stack"
+              }
+             }
+            }
+           ]
+          }
+         },
+         {
+          "id": "rootStack",
+          "type": "stackView",
+          "content": {
+           "properties": {
+            "axis": "vertical",
+            "alignment": "fill",
+            "spacing": 0
+           },
+           "children": [
+            {
+             "id": "header",
+             "type": "view",
+             "content": {
+              "properties": {}
+             }
+            },
+            {
+             "id": "spacer",
+             "type": "view",
+             "content": {
+              "properties": {},
+              "layout": {
+               "constraints": [
+                {
+                 "type": "height",
+                 "constant": 16,
+                 "op": ">="
+                },
+                {
+                 "type": "height",
+                 "constant": 50,
+                 "priority": "defaultLow"
+                }
+               ]
+              }
+             }
+            },
+            {
+             "id": "footer",
+             "type": "view",
+             "content": {
+              "properties": {}
+             }
+            }
+           ]
+          }
+         },
+         {
+          "type": "tableView",
+          "id": "settings",
+          "content": {
+           "properties": {
+            "tableStyle": "insetGrouped"
+           },
+           "layout": {
+            "leading": 0,
+            "trailing": 0,
+            "top": 0,
+            "bottom": 0
+           },
+           "sections": [
+            {
+             "id": "account",
+             "header": "Account",
+             "rows": [
+              {
+               "id": "profile",
+               "height": 56,
+               "actions": {
+                "tap": [
+                 {
+                  "type": "navigation",
+                  "nextScreen": "editProfile"
+                 }
+                ]
+               },
+               "children": [
+                {
+                 "type": "label",
+                 "content": {
+                  "properties": {
+                   "text": "Edit Profile"
+                  },
+                  "layout": {
+                   "leading": 16,
+                   "centerY": 0
+                  }
+                 }
+                }
+               ]
+              },
+              {
+               "id": "notifications",
+               "children": [
+                {
+                 "type": "label",
+                 "content": {
+                  "properties": {
+                   "text": "Notifications"
+                  },
+                  "layout": {
+                   "leading": 16,
+                   "centerY": 0
+                  }
+                 }
+                },
+                {
+                 "type": "toggle",
+                 "content": {
+                  "properties": {
+                   "bindVariable": "notificationsOn"
+                  },
+                  "layout": {
+                   "trailing": 16,
+                   "centerY": 0
+                  }
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "id": "danger",
+             "footer": "This cannot be undone.",
+             "rows": [
+              {
+               "id": "signout",
+               "actions": {
+                "tap": [
+                 {
+                  "type": "emit",
+                  "name": "signOut.tapped"
+                 }
+                ]
+               },
+               "children": [
+                {
+                 "type": "label",
+                 "content": {
+                  "properties": {
+                   "text": "Sign Out"
+                  },
+                  "style": {
+                   "text": {
+                    "id": "destructive",
+                    "type": "text",
+                    "content": {
+                     "color": "#FF3B30"
+                    }
+                   }
+                  },
+                  "layout": {
+                   "centerX": 0,
+                   "centerY": 0
+                  }
+                 }
+                }
+               ]
+              }
+             ]
+            }
+           ]
+          }
+         },
+         {
+          "type": "textField",
+          "id": "emailField",
+          "content": {
+           "properties": {
+            "returnKeyType": "next",
+            "bindVariable": "email"
+           }
+          }
+         },
+         {
+          "type": "textField",
+          "id": "passwordField",
+          "content": {
+           "properties": {
+            "returnKeyType": "done",
+            "bindVariable": "password",
+            "isSecure": true
+           }
+          }
+         },
+         {
+          "type": "textField",
+          "id": "emailField",
+          "content": {
+           "properties": {
+            "placeholder": "Email address",
+            "bindVariable": "email",
+            "keyboardType": "emailAddress",
+            "textContentType": "emailAddress",
+            "returnKeyType": "next",
+            "autocapitalization": "none",
+            "autocorrection": false
+           },
+           "style": {
+            "material": [
+             {
+              "fill": {
+               "solid": "#F5F5F5"
+              }
+             },
+             {
+              "corner": {
+               "radius": 8
+              }
+             }
+            ],
+            "text": {
+             "fontSize": 16,
+             "color": "#333333"
+            },
+            "placeholder": {
+             "fontSize": 16,
+             "color": "#999999"
+            },
+            "padding": {
+             "left": 12,
+             "right": 12
+            }
+           },
+           "layout": {
+            "leading": 20,
+            "trailing": 20,
+            "height": 50
+           },
+           "triggers": {
+            "focus": "focused",
+            "blur": "normal"
+           },
+           "states": {
+            "normal": {
+             "style": {
+              "material": [
+               {
+                "outline": {
+                 "lineWidth": 0
+                }
+               }
+              ]
+             }
+            },
+            "focused": {
+             "style": {
+              "material": [
+               {
+                "outline": {
+                 "lineWidth": 2,
+                 "fill": {
+                  "solid": "#007AFF"
+                 }
+                }
+               }
+              ]
+             }
+            }
+           }
+          }
+         },
+         {
+          "type": "textView",
+          "content": {
+           "properties": {
+            "placeholder": "Enter your notes...",
+            "bindVariable": "notes",
+            "autoGrow": true,
+            "maxHeight": 200
+           },
+           "style": {
+            "material": [
+             {
+              "fill": {
+               "solid": "#F5F5F5"
+              }
+             },
+             {
+              "corner": {
+               "radius": 8
+              }
+             }
+            ],
+            "text": {
+             "fontSize": 16,
+             "color": "#333333"
+            },
+            "placeholder": {
+             "fontSize": 16,
+             "color": "#999999"
+            },
+            "padding": {
+             "top": 12,
+             "left": 12,
+             "bottom": 12,
+             "right": 12
+            }
+           },
+           "layout": {
+            "leading": 20,
+            "trailing": 20,
+            "height": 120
+           }
+          }
+         },
+         {
+          "type": "toggle",
+          "content": {
+           "properties": {
+            "bindVariable": "notificationsOn"
+           },
+           "layout": {
+            "trailing": 16,
+            "centerY": 0
+           }
+          }
+         },
+         {
+          "type": "toggle",
+          "id": "darkModeToggle",
+          "content": {
+           "properties": {
+            "isOn": "{{darkMode}}",
+            "bindVariable": "darkMode"
+           },
+           "style": {
+            "onTintColor": "#34C759"
+           },
+           "layout": {
+            "trailing": 20,
+            "centerY": 0
+           }
+          }
+         },
+         {
+          "type": "toggle",
+          "content": {
+           "properties": {
+            "bindVariable": "notificationsEnabled",
+            "isEnabled": "{{hasGrantedPermission}}"
+           }
+          }
+         },
+         {
+          "type": "video",
+          "id": "trailer",
+          "content": {
+           "properties": {
+            "type": "remoteAsset",
+            "name": "trailer.mp4",
+            "loop": false,
+            "muted": false,
+            "audioMix": "interrupt"
+           },
+           "style": {
+            "contentMode": "scaleAspectFit"
+           },
+           "layout": {
+            "width": "100%",
+            "height": 240
+           }
+          }
+         },
+         {
+          "type": "video",
+          "id": "onboarding-loop",
+          "content": {
+           "properties": {
+            "type": "localAsset",
+            "name": "intro",
+            "loop": true,
+            "muted": true,
+            "autoplay": true
+           },
+           "style": {
+            "contentMode": "scaleAspectFill",
+            "corner": {
+             "radius": 16,
+             "curve": "continuous"
+            }
+           },
+           "layout": {
+            "width": "100%",
+            "height": 240
+           }
+          }
+         },
+         {
+          "type": "video",
+          "id": "heroLoop",
+          "content": {
+           "properties": {
+            "type": "remoteAsset",
+            "name": "shutterAnimation",
+            "loop": true,
+            "muted": true,
+            "autoplay": true
+           },
+           "style": {
+            "contentMode": "scaleAspectFill",
+            "corner": {
+             "radius": 16,
+             "curve": "continuous"
+            }
+           },
+           "layout": {
+            "width": "100%",
+            "height": 240
+           }
+          }
+         },
+         {
+          "id": "connectButton",
+          "type": "view",
+          "content": {
+           "actions": {
+            "tap": {
+             "type": "emit",
+             "name": "connect.tapped"
+            }
+           },
+           "analytics": {
+            "tap": "stripeConnectClicked"
+           }
+          }
+         },
+         {
+          "type": "view",
+          "content": {
+           "style": {
+            "backgroundColor": "#F2F2F7"
+           },
+           "layout": {
+            "height": 28
+           },
+           "children": [
+            {
+             "type": "label",
+             "content": {
+              "properties": {
+               "text": "{{section.key}}"
+              },
+              "style": {
+               "text": {
+                "fontSize": 13,
+                "fontWeight": "semibold",
+                "color": "#6D6D72"
+               }
+              },
+              "layout": {
+               "leading": 16,
+               "centerY": 0
+              }
+             }
+            }
+           ]
+          }
+         },
+         {
+          "type": "view",
+          "content": {
+           "layout": {
+            "height": 48
+           },
+           "children": [
+            {
+             "type": "label",
+             "content": {
+              "properties": {
+               "text": "Featured"
+              },
+              "style": {
+               "text": {
+                "fontSize": 20,
+                "fontWeight": "bold"
+               }
+              },
+              "layout": {
+               "leading": 16,
+               "centerY": 0
+              }
+             }
+            }
+           ]
+          }
+         }
+        ]
+       }
+      }
+     ]
+    }
+   }
+  ]
+ }
+}

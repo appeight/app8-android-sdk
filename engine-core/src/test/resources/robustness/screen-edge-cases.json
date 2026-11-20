@@ -1,0 +1,69 @@
+{"type": "screen", "id": "edgeCases", "content": {
+  "navigationBar": {"title": "{{title}}", "largeTitle": false},
+  "variables": {
+    "title": {"type": "string", "initialValue": "Edge cases"},
+    "items": {"type": "array", "initialValue": [{"id": "a", "name": "A", "price": 2}, {"id": "b", "name": "B", "price": 0}, {"id": "c", "name": "C"}]},
+    "empty": {"type": "array", "initialValue": []},
+    "page": {"type": "number", "initialValue": 1},
+    "choice": {"type": "string", "initialValue": "b"},
+    "ratio": {"type": "number", "computed": "{{items[0].price / items[1].price}}"},
+    "on": {"type": "boolean", "initialValue": true},
+    "note": {"type": "string", "initialValue": ""},
+    "when": {"type": "string", "initialValue": "2026-01-01T00:00:00Z"}
+  },
+  "children": [
+    {"type": "scrollView", "id": "scroll", "content": {"layout": {"leading": 0, "trailing": 0, "top": 0, "bottom": 0}, "children": [
+      {"type": "stackView", "id": "column", "content": {"properties": {"axis": "vertical", "spacing": 8, "alignment": "fill", "distribution": "fill"},
+        "layout": {"leading": 0, "trailing": 0, "top": 0, "bottom": 0, "width": {"relation": "equal", "multiplier": 1}},
+        "children": [
+          {"type": "view", "templateId": "Card", "id": "card1", "content": {"variables": {"title": {"type": "string", "initialValue": "First"}}}},
+          {"type": "view", "templateId": "CardWide", "id": "card2"},
+          {"type": "view", "templateId": "MissingTemplate", "id": "card3"},
+          {"type": "label", "id": "ratioLabel", "content": {"properties": {"text": "{{ratio}} {{items[5].name}} {{page / 0}}", "numberOfLines": 2},
+            "layout": {"height": "{{page * 40}}", "width": "{{items[9].price}}"}}},
+          {"type": "image", "id": "remote", "content": {"properties": {"url": "not a url"}, "layout": {"height": 120, "aspectRatio": 0}}},
+          {"type": "image", "id": "asset", "content": {"properties": {"asset": "no-such-asset"}, "layout": {"height": 40, "width": -10}}},
+          {"type": "icon", "id": "icon", "content": {"properties": {"name": "no.such.symbol"}, "layout": {"width": 24, "height": 24}}},
+          {"type": "collection", "id": "pager", "content": {
+            "properties": {"data": "{{items}}", "currentPageVariable": "page",
+              "layout": {"type": "horizontal", "itemWidth": "fill", "itemHeight": "fill", "pagingStyle": "paging"}},
+            "layout": {"height": 200},
+            "template": {"type": "label", "id": "pageLabel", "content": {"properties": {"text": "{{item.name}}"}}}}},
+          {"type": "collection", "id": "emptyGrid", "content": {
+            "properties": {"data": "{{empty}}", "layout": {"type": "grid", "columns": 0, "itemSpacing": -4}},
+            "layout": {"height": 100},
+            "template": {"type": "view", "id": "cell", "content": {}}}},
+          {"type": "collection", "id": "sectioned", "content": {
+            "properties": {"data": "{{items}}", "groupBy": "missingKey", "layout": {"type": "grid", "columns": 3, "aspectRatio": 0}},
+            "layout": {"height": 300},
+            "template": {"type": "view", "id": "cell", "content": {"children": [
+              {"type": "label", "id": "price", "content": {"properties": {"text": "{{formatCurrency(item.price, 'XXX')}}"}}}]}}}},
+          {"type": "pageControl", "id": "dots", "content": {"properties": {"numberOfPages": "{{count(items)}}", "currentPage": "{{page + 10}}"}}},
+          {"type": "picker", "id": "picker", "content": {"properties": {"bindVariable": "choice", "options": [], "selectedValue": "zzz"}}},
+          {"type": "toggle", "id": "toggle", "content": {"properties": {"bindVariable": "on"}}},
+          {"type": "slider", "id": "slider", "content": {"properties": {"value": "{{page}}", "minimumValue": 10, "maximumValue": 1}}},
+          {"type": "textField", "id": "field", "content": {"properties": {"bindVariable": "note", "placeholder": "Type", "keyboardType": "bogus"}}},
+          {"type": "textView", "id": "area", "content": {"properties": {"bindVariable": "note"}}},
+          {"type": "datePicker", "id": "date", "content": {"properties": {"bindVariable": "when", "mode": "date", "minimumDate": "2030-01-01", "maximumDate": "2020-01-01"}}},
+          {"type": "activityIndicator", "id": "spinner", "content": {"properties": {"isAnimating": "{{on}}"}}},
+          {"type": "shape", "id": "circle", "content": {"properties": {"type": "circle"}, "layout": {"width": 0, "height": 0}}},
+          {"type": "shimmer", "id": "shimmer", "content": {"properties": {}, "layout": {"height": 20}}},
+          {"type": "video", "id": "video", "content": {"properties": {"url": ""}, "layout": {"height": 100}}},
+          {"type": "map", "id": "map", "content": {"properties": {"annotations": "{{items}}"}, "layout": {"height": 100}}},
+          {"type": "native", "id": "nativeView", "content": {"properties": {"module": "unregistered"}, "layout": {"height": 40}}},
+          {"type": "button", "id": "go", "content": {"properties": {"text": "Go"},
+            "actions": {"tap": [
+              {"type": "setVariable", "variableName": "page", "value": "{{page + 1}}"},
+              {"type": "selectTab", "index": 99},
+              {"type": "navigation", "nextScreen": "missingScreen"},
+              {"type": "noSuchAction"}
+            ]}}},
+          {"type": "tableView", "id": "table", "content": {"layout": {"height": 200}, "sections": [
+            {"id": "s1", "header": "Header", "rows": []},
+            {"id": "s2", "rows": [{"id": "r1", "height": -5, "children": [{"type": "label", "content": {"properties": {"text": "Row"}}}]}]}
+          ]}},
+          {"type": "view", "id": "conflict", "content": {"layout": {"width": 100, "leading": 10, "trailing": 10, "height": 10}}},
+          {"type": "view", "id": "siblingRef", "content": {"layout": {"top": {"to": "nowhere", "edge": "bottom", "constant": 4}, "height": 1}}}
+        ]}}
+    ]}}
+  ]}}
