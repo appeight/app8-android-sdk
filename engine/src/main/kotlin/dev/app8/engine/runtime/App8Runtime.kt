@@ -201,7 +201,10 @@ internal class App8Runtime(
 
     val imageLoader: coil3.ImageLoader by lazy { buildImageLoader(this) }
 
-    /** Where persisted variables and photos of this app live: `app.id`, `bundleId`, title, package. */
+    /**
+     * Where persisted variables and photos of this app live: the host's
+     * [App8DataSource.persistenceId], else `app.id`, `bundleId`, title, package (blank values skipped).
+     */
     var persistenceId: String = "default"
         private set
 
@@ -217,7 +220,8 @@ internal class App8Runtime(
         } catch (e: Exception) {
             throw App8Error.AppDecodeFailed(e)
         }
-        persistenceId = model.id ?: model.bundleId ?: model.title ?: appContext.packageName
+        persistenceId = listOf(dataSource.persistenceId, model.id, model.bundleId, model.title)
+            .firstNotNullOfOrNull { it?.trim()?.takeIf(String::isNotEmpty) } ?: appContext.packageName
         var storedValues: Collection<String> = emptyList()
         if (model.variables?.values?.any { persistFlag(it) } == true) {
             // Stored values load before the first screen renders.
