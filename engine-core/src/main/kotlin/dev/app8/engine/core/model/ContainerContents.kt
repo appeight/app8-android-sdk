@@ -79,11 +79,22 @@ public data class TabBarStyle(
     val height: Double? = null,
     /** A component template that draws the whole bar; [variant] is then ignored. */
     val component: String? = null,
-    /** `floating` (platform shape) or `edge` (full-width square stripe, exact [height]). Since 0.7.11. */
+    /**
+     * `floating` (default): the platform bar with a glass background, else an engine-drawn bar
+     * inset from the sides and above the bottom safe area. `edge`: a full-width stripe flush
+     * with the bottom edge. Since 0.7.11.
+     */
     val shape: Shape = Shape.floating,
+    /** Corner radius of an engine-drawn floating bar; null: a capsule (half the height). Never negative. Since 0.7.11. */
+    val cornerRadius: Double? = null,
+    /** Where a text / engine-drawn bar puts its badges. Since 0.7.11. */
+    val badgePlacement: BadgePlacement = BadgePlacement.corner,
 ) {
     @Suppress("EnumEntryName")
     public enum class Shape { floating, edge }
+
+    @Suppress("EnumEntryName")
+    public enum class BadgePlacement { corner, inline }
 
     @Suppress("EnumEntryName")
     public enum class Variant { system, text }
@@ -97,24 +108,46 @@ public data class TabBarStyle(
     /** True for `shape: edge`. */
     val isEdge: Boolean get() = shape == Shape.edge
 
+    /** True when [background] is something other than the platform glass (`solid`, a hex colour, a style). */
+    val hasFlatBackground: Boolean get() = isFlatBackground(background)
+
+    /**
+     * True when the engine draws the bar with an exact [height] (at least [MIN_EDGE_HEIGHT]):
+     * `edge`, or a non-glass background. Variant `system` and `text` alike.
+     */
+    val isEngineDrawn: Boolean get() = isEdge || hasFlatBackground
+
+    /** True for an engine-drawn `floating` bar: inset from the sides, above the bottom safe area, [cornerRadius] corners. */
+    val isInsetFloating: Boolean get() = !isEdge && hasFlatBackground
+
     /** True when the platform bar is drawn, exactly as without a `barStyle`. */
-    val isSystem: Boolean get() = component == null && variant == Variant.system
+    val isSystem: Boolean get() = component == null && variant == Variant.system && !isEngineDrawn
 
     public companion object {
         public const val DEFAULT_UNSELECTED_OPACITY: Double = 0.5
         public const val MIN_HEIGHT: Double = 44.0
-        /** The least `height` of an `edge` stripe. */
+        /** The least `height` of an engine-drawn bar (`edge`, or a non-glass background). */
         public const val MIN_EDGE_HEIGHT: Double = 28.0
+
+        /** Side inset of an engine-drawn floating bar on Android (dp). */
+        public const val FLOATING_SIDE_INSET: Double = 16.0
+
+        /** Gap between an engine-drawn floating bar and the bottom safe area (dp). */
+        public const val FLOATING_BOTTOM_GAP: Double = 8.0
+
+        internal fun isFlatBackground(background: String?): Boolean = background != null && background != "glass"
     }
 }
 
 internal fun decodeTabBarStyle(c: Cursor): TabBarStyle {
     c.obj()
     val shape = c.attempt { it.optSafeEnum("shape", TabBarStyle.Shape.floating) } ?: TabBarStyle.Shape.floating
-    val minHeight = if (shape == TabBarStyle.Shape.edge) TabBarStyle.MIN_EDGE_HEIGHT else TabBarStyle.MIN_HEIGHT
+    val background = c.attempt { it.optString("background") }?.trim()?.takeIf { it.isNotEmpty() }
+    val engineDrawn = shape == TabBarStyle.Shape.edge || TabBarStyle.isFlatBackground(background)
+    val minHeight = if (engineDrawn) TabBarStyle.MIN_EDGE_HEIGHT else TabBarStyle.MIN_HEIGHT
     return TabBarStyle(
         variant = c.attempt { it.optSafeEnum("variant", TabBarStyle.Variant.system) } ?: TabBarStyle.Variant.system,
-        background = c.attempt { it.optString("background") }?.trim()?.takeIf { it.isNotEmpty() },
+        background = background,
         selection = c.attempt { it.opt("selection") { s -> TabBarStyle.Selection.entries.firstOrNull { e -> e.name == s.stringOrNull() } } },
         text = c.wrapped("text", ::decodeTextModel),
         selectedText = c.wrapped("selectedText", ::decodeTextModel),
@@ -123,6 +156,8 @@ internal fun decodeTabBarStyle(c: Cursor): TabBarStyle {
         height = c.attempt { it.optDouble("height") }?.takeIf { it.isFinite() }?.coerceAtLeast(minHeight),
         component = c.attempt { it.optString("component") }?.trim()?.takeIf { it.isNotEmpty() },
         shape = shape,
+        cornerRadius = c.attempt { it.optDouble("cornerRadius") }?.takeIf { it.isFinite() && it >= 0.0 },
+        badgePlacement = c.attempt { it.optSafeEnum("badgePlacement", TabBarStyle.BadgePlacement.corner) } ?: TabBarStyle.BadgePlacement.corner,
     )
 }
 

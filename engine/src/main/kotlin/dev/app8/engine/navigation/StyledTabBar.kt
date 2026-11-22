@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.BasicText
@@ -139,6 +140,9 @@ private fun DrawScope.drawTabIndicator(selection: TabBarStyle.Selection, progres
     }
 }
 
+/** Gap between a label and its `inline` badge (dp). */
+internal const val INLINE_BADGE_GAP = 4f
+
 /** A component bar's host indicator has no label to size to: this stand-in label (dp), a slot wide less this margin. */
 private const val COMPONENT_LABEL_HEIGHT = 16f
 private const val COMPONENT_LABEL_MARGIN = 44f
@@ -163,7 +167,10 @@ internal fun TextTabBar(
     indicator: Color,
     badge: @Composable (Int) -> Unit,
     onTap: (Int) -> Unit,
+    /** An icon above the label (engine-drawn `system` variant); null for labels only. */
+    icon: (@Composable (Int, Boolean) -> Unit)? = null,
 ) {
+    val inline = style.badgePlacement == TabBarStyle.BadgePlacement.inline
     val count = tabs.size
     // Label sizes in px, read in the draw phase only.
     val labels = remember(count) { mutableStateListOf<IntSize>().apply { repeat(count) { add(IntSize.Zero) } } }
@@ -193,9 +200,7 @@ internal fun TextTabBar(
                     },
                 contentAlignment = Alignment.Center,
             ) {
-                // M3's BadgedBox overlaps an icon's corner; past a text label the badge
-                // sits clear of the last letter, right and up (as iOS and web draw it).
-                BadgedBox(badge = { Box(Modifier.offset(x = 12.dp, y = (-4).dp)) { badge(index) } }) {
+                val label = @Composable {
                     BasicText(
                         tab.label,
                         style = if (isSelected) selectedLabelStyle else labelStyle,
@@ -203,6 +208,28 @@ internal fun TextTabBar(
                         softWrap = false,
                         modifier = Modifier.onSizeChanged { if (index < labels.size) labels[index] = it },
                     )
+                }
+                val labelAndBadge = @Composable {
+                    if (inline) {
+                        // `badgePlacement: inline` (0.7.11): the badge follows the label on its
+                        // line, vertically centred, 4dp after it; the pair is centred in the slot.
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            label()
+                            Box(Modifier.padding(start = INLINE_BADGE_GAP.dp)) { badge(index) }
+                        }
+                    } else {
+                        // M3's BadgedBox overlaps an icon's corner; past a text label the badge
+                        // sits clear of the last letter, right and up (as iOS and web draw it).
+                        BadgedBox(badge = { Box(Modifier.offset(x = 12.dp, y = (-4).dp)) { badge(index) } }) { label() }
+                    }
+                }
+                if (icon != null) {
+                    androidx.compose.foundation.layout.Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        icon(index, isSelected)
+                        labelAndBadge()
+                    }
+                } else {
+                    labelAndBadge()
                 }
             }
         }

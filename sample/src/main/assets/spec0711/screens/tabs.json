@@ -29,7 +29,7 @@
   "badgeTextColor": "#000000",
   "barStyle": {
    "variant": "text",
-   "shape": "edge",
+   "shape": "floating",
    "height": 32,
    "background": "#000000",
    "selection": "opacity",
@@ -38,7 +38,9 @@
     "fontSize": 12,
     "fontWeight": "semibold",
     "color": "#FFFFFF"
-   }
+   },
+   "cornerRadius": 0,
+   "badgePlacement": "inline"
   }
  }
 }

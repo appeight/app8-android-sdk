@@ -50,6 +50,51 @@ class Spec0711DecodingTest {
         assertNull(s.height)
     }
 
+    @Test
+    fun flatFloatingBarIsEngineDrawnWithExactHeightAndCorners() {
+        val s = barStyle("""{"variant":"text","shape":"floating","background":"#000000","cornerRadius":0,"height":32,"badgePlacement":"inline"}""")
+        assertEquals(32.0, s.height)
+        assertEquals(0.0, s.cornerRadius)
+        assertEquals(TabBarStyle.BadgePlacement.inline, s.badgePlacement)
+        assertTrue(s.isEngineDrawn)
+        assertTrue(s.isInsetFloating)
+        assertFalse(s.isSystem)
+    }
+
+    @Test
+    fun systemVariantWithANonGlassBackgroundIsEngineDrawn() {
+        val solid = barStyle("""{"background":"solid","height":20}""")
+        assertFalse(solid.isSystem)
+        assertTrue(solid.isInsetFloating)
+        assertEquals(28.0, solid.height)
+        // Glass (explicit or default) stays the platform bar, at least 44.
+        val glass = barStyle("""{"background":"glass","height":20}""")
+        assertTrue(glass.isSystem)
+        assertFalse(glass.isEngineDrawn)
+        assertEquals(44.0, glass.height)
+        assertTrue(barStyle("{}").isSystem)
+        // Edge is engine-drawn whatever the background, and never inset.
+        val edge = barStyle("""{"shape":"edge","background":"#111111"}""")
+        assertTrue(edge.isEngineDrawn)
+        assertFalse(edge.isInsetFloating)
+        assertFalse(edge.isSystem)
+    }
+
+    @Test
+    fun cornerRadiusAndBadgePlacementAreLenient() {
+        val d = barStyle("""{"variant":"text","background":"#000"}""")
+        assertNull(d.cornerRadius)
+        assertEquals(TabBarStyle.BadgePlacement.corner, d.badgePlacement)
+        val bad = barStyle("""{"variant":"text","background":"#000","cornerRadius":-2,"badgePlacement":"below","height":40}""")
+        assertNull(bad.cornerRadius)
+        assertEquals(TabBarStyle.BadgePlacement.corner, bad.badgePlacement)
+        assertEquals(40.0, bad.height)
+        val wrongTypes = barStyle("""{"variant":"text","background":"#000","cornerRadius":"big","badgePlacement":3}""")
+        assertNull(wrongTypes.cornerRadius)
+        assertEquals(TabBarStyle.BadgePlacement.corner, wrongTypes.badgePlacement)
+        assertEquals("#000", wrongTypes.background)
+    }
+
     private fun scroll(json: String) = DslDecoder().decode(json, ::decodeScrollViewProperties)
 
     @Test
