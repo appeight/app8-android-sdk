@@ -138,6 +138,9 @@ internal fun NodeView(node: RenderNode) {
         m = m.zoomSource(node.runtime.zoomSources, node.session, node.string(element.key), corner * env.density.density, photo)
     }
     if (zIndex != null) m = m.zIndex(zIndex)
+    // Stretchy top: the hero of the enclosing scroll view scales to fill the pull.
+    val stretch = LocalHeroStretch.current
+    if (stretch != null && stretch.heroKey == node.key) m = m.heroStretch(stretch.pull)
     m = m.graphicsLayer {
         this.alpha = alpha
         scaleX = scale

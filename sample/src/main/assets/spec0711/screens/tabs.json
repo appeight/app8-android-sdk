@@ -1,0 +1,46 @@
+{
+ "type": "tabBarScreen",
+ "id": "tabs",
+ "content": {
+  "tabs": [
+   {
+    "id": "hero",
+    "label": "COVER",
+    "icon": "house",
+    "screen": "hero"
+   },
+   {
+    "id": "bag",
+    "label": "BAG",
+    "icon": "bag",
+    "screen": "list",
+    "badge": "{{length(cart)}}"
+   },
+   {
+    "id": "more",
+    "label": "MORE",
+    "icon": "heart",
+    "screen": "list"
+   }
+  ],
+  "initialTab": "hero",
+  "tintColor": "#FFFFFF",
+  "badgeColor": "#FFFFFF",
+  "badgeTextColor": "#000000",
+  "barStyle": {
+   "variant": "text",
+   "shape": "floating",
+   "height": 44,
+   "background": "tabBarDarkBlur",
+   "selection": "opacity",
+   "unselectedOpacity": 0.4,
+   "text": {
+    "fontSize": 12,
+    "fontWeight": "semibold",
+    "color": "#FFFFFF"
+   },
+   "cornerRadius": 0,
+   "badgePlacement": "inline"
+  }
+ }
+}

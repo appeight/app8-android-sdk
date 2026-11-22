@@ -399,7 +399,7 @@ internal fun keysOutsideAdjustingScrolls(root: dev.app8.engine.render.RenderNode
         val p = n.content.properties as? dev.app8.engine.core.model.ScrollViewProperties
         val adjusting = (n.type as? dev.app8.engine.core.model.ComponentType.Known)?.key == dev.app8.engine.core.model.ComponentType.Key.scrollView &&
             p?.direction != dev.app8.engine.core.model.ScrollViewProperties.Direction.horizontal &&
-            p?.contentInsetAdjustment != dev.app8.engine.core.model.ScrollViewProperties.ContentInsetAdjustment.never
+            (p?.contentInsetAdjustment ?: dev.app8.engine.core.model.ScrollViewProperties.ContentInsetAdjustment.automatic).adjustsTop
         if (!adjusting) n.children.forEach(::visit)
     }
     visit(root)

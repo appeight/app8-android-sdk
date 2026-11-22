@@ -23,6 +23,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalDensity
@@ -47,7 +48,10 @@ import kotlin.math.roundToInt
  * `scrollView` (UIScrollView). The solver lays the children out in a content view as wide
  * (vertical) or tall (horizontal) as the scroll view; Compose scrolls it, with Android's
  * stretch overscroll. `contentInsetAdjustment: automatic` (the default) insets the content
- * by the part of the safe area the scroll view covers, like `adjustedContentInset`.
+ * by the part of the safe area the scroll view covers, like `adjustedContentInset`; `bottom`
+ * only at the bottom edge. With `never`, the screen's main vertical scroll view still gets a
+ * `bottomBar`'s height (and the safe area under it) as bottom inset (0.7.11).
+ * `stretchesTopChild` replaces the stretch overscroll with the hero stretch (StretchyTop.kt).
  */
 internal object ScrollKind : ComponentKind {
     override val clipsToMaterial: Boolean get() = true
@@ -85,7 +89,29 @@ internal object ScrollKind : ComponentKind {
         val contentLength = remember { androidx.compose.runtime.mutableIntStateOf(0) }
         if (auto != null) AutoScroll(state, auto.speed * density, infinite, { contentLength.intValue + loopGapPx })
         val fling = if (p.pagingEnabled == true) rememberPagingFling(state, vertical) else null
-        val scrollModifier = if (vertical) Modifier.verticalScroll(state, flingBehavior = fling) else Modifier.horizontalScroll(state, flingBehavior = fling)
+        // Stretchy top: our overscroll (the system stretch is off for this scroll view).
+        val viewportPx = remember { androidx.compose.runtime.mutableIntStateOf(0) }
+        val stretchy = if (vertical && p.stretchesTopChild == true && p.bounces != false) {
+            remember(state) { dev.app8.engine.render.StretchyTopOverscroll { viewportPx.intValue.toFloat() } }
+        } else null
+        val heroKey = if (stretchy != null) {
+            remember(node, solved) { androidx.compose.runtime.derivedStateOf { dev.app8.engine.render.stretchHeroKey(node, solved.value) } }.value
+        } else null
+        val heroStretch = if (stretchy != null) remember(heroKey, stretchy) { dev.app8.engine.render.HeroStretch(heroKey, stretchy.pull) } else null
+        // `never` + a screen `bottomBar`: the main vertical scroll view still clears the bar.
+        val adjustment = p.contentInsetAdjustment ?: ScrollViewProperties.ContentInsetAdjustment.automatic
+        val hasBottomBar = dev.app8.engine.render.LocalBottomEdge.current != null
+        val clearsBottomBar = if (vertical && hasBottomBar && !adjustment.adjustsBottom) {
+            remember(node, solved) {
+                androidx.compose.runtime.derivedStateOf { dev.app8.engine.render.mainVerticalScrollKey(node.session.root, solved.value) == node.key }
+            }.value
+        } else false
+        val scrollModifier = when {
+            stretchy != null -> Modifier.verticalScroll(state, stretchy, flingBehavior = fling)
+                .graphicsLayer { translationY = stretchy.pull.value }
+            vertical -> Modifier.verticalScroll(state, flingBehavior = fling)
+            else -> Modifier.horizontalScroll(state, flingBehavior = fling)
+        }
         // `infinite` auto-scroll draws the content a second time after itself (plus
         // `loopGap`), so wrapping the offset by one length is seamless (iOS marquee duplicate).
         val marquee = if (infinite) Modifier.drawWithContent {
@@ -104,12 +130,17 @@ internal object ScrollKind : ComponentKind {
             scroller.viewport = c
             val root = c.findRootCoordinates()
             gapBelow.intValue = (root.size.height - c.localToRoot(androidx.compose.ui.geometry.Offset(0f, c.size.height.toFloat())).y).toInt().coerceAtLeast(0)
+            viewportPx.intValue = c.size.height
         } else Modifier
         Box(modifier.then(track).clipToBounds()) {
             Layout(
                 content = {
                     val provided = if (vertical) scroller else dev.app8.engine.render.controls.LocalKeyboardScroller.current
-                    androidx.compose.runtime.CompositionLocalProvider(dev.app8.engine.render.controls.LocalKeyboardScroller provides provided) {
+                    androidx.compose.runtime.CompositionLocalProvider(
+                        dev.app8.engine.render.controls.LocalKeyboardScroller provides provided,
+                        // A nested scroll view's children are not this one's hero.
+                        dev.app8.engine.render.LocalHeroStretch provides heroStretch,
+                    ) {
                         for (child in node.children) key(child.key) { NodeView(child) }
                     }
                 },
@@ -126,11 +157,9 @@ internal object ScrollKind : ComponentKind {
                 var bottom = inset?.bottom ?: 0.0
                 var left = inset?.left ?: 0.0
                 var right = inset?.right ?: 0.0
-                if (p.contentInsetAdjustment != ScrollViewProperties.ContentInsetAdjustment.never && self != null && root != null) {
-                    if (vertical) {
-                        top += (root.y + s.safeArea.top - self.y).coerceIn(0.0, self.height)
-                        bottom += (self.maxY - (root.maxY - s.safeArea.bottom)).coerceIn(0.0, self.height)
-                    }
+                if (vertical && self != null && root != null) {
+                    if (adjustment.adjustsTop) top += (root.y + s.safeArea.top - self.y).coerceIn(0.0, self.height)
+                    if (adjustment.adjustsBottom || clearsBottomBar) bottom += (self.maxY - (root.maxY - s.safeArea.bottom)).coerceIn(0.0, self.height)
                 }
                 val viewportW = if (constraints.hasBoundedWidth) constraints.maxWidth else pxSize(self?.width ?: 0.0, d)
                 val viewportH = if (constraints.hasBoundedHeight) constraints.maxHeight else pxSize(self?.height ?: 0.0, d)
@@ -167,7 +196,7 @@ internal object ScrollKind : ComponentKind {
      * content, which fills the scroll view. Over-zoom rubber-bands and springs back; double tap
      * zooms to the tap point (2.5× or the maximum, whichever is smaller) and back out. Inside a
      * horizontal pager the pan goes to the pager at a content edge or at scale 1.
-     * `stretchesTopChild` has no custom effect on Android (system stretch overscroll).
+     * `stretchesTopChild` has no effect on a zooming scroll view.
      */
     @Composable
     private fun ZoomContent(node: RenderNode, p: ScrollViewProperties, modifier: Modifier) {

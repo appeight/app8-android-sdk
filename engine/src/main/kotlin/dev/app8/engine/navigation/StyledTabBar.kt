@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.BasicText
@@ -55,6 +56,7 @@ import dev.app8.engine.render.ScreenSession
 import dev.app8.engine.render.collection.Cell
 import dev.app8.engine.render.collection.CellView
 import dev.app8.engine.style.dslMaterial
+import dev.app8.engine.style.toColor
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlin.math.abs
@@ -138,9 +140,20 @@ private fun DrawScope.drawTabIndicator(selection: TabBarStyle.Selection, progres
     }
 }
 
+/** Gap between a label and its `inline` badge (dp). */
+internal const val INLINE_BADGE_GAP = 4f
+
 /** A component bar's host indicator has no label to size to: this stand-in label (dp), a slot wide less this margin. */
 private const val COMPONENT_LABEL_HEIGHT = 16f
 private const val COMPONENT_LABEL_MARGIN = 44f
+
+/**
+ * Opacity of tab [index]'s label and icon: with [TabBarStyle.Selection.opacity] it cross-fades
+ * from [unselectedAlpha] to 1 as the selection reaches it; 1 for any other selection. Badges
+ * never take it: they stay at full opacity on every tab.
+ */
+internal fun tabLabelAlpha(selection: TabBarStyle.Selection, unselectedAlpha: Float, progress: Float, index: Int): Float =
+    if (selection == TabBarStyle.Selection.opacity) unselectedAlpha + (1f - unselectedAlpha) * selectedness(progress, index) else 1f
 
 /** How much tab [index] is selected at [progress]: 1 on it, 0 one tab or more away. */
 private fun selectedness(progress: Float, index: Int): Float = 1f - min(1f, abs(progress - index))
@@ -162,7 +175,10 @@ internal fun TextTabBar(
     indicator: Color,
     badge: @Composable (Int) -> Unit,
     onTap: (Int) -> Unit,
+    /** An icon above the label (engine-drawn `system` variant); null for labels only. */
+    icon: (@Composable (Int, Boolean) -> Unit)? = null,
 ) {
+    val inline = style.badgePlacement == TabBarStyle.BadgePlacement.inline
     val count = tabs.size
     // Label sizes in px, read in the draw phase only.
     val labels = remember(count) { mutableStateListOf<IntSize>().apply { repeat(count) { add(IntSize.Zero) } } }
@@ -184,24 +200,42 @@ internal fun TextTabBar(
                 Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .selectable(selected = isSelected, interactionSource = null, indication = null, role = Role.Tab) { onTap(index) }
-                    .graphicsLayer {
-                        if (selection == TabBarStyle.Selection.opacity) {
-                            alpha = unselectedAlpha + (1f - unselectedAlpha) * selectedness(progress.value, index)
-                        }
-                    },
+                    .selectable(selected = isSelected, interactionSource = null, indication = null, role = Role.Tab) { onTap(index) },
                 contentAlignment = Alignment.Center,
             ) {
-                // M3's BadgedBox overlaps an icon's corner; past a text label the badge
-                // sits clear of the last letter, right and up (as iOS and web draw it).
-                BadgedBox(badge = { Box(Modifier.offset(x = 12.dp, y = (-4).dp)) { badge(index) } }) {
+                // `selection: opacity` fades the label (and icon) only: badges stay at full
+                // opacity on every tab (tab-bar-screen.md, badgePlacement, 0.7.11).
+                val fade = Modifier.graphicsLayer { alpha = tabLabelAlpha(selection, unselectedAlpha, progress.value, index) }
+                val label = @Composable {
                     BasicText(
                         tab.label,
                         style = if (isSelected) selectedLabelStyle else labelStyle,
                         maxLines = 1,
                         softWrap = false,
-                        modifier = Modifier.onSizeChanged { if (index < labels.size) labels[index] = it },
+                        modifier = fade.onSizeChanged { if (index < labels.size) labels[index] = it },
                     )
+                }
+                val labelAndBadge = @Composable {
+                    if (inline) {
+                        // `badgePlacement: inline` (0.7.11): the badge follows the label on its
+                        // line, vertically centred, 4dp after it; the pair is centred in the slot.
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            label()
+                            Box(Modifier.padding(start = INLINE_BADGE_GAP.dp)) { badge(index) }
+                        }
+                    } else {
+                        // M3's BadgedBox overlaps an icon's corner; past a text label the badge
+                        // sits clear of the last letter, right and up (as iOS and web draw it).
+                        BadgedBox(badge = { Box(Modifier.offset(x = 12.dp, y = (-4).dp)) { badge(index) } }) { label() }
+                    }
+                }
+                if (icon != null) {
+                    androidx.compose.foundation.layout.Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Box(fade) { icon(index, isSelected) }
+                        labelAndBadge()
+                    }
+                } else {
+                    labelAndBadge()
                 }
             }
         }
@@ -297,12 +331,14 @@ internal fun indicatorColorFor(style: TabBarStyle, authored: Color?, tint: Color
 
 /**
  * `barStyle.background` behind the bar and the bottom safe area: `glass` (default) is the
- * Material 3 surface container, `solid` the screen background, else a fill / material style.
+ * Material 3 surface container, `solid` the screen background, a hex colour (`#000000`, the
+ * edge stripe's usual background, 0.7.11), else a fill / material style.
  */
 @Composable
-internal fun Modifier.tabBarBackground(background: String?, env: RenderEnv): Modifier = when (background) {
-    null, "glass" -> background(MaterialTheme.colorScheme.surfaceContainer)
-    "solid" -> background(MaterialTheme.colorScheme.surface)
+internal fun Modifier.tabBarBackground(background: String?, env: RenderEnv): Modifier = when {
+    background == null || background == "glass" -> background(MaterialTheme.colorScheme.surfaceContainer)
+    background == "solid" -> background(MaterialTheme.colorScheme.surface)
+    background.startsWith("#") && tabBarHexColor(background) != null -> background(tabBarHexColor(background)!!)
     else -> {
         val entity = env.runtime.styles.entity(background)
         val material = when (val c = entity?.content) {
@@ -318,7 +354,43 @@ internal fun Modifier.tabBarBackground(background: String?, env: RenderEnv): Mod
             }
             background(MaterialTheme.colorScheme.surfaceContainer)
         } else {
-            dslMaterial(env.styles.material(material), env.appearance)
+            // Layers in array order: a fill listed after a blur tints the blur (a dark blur +
+            // 50% black bar). The general material rule draws every fill under the effects.
+            val (base, overlay) = splitFillsAfterEffects(env.styles.material(material))
+            val drawn = dslMaterial(base, env.appearance)
+            if (overlay == null) drawn else drawn.dslMaterial(overlay, env.appearance)
         }
     }
 }
+
+/**
+ * Splits a bar background material so it draws in array order: [Pair.first] keeps every layer
+ * up to the last visual effect (and corners / shadows / outlines); [Pair.second] is the fill
+ * layers listed after the first visual effect, drawn above it, or null when there are none.
+ * Materials without a visual effect come back whole.
+ */
+internal fun splitFillsAfterEffects(material: Material): Pair<Material, Material?> {
+    fun key(l: dev.app8.engine.core.model.style.StyleAny) = (l.type as? dev.app8.engine.core.model.style.StyleType.Known)?.key
+    val firstEffect = material.layers.indexOfFirst { key(it) == dev.app8.engine.core.model.style.StyleType.Key.visualEffect }
+    if (firstEffect < 0) return material to null
+    val after = material.layers.withIndex()
+        .filter { (i, l) -> i > firstEffect && key(l) == dev.app8.engine.core.model.style.StyleType.Key.fill }
+    if (after.isEmpty()) return material to null
+    val moved = after.map { it.index }.toSet()
+    val corners = material.layers.filter { key(it) == dev.app8.engine.core.model.style.StyleType.Key.corner }
+    val base = Material(material.layers.filterIndexed { i, _ -> i !in moved })
+    // The overlay keeps the material's corner so the tint is clipped like the blur.
+    return base to Material(corners + after.map { it.value })
+}
+
+/**
+ * Whether a bar background may need the tab content as a backdrop: a style entity id (a
+ * material can carry a `visualEffect` blur). `glass`, `solid` and hex colours draw without one.
+ */
+internal fun tabBarSamplesBackdrop(background: String?): Boolean =
+    background != null && background != "glass" && background != "solid" && !background.trim().startsWith("#")
+
+/** A `#RGB` / `#RRGGBB` / `#RRGGBBAA` bar background; null when it does not parse. */
+internal fun tabBarHexColor(raw: String): Color? =
+    raw.trim().takeIf { dev.app8.engine.core.model.style.ColorHex.isValidHexString(it) }
+        ?.let { runCatching { dev.app8.engine.core.model.style.ColorHex.parse(it) }.getOrNull()?.toColor() }

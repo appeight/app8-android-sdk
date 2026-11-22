@@ -79,7 +79,34 @@ public data class TabBarStyle(
     val height: Double? = null,
     /** A component template that draws the whole bar; [variant] is then ignored. */
     val component: String? = null,
+    /**
+     * `floating` (default): the platform bar with a glass background, else an engine-drawn bar
+     * inset from the sides and above the bottom safe area. `edge`: a full-width stripe flush
+     * with the bottom edge. Since 0.7.11.
+     */
+    val shape: Shape = Shape.floating,
+    /** Corner radius of an engine-drawn floating bar; null: a capsule (half the height). Never negative. Since 0.7.11. */
+    val cornerRadius: Double? = null,
+    /** Where a text / engine-drawn bar puts its badges. Since 0.7.11. */
+    val badgePlacement: BadgePlacement = BadgePlacement.corner,
+    /**
+     * Engine-drawn floating bar only: dp between the bar's bottom edge and the bottom system
+     * inset (gesture / navigation bar); positive above it, negative into it. Null: the platform
+     * placement ([floatingBarBottom]). Finite, at most [MAX_BOTTOM_OFFSET] either way. Since 0.7.11.
+     */
+    val bottomOffset: Double? = null,
+    /** Engine-drawn floating bar only: dp from each screen edge; null: [FLOATING_SIDE_INSET]. 0..[MAX_SIDE_INSET]. Since 0.7.11. */
+    val sideInset: Double? = null,
 ) {
+    /** The floating bar's distance from each screen edge: [sideInset], else the platform's [FLOATING_SIDE_INSET]. */
+    val effectiveSideInset: Double get() = sideInset ?: FLOATING_SIDE_INSET
+
+    @Suppress("EnumEntryName")
+    public enum class Shape { floating, edge }
+
+    @Suppress("EnumEntryName")
+    public enum class BadgePlacement { corner, inline }
+
     @Suppress("EnumEntryName")
     public enum class Variant { system, text }
 
@@ -89,27 +116,102 @@ public data class TabBarStyle(
     /** The selection a text bar draws: [selection], else [Selection.capsule]. */
     val effectiveSelection: Selection get() = selection ?: Selection.capsule
 
+    /** True for `shape: edge`. */
+    val isEdge: Boolean get() = shape == Shape.edge
+
+    /** True when [background] is something other than the platform glass (`solid`, a hex colour, a style). */
+    val hasFlatBackground: Boolean get() = isFlatBackground(background)
+
+    /**
+     * True when the engine draws the bar with an exact [height] (at least [MIN_EDGE_HEIGHT]):
+     * `edge`, or a non-glass background. Variant `system` and `text` alike.
+     */
+    val isEngineDrawn: Boolean get() = isEdge || hasFlatBackground
+
+    /** True for an engine-drawn `floating` bar: inset from the sides, above the bottom safe area, [cornerRadius] corners. */
+    val isInsetFloating: Boolean get() = !isEdge && hasFlatBackground
+
     /** True when the platform bar is drawn, exactly as without a `barStyle`. */
-    val isSystem: Boolean get() = component == null && variant == Variant.system
+    val isSystem: Boolean get() = component == null && variant == Variant.system && !isEngineDrawn
 
     public companion object {
         public const val DEFAULT_UNSELECTED_OPACITY: Double = 0.5
         public const val MIN_HEIGHT: Double = 44.0
+        /** The least `height` of an engine-drawn bar (`edge`, or a non-glass background). */
+        public const val MIN_EDGE_HEIGHT: Double = 28.0
+
+        /** Side inset of an engine-drawn floating bar on Android (dp). */
+        public const val FLOATING_SIDE_INSET: Double = 16.0
+
+        /** Bottom edge of an engine-drawn floating bar above the screen's bottom edge with no bottom inset (dp; iOS 26: 8 pt). */
+        public const val FLOATING_BOTTOM_GAP: Double = 8.0
+
+        /**
+         * Bottom edge of an engine-drawn floating bar above the screen's bottom edge over a gesture
+         * bar / home indicator inset (dp): where the iOS 26 bar sits, 21 pt above the screen bottom
+         * (13 pt into the 34 pt inset; measured on iOS 26.4).
+         */
+        public const val FLOATING_GESTURE_BOTTOM: Double = 21.0
+
+        /** The largest bottom inset still treated as a gesture bar (dp); a taller one is three-button navigation (spec: over 40 dp). */
+        public const val GESTURE_INSET_MAX: Double = 40.0
+
+        /**
+         * How far an engine-drawn floating bar's bottom edge sits above the screen's bottom edge
+         * for a system bottom inset of [bottomInset] (tab-bar-screen.md, `shape`, 0.7.11):
+         * [FLOATING_BOTTOM_GAP] with no inset, [FLOATING_GESTURE_BOTTOM] over a gesture bar (the bar
+         * reaches into it, as on iOS), and [FLOATING_BOTTOM_GAP] above three-button navigation (an
+         * inset over [GESTURE_INSET_MAX]) instead of overlapping its buttons.
+         */
+        public fun floatingBarBottom(bottomInset: Double): Double = when {
+            !(bottomInset > 0.0) -> FLOATING_BOTTOM_GAP
+            bottomInset <= GESTURE_INSET_MAX -> maxOf(FLOATING_GESTURE_BOTTOM, FLOATING_BOTTOM_GAP)
+            else -> bottomInset + FLOATING_BOTTOM_GAP
+        }
+
+        /**
+         * [floatingBarBottom] with an authored `bottomOffset`: the inset plus the offset, never
+         * below the screen's bottom edge; without one, the platform placement.
+         */
+        public fun floatingBarBottom(bottomInset: Double, bottomOffset: Double?): Double {
+            bottomOffset ?: return floatingBarBottom(bottomInset)
+            val inset = if (bottomInset > 0.0) bottomInset else 0.0
+            return (inset + bottomOffset).coerceAtLeast(0.0)
+        }
+
+        /** The largest `sideInset` decoded; larger (or negative) values are ignored. */
+        public const val MAX_SIDE_INSET: Double = 200.0
+
+        /** The largest `bottomOffset` magnitude decoded; larger values are ignored. */
+        public const val MAX_BOTTOM_OFFSET: Double = 200.0
+
+        internal fun isFlatBackground(background: String?): Boolean = background != null && background != "glass"
     }
 }
 
 internal fun decodeTabBarStyle(c: Cursor): TabBarStyle {
     c.obj()
+    val shape = c.attempt { it.optSafeEnum("shape", TabBarStyle.Shape.floating) } ?: TabBarStyle.Shape.floating
+    val background = c.attempt { it.optString("background") }?.trim()?.takeIf { it.isNotEmpty() }
+    val engineDrawn = shape == TabBarStyle.Shape.edge || TabBarStyle.isFlatBackground(background)
+    val minHeight = if (engineDrawn) TabBarStyle.MIN_EDGE_HEIGHT else TabBarStyle.MIN_HEIGHT
     return TabBarStyle(
         variant = c.attempt { it.optSafeEnum("variant", TabBarStyle.Variant.system) } ?: TabBarStyle.Variant.system,
-        background = c.attempt { it.optString("background") }?.trim()?.takeIf { it.isNotEmpty() },
+        background = background,
         selection = c.attempt { it.opt("selection") { s -> TabBarStyle.Selection.entries.firstOrNull { e -> e.name == s.stringOrNull() } } },
         text = c.wrapped("text", ::decodeTextModel),
         selectedText = c.wrapped("selectedText", ::decodeTextModel),
         unselectedOpacity = (c.attempt { it.optDouble("unselectedOpacity") } ?: TabBarStyle.DEFAULT_UNSELECTED_OPACITY).coerceIn(0.0, 1.0),
         indicatorColor = c.attempt { it.optString("indicatorColor") },
-        height = c.attempt { it.optDouble("height") }?.coerceAtLeast(TabBarStyle.MIN_HEIGHT),
+        height = c.attempt { it.optDouble("height") }?.takeIf { it.isFinite() }?.coerceAtLeast(minHeight),
         component = c.attempt { it.optString("component") }?.trim()?.takeIf { it.isNotEmpty() },
+        shape = shape,
+        cornerRadius = c.attempt { it.optDouble("cornerRadius") }?.takeIf { it.isFinite() && it >= 0.0 },
+        badgePlacement = c.attempt { it.optSafeEnum("badgePlacement", TabBarStyle.BadgePlacement.corner) } ?: TabBarStyle.BadgePlacement.corner,
+        bottomOffset = c.attempt { it.optDouble("bottomOffset") }
+            ?.takeIf { it.isFinite() && kotlin.math.abs(it) <= TabBarStyle.MAX_BOTTOM_OFFSET },
+        sideInset = c.attempt { it.optDouble("sideInset") }
+            ?.takeIf { it.isFinite() && it >= 0.0 && it <= TabBarStyle.MAX_SIDE_INSET },
     )
 }
 

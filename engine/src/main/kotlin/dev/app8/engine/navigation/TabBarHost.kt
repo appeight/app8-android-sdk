@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.material3.Badge
@@ -109,10 +111,17 @@ internal fun TabBarHost(session: ScreenSession, flow: FlowController, layer: Lay
     // The fade through passes through the surface color, never the black window behind.
     Box(Modifier.fillMaxSize().background(scheme.surface)) {
         val i = state.selected
+        // A bar background style with a blur (a `visualEffect` layer) samples the tab content:
+        // the content records itself as the bar's backdrop (screens record their own for chrome
+        // inside them). Without it the blur could only draw its opaque fallback.
+        val barBackdrop = remember(session) { dev.app8.engine.style.App8Backdrop() }
+        val samplesBackdrop = styled != null && tabBarSamplesBackdrop(styled.background)
         // M3 fade through between tabs. Each tab's saved state (scroll, fields) lives in the
         // holder and its screens in the session cache, so a revisit draws at once, unchanged.
+        val tabContent: @Composable (Modifier) -> Unit = { contentModifier ->
         androidx.compose.animation.AnimatedContent(
             targetState = shown,
+            modifier = contentModifier,
             transitionSpec = { MotionSpecs.tabFadeThrough() },
             contentKey = { it },
             label = "a8-tab",
@@ -125,9 +134,15 @@ internal fun TabBarHost(session: ScreenSession, flow: FlowController, layer: Lay
                 androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner provides backOwner,
             ) {
                 holder.SaveableStateProvider(tab) {
-                    StackHost(flow, layer, stacks[tab], state, Chrome(bottom = barHeight + navInset, inTabs = true))
+                    StackHost(flow, layer, stacks[tab], state, Chrome(bottom = tabBarSafeBottom(styled, barHeight, navInset), inTabs = true))
                 }
             }
+        }
+        }
+        if (samplesBackdrop) {
+            dev.app8.engine.style.App8BackdropSource(barBackdrop, Modifier.fillMaxSize()) { m -> tabContent(m) }
+        } else {
+            tabContent(Modifier)
         }
         // `hidesTabBar` on the top screen of the selected tab slides the bar away. During a
         // predictive back to a screen that shows it, the bar follows the gesture (iOS).
@@ -152,7 +167,10 @@ internal fun TabBarHost(session: ScreenSession, flow: FlowController, layer: Lay
             // (selectTab) need a dispatcher of their own, on this flow layer.
             val host = LocalHostEffects.current
             val barDispatcher = remember(session, flow, layer) { dev.app8.engine.actions.ActionDispatcher(env.runtime, LiveNavigator(flow, layer), host) }
-            androidx.compose.runtime.CompositionLocalProvider(dev.app8.engine.render.LocalDispatcher provides barDispatcher) {
+            androidx.compose.runtime.CompositionLocalProvider(
+                dev.app8.engine.render.LocalDispatcher provides barDispatcher,
+                dev.app8.engine.style.LocalApp8Backdrop provides (if (samplesBackdrop) barBackdrop else null),
+            ) {
                 StyledBar(session, styled, barTemplate, tabs, state, stacks, barHeight, navInset, tint, authoredUnselected ?: unselected, reselectScope)
             }
             return@Box
@@ -211,7 +229,29 @@ internal fun TabBarHost(session: ScreenSession, flow: FlowController, layer: Lay
     }
 }
 
-/** A `barStyle` bar (text or component) over its background, which also fills the bottom safe area. */
+/**
+ * The tab screens' bottom safe area: up to the bar's top edge. An engine-drawn floating bar
+ * (non-glass background, 0.7.11) sits [tabBarBottomSpace] above the screen's bottom edge.
+ */
+internal fun tabBarSafeBottom(style: dev.app8.engine.core.model.TabBarStyle?, barHeight: Double, navInset: Double): Double =
+    barHeight + tabBarBottomSpace(style, navInset)
+
+/**
+ * The space between the bar's bottom edge and the screen's bottom edge: the system inset for a
+ * bar whose background fills it, or the iOS 26 placement for an engine-drawn floating bar
+ * ([dev.app8.engine.core.model.TabBarStyle.floatingBarBottom]: 21dp over a gesture bar, 8dp with none),
+ * or the system inset plus an authored `bottomOffset`.
+ */
+internal fun tabBarBottomSpace(style: dev.app8.engine.core.model.TabBarStyle?, navInset: Double): Double =
+    if (style?.isInsetFloating == true) dev.app8.engine.core.model.TabBarStyle.floatingBarBottom(navInset, style.bottomOffset) else navInset
+
+/**
+ * A `barStyle` bar (text or component). Full width over its background, which also fills the
+ * bottom safe area; an engine-drawn floating bar (non-glass background, 0.7.11) is inset
+ * `sideInset` (default 16dp) from the sides, its bottom edge where the iOS 26 bar's is ([tabBarBottomSpace]), its background clipped to
+ * `cornerRadius` (default a capsule) and nothing under the gesture bar. No elevation. The
+ * content is never clipped, so badges may overflow the bar's top edge.
+ */
 @Composable
 private fun StyledBar(
     session: ScreenSession,
@@ -231,7 +271,16 @@ private fun StyledBar(
     fun hex(s: String?) = session.root.hexColor(s)
     val progress = rememberSelectionProgress(state)
     val badges = tabs.map { tab -> tab.badge?.let { session.root.string(it) }?.takeIf { it.isNotEmpty() && it != "0" } }
-    androidx.compose.foundation.layout.Column(Modifier.fillMaxWidth().tabBarBackground(style.background, env)) {
+    val floating = style.isInsetFloating
+    val barShape = tabBarShape(style, height)
+    androidx.compose.foundation.layout.Column(Modifier.fillMaxWidth().then(if (floating) Modifier else Modifier.tabBarBackground(style.background, env))) {
+      Box(
+          if (floating) Modifier.fillMaxWidth().padding(horizontal = style.effectiveSideInset.dp) else Modifier.fillMaxWidth(),
+      ) {
+        if (floating) {
+            // Only the background is clipped to the corners: badges may overflow the bar.
+            Box(Modifier.matchParentSize().clip(barShape).tabBarBackground(style.background, env))
+        }
         if (template != null) {
             // A host indicator only for an explicit capsule / underline / box (opacity is the template's job).
             val indicator = style.selection?.takeIf { it != dev.app8.engine.core.model.TabBarStyle.Selection.opacity }
@@ -248,6 +297,8 @@ private fun StyledBar(
             }
             val textModel = env.textModel(style.text, session.root)
             val selectedModel = env.textModel(style.selectedText, session.root) ?: textModel
+            // An engine-drawn `system` variant keeps its icons when the bar is tall enough for them.
+            val icons = style.variant == dev.app8.engine.core.model.TabBarStyle.Variant.system && height >= SYSTEM_ICON_MIN_HEIGHT
             TextTabBar(
                 tabs = tabs,
                 selected = state.selected,
@@ -260,14 +311,25 @@ private fun StyledBar(
                 badge = { i ->
                     badges[i]?.let { TabBadge(it, hex(tabs[i].badgeColor) ?: hex(content.badgeColor), hex(content.badgeTextColor)) }
                 },
+                icon = if (icons) ({ i, selected -> Symbol(tabs[i].icon, if (selected || opacity) tint else unselected) }) else null,
                 onTap = { index ->
                     if (index == state.selected) reselectScope.launch { stacks[index].reselect() } else state.selected = index
                 },
             )
         }
-        androidx.compose.foundation.layout.Spacer(Modifier.fillMaxWidth().height(navInset.dp))
+      }
+        androidx.compose.foundation.layout.Spacer(Modifier.fillMaxWidth().height(tabBarBottomSpace(style, navInset).dp))
     }
 }
+
+/** An engine-drawn floating bar's corners: `cornerRadius`, else a capsule; 0 is a rectangle. */
+internal fun tabBarShape(style: dev.app8.engine.core.model.TabBarStyle, height: Double): androidx.compose.ui.graphics.Shape {
+    val r = style.cornerRadius ?: (height / 2)
+    return if (r <= 0.0) androidx.compose.ui.graphics.RectangleShape else androidx.compose.foundation.shape.RoundedCornerShape(r.toFloat().dp)
+}
+
+/** An engine-drawn `system` bar shows icons above its labels from this height (dp). */
+internal const val SYSTEM_ICON_MIN_HEIGHT = 48.0
 
 /**
  * The tab bar's navigator: resolves [FlowController.navigatorFor] on every call. A navigator

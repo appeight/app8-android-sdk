@@ -19,6 +19,8 @@ public data class ContextMenu(
         val component: Component,
         val width: Double? = null,
         val height: Double? = null,
+        /** Platter corner radius in points (0.7.11); null: the platform's. Never negative. */
+        val cornerRadius: Double? = null,
     )
 
     public data class Item(
@@ -52,7 +54,9 @@ internal fun decodeContextMenu(c: Cursor): ContextMenu {
                     null
                 }
             }?.let { comp ->
-                ContextMenu.Preview(comp, p.optDouble("width"), p.optDouble("height"))
+                // Lenient: a non-number or negative `cornerRadius` keeps the platform corners.
+                val corner = p.attempt { it.optDouble("cornerRadius") }?.takeIf { it.isFinite() && it >= 0.0 }
+                ContextMenu.Preview(comp, p.optDouble("width"), p.optDouble("height"), corner)
             }
         },
         items = c.safeOptionalList("items", "ContextMenu.Item") { i ->

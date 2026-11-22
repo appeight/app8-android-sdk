@@ -1,0 +1,722 @@
+{
+ "type": "screen",
+ "id": "hero",
+ "content": {
+  "navigationBar": {
+   "hidden": true
+  },
+  "properties": {
+   "backgroundColor": "#FFFFFF"
+  },
+  "children": [
+   {
+    "type": "scrollView",
+    "id": "scroll",
+    "content": {
+     "properties": {
+      "stretchesTopChild": true,
+      "contentInsetAdjustment": "bottom"
+     },
+     "layout": {
+      "constraints": [
+       {
+        "type": "top",
+        "target": "superview"
+       },
+       {
+        "type": "bottom",
+        "target": "superview"
+       },
+       {
+        "type": "leading",
+        "target": "superview"
+       },
+       {
+        "type": "trailing",
+        "target": "superview"
+       }
+      ]
+     },
+     "children": [
+      {
+       "type": "stackView",
+       "id": "stack",
+       "content": {
+        "properties": {
+         "axis": "vertical",
+         "spacing": 12
+        },
+        "layout": {
+         "constraints": [
+          {
+           "type": "top",
+           "target": "superview"
+          },
+          {
+           "type": "bottom",
+           "target": "superview"
+          },
+          {
+           "type": "leading",
+           "target": "superview"
+          },
+          {
+           "type": "trailing",
+           "target": "superview"
+          },
+          {
+           "type": "width",
+           "target": "superview",
+           "attribute": "width"
+          }
+         ]
+        },
+        "children": [
+         {
+          "type": "view",
+          "id": "heroBox",
+          "content": {
+           "layout": {
+            "height": 420
+           },
+           "children": [
+            {
+             "type": "collection",
+             "id": "pager",
+             "content": {
+              "properties": {
+               "data": "{{pages}}",
+               "layout": {
+                "type": "horizontal",
+                "itemHeight": 420,
+                "pagingStyle": "paging"
+               }
+              },
+              "template": {
+               "id": "page",
+               "type": "image",
+               "content": {
+                "properties": {
+                 "type": "remoteAsset",
+                 "name": "{{item.image}}"
+                },
+                "style": {
+                 "contentMode": "scaleAspectFill"
+                }
+               }
+              },
+              "layout": {
+               "constraints": [
+                {
+                 "type": "top",
+                 "target": "superview"
+                },
+                {
+                 "type": "bottom",
+                 "target": "superview"
+                },
+                {
+                 "type": "leading",
+                 "target": "superview"
+                },
+                {
+                 "type": "trailing",
+                 "target": "superview"
+                }
+               ]
+              }
+             }
+            }
+           ]
+          }
+         },
+         {
+          "type": "label",
+          "id": "title",
+          "content": {
+           "properties": {
+            "text": "Cover title",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 26,
+             "fontWeight": "bold",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "view",
+          "id": "card",
+          "content": {
+           "properties": {
+            "backgroundColor": "#EEEEEE"
+           },
+           "layout": {
+            "height": 80,
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           },
+           "contextMenu": {
+            "preview": {
+             "component": {
+              "type": "image",
+              "content": {
+               "properties": {
+                "type": "remoteAsset",
+                "name": "p-item-b"
+               },
+               "style": {
+                "contentMode": "scaleAspectFill"
+               },
+               "layout": {
+                "height": 300
+               }
+              }
+             },
+             "cornerRadius": 0
+            },
+            "items": [
+             {
+              "id": "add",
+              "title": "Add to bag",
+              "icon": "bag",
+              "actions": []
+             }
+            ]
+           },
+           "children": [
+            {
+             "type": "label",
+             "id": "cardLabel",
+             "content": {
+              "properties": {
+               "text": "Long-press: square preview",
+               "numberOfLines": 0
+              },
+              "style": {
+               "text": {
+                "fontSize": 16,
+                "fontWeight": "regular",
+                "color": "#111111"
+               }
+              },
+              "layout": {
+               "constraints": [
+                {
+                 "type": "leading",
+                 "target": "superview",
+                 "constant": 16
+                },
+                {
+                 "type": "trailing",
+                 "target": "superview",
+                 "constant": -16
+                }
+               ]
+              }
+             }
+            }
+           ]
+          }
+         },
+         {
+          "type": "label",
+          "id": "r1",
+          "content": {
+           "properties": {
+            "text": "Row 1 \u2014 body copy that fills the page so the scroll reaches the bottom.",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 16,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "r2",
+          "content": {
+           "properties": {
+            "text": "Row 2 \u2014 body copy that fills the page so the scroll reaches the bottom.",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 16,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "r3",
+          "content": {
+           "properties": {
+            "text": "Row 3 \u2014 body copy that fills the page so the scroll reaches the bottom.",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 16,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "r4",
+          "content": {
+           "properties": {
+            "text": "Row 4 \u2014 body copy that fills the page so the scroll reaches the bottom.",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 16,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "r5",
+          "content": {
+           "properties": {
+            "text": "Row 5 \u2014 body copy that fills the page so the scroll reaches the bottom.",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 16,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "r6",
+          "content": {
+           "properties": {
+            "text": "Row 6 \u2014 body copy that fills the page so the scroll reaches the bottom.",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 16,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "r7",
+          "content": {
+           "properties": {
+            "text": "Row 7 \u2014 body copy that fills the page so the scroll reaches the bottom.",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 16,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "r8",
+          "content": {
+           "properties": {
+            "text": "Row 8 \u2014 body copy that fills the page so the scroll reaches the bottom.",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 16,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "r9",
+          "content": {
+           "properties": {
+            "text": "Row 9 \u2014 body copy that fills the page so the scroll reaches the bottom.",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 16,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "r10",
+          "content": {
+           "properties": {
+            "text": "Row 10 \u2014 body copy that fills the page so the scroll reaches the bottom.",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 16,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "r11",
+          "content": {
+           "properties": {
+            "text": "Row 11 \u2014 body copy that fills the page so the scroll reaches the bottom.",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 16,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "r12",
+          "content": {
+           "properties": {
+            "text": "Row 12 \u2014 body copy that fills the page so the scroll reaches the bottom.",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 16,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "r13",
+          "content": {
+           "properties": {
+            "text": "Row 13 \u2014 body copy that fills the page so the scroll reaches the bottom.",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 16,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "r14",
+          "content": {
+           "properties": {
+            "text": "Row 14 \u2014 body copy that fills the page so the scroll reaches the bottom.",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 16,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "r15",
+          "content": {
+           "properties": {
+            "text": "Row 15 \u2014 body copy that fills the page so the scroll reaches the bottom.",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 16,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         }
+        ]
+       }
+      }
+     ]
+    }
+   }
+  ]
+ }
+}

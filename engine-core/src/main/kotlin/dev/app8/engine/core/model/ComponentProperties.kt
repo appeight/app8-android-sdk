@@ -142,7 +142,7 @@ public data class ScrollViewProperties(
     val maximumZoomScale: Double? = null,
     /** Default: true when zoom is on. */
     val doubleTapZoom: Boolean? = null,
-    /** iOS stretchy header. Android: parsed, no custom effect (system stretch overscroll). */
+    /** Stretchy top (scroll-view.md): the pull-down at the top scales the hero about its bottom centre (0.7.11). */
     val stretchesTopChild: Boolean? = null,
 ) {
     /** True when `maximumZoomScale` > 1. */
@@ -152,7 +152,19 @@ public data class ScrollViewProperties(
     public enum class Direction { vertical, horizontal }
 
     @Suppress("EnumEntryName")
-    public enum class ContentInsetAdjustment { never, automatic }
+    public enum class ContentInsetAdjustment {
+        never,
+        automatic,
+        /** Only the bottom edge follows the safe area; the content starts under the top bars (0.7.11). */
+        bottom,
+        ;
+
+        /** Whether the top content inset follows the safe area. */
+        public val adjustsTop: Boolean get() = this == automatic
+
+        /** Whether the bottom content inset follows the safe area. */
+        public val adjustsBottom: Boolean get() = this != never
+    }
 
     @Suppress("EnumEntryName")
     public enum class KeyboardDismissMode { none, onDrag, interactive }
@@ -171,7 +183,8 @@ internal fun decodeScrollViewProperties(c: Cursor): ScrollViewProperties {
         outputVariable = c.optString("outputVariable"),
         scrollThreshold = c.optDouble("scrollThreshold"),
         contentInset = c.opt("contentInset", ::decodeEdgeInsets),
-        contentInsetAdjustment = c.optEnum<ScrollViewProperties.ContentInsetAdjustment>("contentInsetAdjustment"),
+        // Lenient: an unknown value reads as `automatic` (as engines up to 0.7.10 read `bottom`).
+        contentInsetAdjustment = c.attempt { it.optSafeEnum("contentInsetAdjustment", ScrollViewProperties.ContentInsetAdjustment.automatic) },
         bounces = c.optBool("bounces"),
         pagingEnabled = c.optBool("pagingEnabled"),
         keyboardDismissMode = c.optEnum<ScrollViewProperties.KeyboardDismissMode>("keyboardDismissMode"),

@@ -79,7 +79,8 @@ full-width view that starts at y = 0, minus the bar's bottom edge
 (`heroScrollDistance`). With no such view it happens on the first scroll. The
 change animates over 200ms. Only views that really draw under the bar count: the
 content of a scroll view that insets itself by the safe area
-(`contentInsetAdjustment` other than `never`) is skipped.
+(`contentInsetAdjustment: automatic`) is skipped; `never` and `bottom` content
+counts.
 
 With `topEdgeEffect: automatic` (or `soft` / `hard`) over a hero drawn under the
 bar, the bar keeps its usual behavior (title shown, `surfaceContainer` as soon as
@@ -172,7 +173,7 @@ follow these rows.
 | Edge-to-edge | mandatory at targetSdk 36; transparent status and gesture bars | always; insets consumed explicitly | E2E |
 | 3-button nav scrim | system contrast scrim unless disabled | system default | E2E |
 | Status bar icons | light / dark by what is under them | `StatusBarContrast` | E2E |
-| Overscroll | stretch (Android 12+) | Compose default stretch | E2E |
+| Overscroll | stretch (Android 12+) | Compose default stretch; a `stretchesTopChild` scroll view replaces it with the hero stretch (0.7.11, `StretchyTop.kt`) | E2E |
 | `system` font | Roboto for third-party apps (Google Sans Flex is Google's own apps; OFL since Nov 2025 but not a system default) | Roboto | https://9to5google.com/2025/11/18/google-sans-flex-font-available/ |
 
 ## Not matched yet
