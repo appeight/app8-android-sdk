@@ -95,7 +95,12 @@ public data class TabBarStyle(
      * placement ([floatingBarBottom]). Finite, at most [MAX_BOTTOM_OFFSET] either way. Since 0.7.11.
      */
     val bottomOffset: Double? = null,
+    /** Engine-drawn floating bar only: dp from each screen edge; null: [FLOATING_SIDE_INSET]. 0..[MAX_SIDE_INSET]. Since 0.7.11. */
+    val sideInset: Double? = null,
 ) {
+    /** The floating bar's distance from each screen edge: [sideInset], else the platform's [FLOATING_SIDE_INSET]. */
+    val effectiveSideInset: Double get() = sideInset ?: FLOATING_SIDE_INSET
+
     @Suppress("EnumEntryName")
     public enum class Shape { floating, edge }
 
@@ -174,6 +179,9 @@ public data class TabBarStyle(
             return (inset + bottomOffset).coerceAtLeast(0.0)
         }
 
+        /** The largest `sideInset` decoded; larger (or negative) values are ignored. */
+        public const val MAX_SIDE_INSET: Double = 200.0
+
         /** The largest `bottomOffset` magnitude decoded; larger values are ignored. */
         public const val MAX_BOTTOM_OFFSET: Double = 200.0
 
@@ -202,6 +210,8 @@ internal fun decodeTabBarStyle(c: Cursor): TabBarStyle {
         badgePlacement = c.attempt { it.optSafeEnum("badgePlacement", TabBarStyle.BadgePlacement.corner) } ?: TabBarStyle.BadgePlacement.corner,
         bottomOffset = c.attempt { it.optDouble("bottomOffset") }
             ?.takeIf { it.isFinite() && kotlin.math.abs(it) <= TabBarStyle.MAX_BOTTOM_OFFSET },
+        sideInset = c.attempt { it.optDouble("sideInset") }
+            ?.takeIf { it.isFinite() && it >= 0.0 && it <= TabBarStyle.MAX_SIDE_INSET },
     )
 }
 

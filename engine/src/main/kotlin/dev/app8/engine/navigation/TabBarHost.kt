@@ -232,7 +232,7 @@ internal fun tabBarBottomSpace(style: dev.app8.engine.core.model.TabBarStyle?, n
 /**
  * A `barStyle` bar (text or component). Full width over its background, which also fills the
  * bottom safe area; an engine-drawn floating bar (non-glass background, 0.7.11) is inset
- * 16dp from the sides, its bottom edge where the iOS 26 bar's is ([tabBarBottomSpace]), its background clipped to
+ * `sideInset` (default 16dp) from the sides, its bottom edge where the iOS 26 bar's is ([tabBarBottomSpace]), its background clipped to
  * `cornerRadius` (default a capsule) and nothing under the gesture bar. No elevation. The
  * content is never clipped, so badges may overflow the bar's top edge.
  */
@@ -259,7 +259,7 @@ private fun StyledBar(
     val barShape = tabBarShape(style, height)
     androidx.compose.foundation.layout.Column(Modifier.fillMaxWidth().then(if (floating) Modifier else Modifier.tabBarBackground(style.background, env))) {
       Box(
-          if (floating) Modifier.fillMaxWidth().padding(horizontal = dev.app8.engine.core.model.TabBarStyle.FLOATING_SIDE_INSET.dp) else Modifier.fillMaxWidth(),
+          if (floating) Modifier.fillMaxWidth().padding(horizontal = style.effectiveSideInset.dp) else Modifier.fillMaxWidth(),
       ) {
         if (floating) {
             // Only the background is clipped to the corners: badges may overflow the bar.

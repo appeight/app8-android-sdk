@@ -125,6 +125,26 @@ class Spec0711DecodingTest {
         assertEquals(21.0, TabBarStyle.floatingBarBottom(24.0, null))
     }
 
+    @Test
+    fun sideInsetDecodesLeniently() {
+        val d = barStyle("""{"variant":"text","background":"#000"}""")
+        assertNull(d.sideInset)
+        assertEquals(16.0, d.effectiveSideInset)
+        assertEquals(24.0, barStyle("""{"variant":"text","background":"#000","sideInset":24}""").effectiveSideInset)
+        assertEquals(0.0, barStyle("""{"variant":"text","background":"#000","sideInset":0}""").effectiveSideInset)
+        assertEquals(200.0, barStyle("""{"variant":"text","background":"#000","sideInset":200}""").effectiveSideInset)
+        for (bad in listOf("-1", "201", "\"wide\"", "{}")) {
+            val s = barStyle("""{"variant":"text","background":"#000","height":40,"sideInset":$bad}""")
+            assertNull(s.sideInset, bad)
+            assertEquals(16.0, s.effectiveSideInset)
+            assertEquals(40.0, s.height)
+        }
+        // Together with bottomOffset.
+        val both = barStyle("""{"variant":"text","background":"#000","sideInset":20,"bottomOffset":4}""")
+        assertEquals(20.0, both.sideInset)
+        assertEquals(4.0, both.bottomOffset)
+    }
+
     private fun scroll(json: String) = DslDecoder().decode(json, ::decodeScrollViewProperties)
 
     @Test
