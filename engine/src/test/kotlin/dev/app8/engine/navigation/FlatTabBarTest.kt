@@ -28,3 +28,23 @@ class FlatTabBarTest {
         assertEquals(RoundedCornerShape(6.dp), tabBarShape(style.copy(cornerRadius = 6.0), 32.0))
     }
 }
+
+/** `selection: opacity` fades labels only; badges stay at full opacity (tab-bar-screen.md, badgePlacement). */
+class TabLabelOpacityTest {
+    @Test
+    fun opacitySelectionFadesUnselectedLabels() {
+        val s = TabBarStyle.Selection.opacity
+        assertEquals(1f, tabLabelAlpha(s, 0.3f, progress = 1f, index = 1))
+        assertEquals(0.3f, tabLabelAlpha(s, 0.3f, progress = 1f, index = 0))
+        assertEquals(0.3f, tabLabelAlpha(s, 0.3f, progress = 1f, index = 2))
+        // Halfway through a switch both labels are half faded.
+        assertEquals(0.65f, tabLabelAlpha(s, 0.3f, progress = 0.5f, index = 0), 0.0001f)
+    }
+
+    @Test
+    fun otherSelectionsKeepLabelsOpaque() {
+        for (s in listOf(TabBarStyle.Selection.capsule, TabBarStyle.Selection.underline, TabBarStyle.Selection.box)) {
+            assertEquals(1f, tabLabelAlpha(s, 0.3f, progress = 0f, index = 2))
+        }
+    }
+}

@@ -147,6 +147,14 @@ internal const val INLINE_BADGE_GAP = 4f
 private const val COMPONENT_LABEL_HEIGHT = 16f
 private const val COMPONENT_LABEL_MARGIN = 44f
 
+/**
+ * Opacity of tab [index]'s label and icon: with [TabBarStyle.Selection.opacity] it cross-fades
+ * from [unselectedAlpha] to 1 as the selection reaches it; 1 for any other selection. Badges
+ * never take it: they stay at full opacity on every tab.
+ */
+internal fun tabLabelAlpha(selection: TabBarStyle.Selection, unselectedAlpha: Float, progress: Float, index: Int): Float =
+    if (selection == TabBarStyle.Selection.opacity) unselectedAlpha + (1f - unselectedAlpha) * selectedness(progress, index) else 1f
+
 /** How much tab [index] is selected at [progress]: 1 on it, 0 one tab or more away. */
 private fun selectedness(progress: Float, index: Int): Float = 1f - min(1f, abs(progress - index))
 
@@ -192,21 +200,19 @@ internal fun TextTabBar(
                 Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .selectable(selected = isSelected, interactionSource = null, indication = null, role = Role.Tab) { onTap(index) }
-                    .graphicsLayer {
-                        if (selection == TabBarStyle.Selection.opacity) {
-                            alpha = unselectedAlpha + (1f - unselectedAlpha) * selectedness(progress.value, index)
-                        }
-                    },
+                    .selectable(selected = isSelected, interactionSource = null, indication = null, role = Role.Tab) { onTap(index) },
                 contentAlignment = Alignment.Center,
             ) {
+                // `selection: opacity` fades the label (and icon) only: badges stay at full
+                // opacity on every tab (tab-bar-screen.md, badgePlacement, 0.7.11).
+                val fade = Modifier.graphicsLayer { alpha = tabLabelAlpha(selection, unselectedAlpha, progress.value, index) }
                 val label = @Composable {
                     BasicText(
                         tab.label,
                         style = if (isSelected) selectedLabelStyle else labelStyle,
                         maxLines = 1,
                         softWrap = false,
-                        modifier = Modifier.onSizeChanged { if (index < labels.size) labels[index] = it },
+                        modifier = fade.onSizeChanged { if (index < labels.size) labels[index] = it },
                     )
                 }
                 val labelAndBadge = @Composable {
@@ -225,7 +231,7 @@ internal fun TextTabBar(
                 }
                 if (icon != null) {
                     androidx.compose.foundation.layout.Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        icon(index, isSelected)
+                        Box(fade) { icon(index, isSelected) }
                         labelAndBadge()
                     }
                 } else {
