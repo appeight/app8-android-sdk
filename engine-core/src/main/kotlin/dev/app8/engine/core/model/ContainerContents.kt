@@ -89,6 +89,12 @@ public data class TabBarStyle(
     val cornerRadius: Double? = null,
     /** Where a text / engine-drawn bar puts its badges. Since 0.7.11. */
     val badgePlacement: BadgePlacement = BadgePlacement.corner,
+    /**
+     * Engine-drawn floating bar only: dp between the bar's bottom edge and the bottom system
+     * inset (gesture / navigation bar); positive above it, negative into it. Null: the platform
+     * placement ([floatingBarBottom]). Finite, at most [MAX_BOTTOM_OFFSET] either way. Since 0.7.11.
+     */
+    val bottomOffset: Double? = null,
 ) {
     @Suppress("EnumEntryName")
     public enum class Shape { floating, edge }
@@ -158,6 +164,19 @@ public data class TabBarStyle(
             else -> bottomInset + FLOATING_BOTTOM_GAP
         }
 
+        /**
+         * [floatingBarBottom] with an authored `bottomOffset`: the inset plus the offset, never
+         * below the screen's bottom edge; without one, the platform placement.
+         */
+        public fun floatingBarBottom(bottomInset: Double, bottomOffset: Double?): Double {
+            bottomOffset ?: return floatingBarBottom(bottomInset)
+            val inset = if (bottomInset > 0.0) bottomInset else 0.0
+            return (inset + bottomOffset).coerceAtLeast(0.0)
+        }
+
+        /** The largest `bottomOffset` magnitude decoded; larger values are ignored. */
+        public const val MAX_BOTTOM_OFFSET: Double = 200.0
+
         internal fun isFlatBackground(background: String?): Boolean = background != null && background != "glass"
     }
 }
@@ -181,6 +200,8 @@ internal fun decodeTabBarStyle(c: Cursor): TabBarStyle {
         shape = shape,
         cornerRadius = c.attempt { it.optDouble("cornerRadius") }?.takeIf { it.isFinite() && it >= 0.0 },
         badgePlacement = c.attempt { it.optSafeEnum("badgePlacement", TabBarStyle.BadgePlacement.corner) } ?: TabBarStyle.BadgePlacement.corner,
+        bottomOffset = c.attempt { it.optDouble("bottomOffset") }
+            ?.takeIf { it.isFinite() && kotlin.math.abs(it) <= TabBarStyle.MAX_BOTTOM_OFFSET },
     )
 }
 

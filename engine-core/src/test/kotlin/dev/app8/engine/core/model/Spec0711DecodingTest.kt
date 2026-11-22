@@ -106,6 +106,25 @@ class Spec0711DecodingTest {
         assertEquals(8.0, TabBarStyle.floatingBarBottom(Double.NaN))
     }
 
+    @Test
+    fun bottomOffsetDecodesLenientlyAndPlacesTheBarFromTheInset() {
+        assertEquals(12.0, barStyle("""{"variant":"text","background":"#000","bottomOffset":12}""").bottomOffset)
+        assertEquals(-6.0, barStyle("""{"variant":"text","background":"#000","bottomOffset":-6}""").bottomOffset)
+        assertEquals(200.0, barStyle("""{"variant":"text","background":"#000","bottomOffset":200}""").bottomOffset)
+        assertNull(barStyle("""{"variant":"text","background":"#000"}""").bottomOffset)
+        assertNull(barStyle("""{"variant":"text","background":"#000","bottomOffset":201}""").bottomOffset)
+        assertNull(barStyle("""{"variant":"text","background":"#000","bottomOffset":-500}""").bottomOffset)
+        val bad = barStyle("""{"variant":"text","background":"#000","bottomOffset":"low","height":40}""")
+        assertNull(bad.bottomOffset)
+        assertEquals(40.0, bad.height)
+        // Placement: inset + offset, never below the screen's bottom edge; null keeps the platform's.
+        assertEquals(36.0, TabBarStyle.floatingBarBottom(24.0, 12.0))
+        assertEquals(18.0, TabBarStyle.floatingBarBottom(24.0, -6.0))
+        assertEquals(0.0, TabBarStyle.floatingBarBottom(24.0, -60.0))
+        assertEquals(12.0, TabBarStyle.floatingBarBottom(0.0, 12.0))
+        assertEquals(21.0, TabBarStyle.floatingBarBottom(24.0, null))
+    }
+
     private fun scroll(json: String) = DslDecoder().decode(json, ::decodeScrollViewProperties)
 
     @Test

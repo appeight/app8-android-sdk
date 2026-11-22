@@ -223,10 +223,11 @@ internal fun tabBarSafeBottom(style: dev.app8.engine.core.model.TabBarStyle?, ba
 /**
  * The space between the bar's bottom edge and the screen's bottom edge: the system inset for a
  * bar whose background fills it, or the iOS 26 placement for an engine-drawn floating bar
- * ([dev.app8.engine.core.model.TabBarStyle.floatingBarBottom]: 21dp over a gesture bar, 8dp with none).
+ * ([dev.app8.engine.core.model.TabBarStyle.floatingBarBottom]: 21dp over a gesture bar, 8dp with none),
+ * or the system inset plus an authored `bottomOffset`.
  */
 internal fun tabBarBottomSpace(style: dev.app8.engine.core.model.TabBarStyle?, navInset: Double): Double =
-    if (style?.isInsetFloating == true) dev.app8.engine.core.model.TabBarStyle.floatingBarBottom(navInset) else navInset
+    if (style?.isInsetFloating == true) dev.app8.engine.core.model.TabBarStyle.floatingBarBottom(navInset, style.bottomOffset) else navInset
 
 /**
  * A `barStyle` bar (text or component). Full width over its background, which also fills the

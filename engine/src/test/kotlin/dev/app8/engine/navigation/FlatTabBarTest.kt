@@ -19,6 +19,10 @@ class FlatTabBarTest {
         assertEquals(32.0 + 8.0, tabBarSafeBottom(floating, 32.0, 0.0))
         // Three-button navigation (48dp): 8dp above the buttons.
         assertEquals(32.0 + 56.0, tabBarSafeBottom(floating, 32.0, 48.0))
+        // `bottomOffset`: from the system inset; the safe area still reaches the bar's top edge.
+        assertEquals(32.0 + 24.0 + 10.0, tabBarSafeBottom(floating.copy(bottomOffset = 10.0), 32.0, 24.0))
+        // Edge stripes ignore it.
+        assertEquals(32.0 + 24.0, tabBarSafeBottom(floating.copy(shape = TabBarStyle.Shape.edge, bottomOffset = 10.0), 32.0, 24.0))
         val edge = floating.copy(shape = TabBarStyle.Shape.edge)
         assertEquals(32.0 + 24.0, tabBarSafeBottom(edge, 32.0, 24.0))
         val glassText = TabBarStyle(variant = TabBarStyle.Variant.text)
