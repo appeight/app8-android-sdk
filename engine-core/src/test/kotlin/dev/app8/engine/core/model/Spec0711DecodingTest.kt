@@ -101,6 +101,8 @@ class Spec0711DecodingTest {
         assertEquals(21.0, TabBarStyle.floatingBarBottom(34.0)) // 13 into a 34 inset
         assertEquals(21.0, TabBarStyle.floatingBarBottom(24.0)) // Pixel gesture bar
         assertEquals(56.0, TabBarStyle.floatingBarBottom(48.0)) // three-button navigation
+        assertEquals(21.0, TabBarStyle.floatingBarBottom(40.0)) // still a gesture bar
+        assertEquals(49.0, TabBarStyle.floatingBarBottom(41.0)) // over 40 dp: 8 above the navigation bar
         assertEquals(8.0, TabBarStyle.floatingBarBottom(Double.NaN))
     }
 

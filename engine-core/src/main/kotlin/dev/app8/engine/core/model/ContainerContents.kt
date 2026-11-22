@@ -142,15 +142,15 @@ public data class TabBarStyle(
          */
         public const val FLOATING_GESTURE_BOTTOM: Double = 21.0
 
-        /** The largest bottom inset still treated as a gesture bar / home indicator (dp); a taller one is button navigation. */
-        public const val GESTURE_INSET_MAX: Double = 34.0
+        /** The largest bottom inset still treated as a gesture bar (dp); a taller one is three-button navigation (spec: over 40 dp). */
+        public const val GESTURE_INSET_MAX: Double = 40.0
 
         /**
          * How far an engine-drawn floating bar's bottom edge sits above the screen's bottom edge
          * for a system bottom inset of [bottomInset] (tab-bar-screen.md, `shape`, 0.7.11):
          * [FLOATING_BOTTOM_GAP] with no inset, [FLOATING_GESTURE_BOTTOM] over a gesture bar (the bar
-         * reaches into it, as on iOS), and [FLOATING_BOTTOM_GAP] above three-button navigation so
-         * the buttons stay clear.
+         * reaches into it, as on iOS), and [FLOATING_BOTTOM_GAP] above three-button navigation (an
+         * inset over [GESTURE_INSET_MAX]) instead of overlapping its buttons.
          */
         public fun floatingBarBottom(bottomInset: Double): Double = when {
             !(bottomInset > 0.0) -> FLOATING_BOTTOM_GAP
