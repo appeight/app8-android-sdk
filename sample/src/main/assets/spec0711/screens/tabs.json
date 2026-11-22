@@ -30,8 +30,8 @@
   "barStyle": {
    "variant": "text",
    "shape": "floating",
-   "height": 32,
-   "background": "#000000",
+   "height": 44,
+   "background": "tabBarDarkBlur",
    "selection": "opacity",
    "unselectedOpacity": 0.4,
    "text": {

@@ -4,6 +4,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
 import dev.app8.engine.core.model.TabBarStyle
+import dev.app8.engine.style.effectSpec
 import org.junit.Test
 import kotlin.test.assertEquals
 
@@ -56,5 +57,62 @@ class TabLabelOpacityTest {
         for (s in listOf(TabBarStyle.Selection.capsule, TabBarStyle.Selection.underline, TabBarStyle.Selection.box)) {
             assertEquals(1f, tabLabelAlpha(s, 0.3f, progress = 0f, index = 2))
         }
+    }
+}
+
+/** A material-style bar background (blur + tint) samples the tab content as its backdrop. */
+class TabBarBackdropTest {
+    @Test
+    fun onlyStyleIdsSampleTheBackdrop() {
+        kotlin.test.assertTrue(tabBarSamplesBackdrop("tabBarDarkBlur"))
+        kotlin.test.assertFalse(tabBarSamplesBackdrop(null))
+        kotlin.test.assertFalse(tabBarSamplesBackdrop("glass"))
+        kotlin.test.assertFalse(tabBarSamplesBackdrop("solid"))
+        kotlin.test.assertFalse(tabBarSamplesBackdrop("#00000080"))
+    }
+}
+
+/** The dark blur material of a flat bar: systemMaterialDark is a dark translucent tint in any appearance. */
+class TabBarDarkMaterialTest {
+    @Test
+    fun systemMaterialDarkIsDarkAndTranslucent() {
+        for (a in listOf(dev.app8.engine.style.App8Appearance.Light, dev.app8.engine.style.App8Appearance.Dark)) {
+            val spec = dev.app8.engine.core.model.style.BackgroundBlur.systemMaterialDark.effectSpec(a)
+            kotlin.test.assertTrue(spec.tint.alpha in 0.5f..0.95f, "tint ${spec.tint}")
+            kotlin.test.assertTrue(spec.tint.red < 0.2f && spec.tint.green < 0.2f && spec.tint.blue < 0.2f, "tint ${spec.tint}")
+            kotlin.test.assertTrue(spec.blurSigmaDp > 0f)
+        }
+    }
+}
+
+/** Bar background materials draw in array order: a fill after a blur tints it. */
+class TabBarMaterialOrderTest {
+    private fun material(json: String): dev.app8.engine.core.model.style.Material {
+        val e = dev.app8.engine.core.model.DslDecoder().decodeStyles(json).single()
+        return (e as dev.app8.engine.core.model.style.StyleEntity<*>).content as dev.app8.engine.core.model.style.Material
+    }
+    private fun ids(m: dev.app8.engine.core.model.style.Material?) = m?.layers?.map { it.id }
+
+    @Test
+    fun fillAfterABlurDrawsAboveIt() {
+        val (base, overlay) = splitFillsAfterEffects(material("""[{"id":"bar","type":"material","content":[
+          {"id":"blur","type":"visualEffect","content":{"blur":"systemMaterialDark"}},
+          {"id":"tint","type":"fill","content":{"solid":"#00000080"}}]}]"""))
+        assertEquals(listOf("blur"), ids(base))
+        assertEquals(listOf("tint"), ids(overlay))
+    }
+
+    @Test
+    fun fillBeforeTheBlurAndPlainMaterialsStayWhole() {
+        val (base, overlay) = splitFillsAfterEffects(material("""[{"id":"bar","type":"material","content":[
+          {"id":"under","type":"fill","content":{"solid":"#FF0000"}},
+          {"id":"c","type":"corner","content":{"radius":8}},
+          {"id":"blur","type":"visualEffect","content":{"blur":"dark"}},
+          {"id":"tint","type":"fill","content":{"solid":"#00000080"}}]}]"""))
+        assertEquals(listOf("under", "c", "blur"), ids(base))
+        // The overlay keeps the corner so the tint is clipped like the blur.
+        assertEquals(listOf("c", "tint"), ids(overlay))
+        val plain = material("""[{"id":"p","type":"material","content":[{"id":"f","type":"fill","content":{"solid":"#000000"}}]}]""")
+        assertEquals(plain to null, splitFillsAfterEffects(plain))
     }
 }

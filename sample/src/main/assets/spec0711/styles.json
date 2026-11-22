@@ -1,1 +1,22 @@
-[]
+[
+ {
+  "id": "tabBarDarkBlur",
+  "type": "material",
+  "content": [
+   {
+    "id": "tabBarDarkBlurEffect",
+    "type": "visualEffect",
+    "content": {
+     "blur": "systemMaterialDark"
+    }
+   },
+   {
+    "id": "tabBarDarkBlurTint",
+    "type": "fill",
+    "content": {
+     "solid": "#00000080"
+    }
+   }
+  ]
+ }
+]

@@ -354,10 +354,41 @@ internal fun Modifier.tabBarBackground(background: String?, env: RenderEnv): Mod
             }
             background(MaterialTheme.colorScheme.surfaceContainer)
         } else {
-            dslMaterial(env.styles.material(material), env.appearance)
+            // Layers in array order: a fill listed after a blur tints the blur (a dark blur +
+            // 50% black bar). The general material rule draws every fill under the effects.
+            val (base, overlay) = splitFillsAfterEffects(env.styles.material(material))
+            val drawn = dslMaterial(base, env.appearance)
+            if (overlay == null) drawn else drawn.dslMaterial(overlay, env.appearance)
         }
     }
 }
+
+/**
+ * Splits a bar background material so it draws in array order: [Pair.first] keeps every layer
+ * up to the last visual effect (and corners / shadows / outlines); [Pair.second] is the fill
+ * layers listed after the first visual effect, drawn above it, or null when there are none.
+ * Materials without a visual effect come back whole.
+ */
+internal fun splitFillsAfterEffects(material: Material): Pair<Material, Material?> {
+    fun key(l: dev.app8.engine.core.model.style.StyleAny) = (l.type as? dev.app8.engine.core.model.style.StyleType.Known)?.key
+    val firstEffect = material.layers.indexOfFirst { key(it) == dev.app8.engine.core.model.style.StyleType.Key.visualEffect }
+    if (firstEffect < 0) return material to null
+    val after = material.layers.withIndex()
+        .filter { (i, l) -> i > firstEffect && key(l) == dev.app8.engine.core.model.style.StyleType.Key.fill }
+    if (after.isEmpty()) return material to null
+    val moved = after.map { it.index }.toSet()
+    val corners = material.layers.filter { key(it) == dev.app8.engine.core.model.style.StyleType.Key.corner }
+    val base = Material(material.layers.filterIndexed { i, _ -> i !in moved })
+    // The overlay keeps the material's corner so the tint is clipped like the blur.
+    return base to Material(corners + after.map { it.value })
+}
+
+/**
+ * Whether a bar background may need the tab content as a backdrop: a style entity id (a
+ * material can carry a `visualEffect` blur). `glass`, `solid` and hex colours draw without one.
+ */
+internal fun tabBarSamplesBackdrop(background: String?): Boolean =
+    background != null && background != "glass" && background != "solid" && !background.trim().startsWith("#")
 
 /** A `#RGB` / `#RRGGBB` / `#RRGGBBAA` bar background; null when it does not parse. */
 internal fun tabBarHexColor(raw: String): Color? =

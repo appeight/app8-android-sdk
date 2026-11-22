@@ -111,10 +111,17 @@ internal fun TabBarHost(session: ScreenSession, flow: FlowController, layer: Lay
     // The fade through passes through the surface color, never the black window behind.
     Box(Modifier.fillMaxSize().background(scheme.surface)) {
         val i = state.selected
+        // A bar background style with a blur (a `visualEffect` layer) samples the tab content:
+        // the content records itself as the bar's backdrop (screens record their own for chrome
+        // inside them). Without it the blur could only draw its opaque fallback.
+        val barBackdrop = remember(session) { dev.app8.engine.style.App8Backdrop() }
+        val samplesBackdrop = styled != null && tabBarSamplesBackdrop(styled.background)
         // M3 fade through between tabs. Each tab's saved state (scroll, fields) lives in the
         // holder and its screens in the session cache, so a revisit draws at once, unchanged.
+        val tabContent: @Composable (Modifier) -> Unit = { contentModifier ->
         androidx.compose.animation.AnimatedContent(
             targetState = shown,
+            modifier = contentModifier,
             transitionSpec = { MotionSpecs.tabFadeThrough() },
             contentKey = { it },
             label = "a8-tab",
@@ -130,6 +137,12 @@ internal fun TabBarHost(session: ScreenSession, flow: FlowController, layer: Lay
                     StackHost(flow, layer, stacks[tab], state, Chrome(bottom = tabBarSafeBottom(styled, barHeight, navInset), inTabs = true))
                 }
             }
+        }
+        }
+        if (samplesBackdrop) {
+            dev.app8.engine.style.App8BackdropSource(barBackdrop, Modifier.fillMaxSize()) { m -> tabContent(m) }
+        } else {
+            tabContent(Modifier)
         }
         // `hidesTabBar` on the top screen of the selected tab slides the bar away. During a
         // predictive back to a screen that shows it, the bar follows the gesture (iOS).
@@ -154,7 +167,10 @@ internal fun TabBarHost(session: ScreenSession, flow: FlowController, layer: Lay
             // (selectTab) need a dispatcher of their own, on this flow layer.
             val host = LocalHostEffects.current
             val barDispatcher = remember(session, flow, layer) { dev.app8.engine.actions.ActionDispatcher(env.runtime, LiveNavigator(flow, layer), host) }
-            androidx.compose.runtime.CompositionLocalProvider(dev.app8.engine.render.LocalDispatcher provides barDispatcher) {
+            androidx.compose.runtime.CompositionLocalProvider(
+                dev.app8.engine.render.LocalDispatcher provides barDispatcher,
+                dev.app8.engine.style.LocalApp8Backdrop provides (if (samplesBackdrop) barBackdrop else null),
+            ) {
                 StyledBar(session, styled, barTemplate, tabs, state, stacks, barHeight, navInset, tint, authoredUnselected ?: unselected, reselectScope)
             }
             return@Box
