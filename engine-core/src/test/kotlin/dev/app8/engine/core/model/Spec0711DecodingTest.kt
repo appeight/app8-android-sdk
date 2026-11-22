@@ -95,6 +95,15 @@ class Spec0711DecodingTest {
         assertEquals("#000", wrongTypes.background)
     }
 
+    @Test
+    fun floatingBarBottomFollowsTheIos26Placement() {
+        assertEquals(8.0, TabBarStyle.floatingBarBottom(0.0))
+        assertEquals(21.0, TabBarStyle.floatingBarBottom(34.0)) // 13 into a 34 inset
+        assertEquals(21.0, TabBarStyle.floatingBarBottom(24.0)) // Pixel gesture bar
+        assertEquals(56.0, TabBarStyle.floatingBarBottom(48.0)) // three-button navigation
+        assertEquals(8.0, TabBarStyle.floatingBarBottom(Double.NaN))
+    }
+
     private fun scroll(json: String) = DslDecoder().decode(json, ::decodeScrollViewProperties)
 
     @Test

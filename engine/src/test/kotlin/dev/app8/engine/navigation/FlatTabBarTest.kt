@@ -12,7 +12,13 @@ class FlatTabBarTest {
     @Test
     fun floatingFlatBarSafeAreaReachesItsTopEdge() {
         val floating = TabBarStyle(variant = TabBarStyle.Variant.text, background = "#000000", height = 32.0)
-        assertEquals(32.0 + 8.0 + 24.0, tabBarSafeBottom(floating, 32.0, 24.0))
+        // Over a 24dp gesture bar: bottom edge 21dp above the screen bottom (iOS 26 placement).
+        assertEquals(32.0 + 21.0, tabBarSafeBottom(floating, 32.0, 24.0))
+        assertEquals(21.0, tabBarBottomSpace(floating, 24.0))
+        // No bottom inset: 8dp above the screen bottom.
+        assertEquals(32.0 + 8.0, tabBarSafeBottom(floating, 32.0, 0.0))
+        // Three-button navigation (48dp): 8dp above the buttons.
+        assertEquals(32.0 + 56.0, tabBarSafeBottom(floating, 32.0, 48.0))
         val edge = floating.copy(shape = TabBarStyle.Shape.edge)
         assertEquals(32.0 + 24.0, tabBarSafeBottom(edge, 32.0, 24.0))
         val glassText = TabBarStyle(variant = TabBarStyle.Variant.text)

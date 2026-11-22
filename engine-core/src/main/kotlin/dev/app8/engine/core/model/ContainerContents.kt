@@ -132,8 +132,31 @@ public data class TabBarStyle(
         /** Side inset of an engine-drawn floating bar on Android (dp). */
         public const val FLOATING_SIDE_INSET: Double = 16.0
 
-        /** Gap between an engine-drawn floating bar and the bottom safe area (dp). */
+        /** Bottom edge of an engine-drawn floating bar above the screen's bottom edge with no bottom inset (dp; iOS 26: 8 pt). */
         public const val FLOATING_BOTTOM_GAP: Double = 8.0
+
+        /**
+         * Bottom edge of an engine-drawn floating bar above the screen's bottom edge over a gesture
+         * bar / home indicator inset (dp): where the iOS 26 bar sits, 21 pt above the screen bottom
+         * (13 pt into the 34 pt inset; measured on iOS 26.4).
+         */
+        public const val FLOATING_GESTURE_BOTTOM: Double = 21.0
+
+        /** The largest bottom inset still treated as a gesture bar / home indicator (dp); a taller one is button navigation. */
+        public const val GESTURE_INSET_MAX: Double = 34.0
+
+        /**
+         * How far an engine-drawn floating bar's bottom edge sits above the screen's bottom edge
+         * for a system bottom inset of [bottomInset] (tab-bar-screen.md, `shape`, 0.7.11):
+         * [FLOATING_BOTTOM_GAP] with no inset, [FLOATING_GESTURE_BOTTOM] over a gesture bar (the bar
+         * reaches into it, as on iOS), and [FLOATING_BOTTOM_GAP] above three-button navigation so
+         * the buttons stay clear.
+         */
+        public fun floatingBarBottom(bottomInset: Double): Double = when {
+            !(bottomInset > 0.0) -> FLOATING_BOTTOM_GAP
+            bottomInset <= GESTURE_INSET_MAX -> maxOf(FLOATING_GESTURE_BOTTOM, FLOATING_BOTTOM_GAP)
+            else -> bottomInset + FLOATING_BOTTOM_GAP
+        }
 
         internal fun isFlatBackground(background: String?): Boolean = background != null && background != "glass"
     }

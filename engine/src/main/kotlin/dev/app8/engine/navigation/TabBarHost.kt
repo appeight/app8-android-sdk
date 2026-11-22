@@ -215,15 +215,23 @@ internal fun TabBarHost(session: ScreenSession, flow: FlowController, layer: Lay
 
 /**
  * The tab screens' bottom safe area: up to the bar's top edge. An engine-drawn floating bar
- * (non-glass background, 0.7.11) sits [TabBarStyle.FLOATING_BOTTOM_GAP] above the system inset.
+ * (non-glass background, 0.7.11) sits [tabBarBottomSpace] above the screen's bottom edge.
  */
 internal fun tabBarSafeBottom(style: dev.app8.engine.core.model.TabBarStyle?, barHeight: Double, navInset: Double): Double =
-    barHeight + navInset + if (style?.isInsetFloating == true) dev.app8.engine.core.model.TabBarStyle.FLOATING_BOTTOM_GAP else 0.0
+    barHeight + tabBarBottomSpace(style, navInset)
+
+/**
+ * The space between the bar's bottom edge and the screen's bottom edge: the system inset for a
+ * bar whose background fills it, or the iOS 26 placement for an engine-drawn floating bar
+ * ([dev.app8.engine.core.model.TabBarStyle.floatingBarBottom]: 21dp over a gesture bar, 8dp with none).
+ */
+internal fun tabBarBottomSpace(style: dev.app8.engine.core.model.TabBarStyle?, navInset: Double): Double =
+    if (style?.isInsetFloating == true) dev.app8.engine.core.model.TabBarStyle.floatingBarBottom(navInset) else navInset
 
 /**
  * A `barStyle` bar (text or component). Full width over its background, which also fills the
  * bottom safe area; an engine-drawn floating bar (non-glass background, 0.7.11) is inset
- * 16dp from the sides and 8dp above the system inset, its background clipped to
+ * 16dp from the sides, its bottom edge where the iOS 26 bar's is ([tabBarBottomSpace]), its background clipped to
  * `cornerRadius` (default a capsule) and nothing under the gesture bar. No elevation. The
  * content is never clipped, so badges may overflow the bar's top edge.
  */
@@ -293,8 +301,7 @@ private fun StyledBar(
             )
         }
       }
-        val gap = if (floating) dev.app8.engine.core.model.TabBarStyle.FLOATING_BOTTOM_GAP else 0.0
-        androidx.compose.foundation.layout.Spacer(Modifier.fillMaxWidth().height((navInset + gap).dp))
+        androidx.compose.foundation.layout.Spacer(Modifier.fillMaxWidth().height(tabBarBottomSpace(style, navInset).dp))
     }
 }
 

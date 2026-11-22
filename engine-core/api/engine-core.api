@@ -4325,7 +4325,9 @@ public final class dev/app8/engine/core/model/TabBarStyle {
 	public static final field Companion Ldev/app8/engine/core/model/TabBarStyle$Companion;
 	public static final field DEFAULT_UNSELECTED_OPACITY D
 	public static final field FLOATING_BOTTOM_GAP D
+	public static final field FLOATING_GESTURE_BOTTOM D
 	public static final field FLOATING_SIDE_INSET D
+	public static final field GESTURE_INSET_MAX D
 	public static final field MIN_EDGE_HEIGHT D
 	public static final field MIN_HEIGHT D
 	public fun <init> ()V
@@ -4377,6 +4379,7 @@ public final class dev/app8/engine/core/model/TabBarStyle$BadgePlacement : java/
 }
 
 public final class dev/app8/engine/core/model/TabBarStyle$Companion {
+	public final fun floatingBarBottom (D)D
 }
 
 public final class dev/app8/engine/core/model/TabBarStyle$Selection : java/lang/Enum {
