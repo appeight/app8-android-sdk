@@ -1,0 +1,1024 @@
+{
+ "type": "screen",
+ "id": "list",
+ "content": {
+  "navigationBar": {
+   "title": "Bag"
+  },
+  "bottomBar": {
+   "component": {
+    "type": "button",
+    "id": "checkout",
+    "content": {
+     "properties": {
+      "title": "Checkout"
+     },
+     "layout": {
+      "height": 48
+     }
+    }
+   }
+  },
+  "children": [
+   {
+    "type": "scrollView",
+    "id": "scroll",
+    "content": {
+     "properties": {
+      "contentInsetAdjustment": "never"
+     },
+     "layout": {
+      "constraints": [
+       {
+        "type": "top",
+        "target": "superview"
+       },
+       {
+        "type": "bottom",
+        "target": "superview"
+       },
+       {
+        "type": "leading",
+        "target": "superview"
+       },
+       {
+        "type": "trailing",
+        "target": "superview"
+       }
+      ]
+     },
+     "children": [
+      {
+       "type": "stackView",
+       "id": "stack",
+       "content": {
+        "properties": {
+         "axis": "vertical",
+         "spacing": 12
+        },
+        "layout": {
+         "constraints": [
+          {
+           "type": "top",
+           "target": "superview",
+           "constant": 120
+          },
+          {
+           "type": "bottom",
+           "target": "superview"
+          },
+          {
+           "type": "leading",
+           "target": "superview"
+          },
+          {
+           "type": "trailing",
+           "target": "superview"
+          },
+          {
+           "type": "width",
+           "target": "superview",
+           "attribute": "width"
+          }
+         ]
+        },
+        "children": [
+         {
+          "type": "label",
+          "id": "l1",
+          "content": {
+           "properties": {
+            "text": "Line 1",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 18,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "l2",
+          "content": {
+           "properties": {
+            "text": "Line 2",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 18,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "l3",
+          "content": {
+           "properties": {
+            "text": "Line 3",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 18,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "l4",
+          "content": {
+           "properties": {
+            "text": "Line 4",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 18,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "l5",
+          "content": {
+           "properties": {
+            "text": "Line 5",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 18,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "l6",
+          "content": {
+           "properties": {
+            "text": "Line 6",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 18,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "l7",
+          "content": {
+           "properties": {
+            "text": "Line 7",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 18,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "l8",
+          "content": {
+           "properties": {
+            "text": "Line 8",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 18,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "l9",
+          "content": {
+           "properties": {
+            "text": "Line 9",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 18,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "l10",
+          "content": {
+           "properties": {
+            "text": "Line 10",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 18,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "l11",
+          "content": {
+           "properties": {
+            "text": "Line 11",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 18,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "l12",
+          "content": {
+           "properties": {
+            "text": "Line 12",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 18,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "l13",
+          "content": {
+           "properties": {
+            "text": "Line 13",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 18,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "l14",
+          "content": {
+           "properties": {
+            "text": "Line 14",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 18,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "l15",
+          "content": {
+           "properties": {
+            "text": "Line 15",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 18,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "l16",
+          "content": {
+           "properties": {
+            "text": "Line 16",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 18,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "l17",
+          "content": {
+           "properties": {
+            "text": "Line 17",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 18,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "l18",
+          "content": {
+           "properties": {
+            "text": "Line 18",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 18,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "l19",
+          "content": {
+           "properties": {
+            "text": "Line 19",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 18,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "l20",
+          "content": {
+           "properties": {
+            "text": "Line 20",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 18,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "l21",
+          "content": {
+           "properties": {
+            "text": "Line 21",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 18,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "l22",
+          "content": {
+           "properties": {
+            "text": "Line 22",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 18,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "l23",
+          "content": {
+           "properties": {
+            "text": "Line 23",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 18,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "l24",
+          "content": {
+           "properties": {
+            "text": "Line 24",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 18,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "l25",
+          "content": {
+           "properties": {
+            "text": "Line 25",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 18,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "l26",
+          "content": {
+           "properties": {
+            "text": "Line 26",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 18,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "l27",
+          "content": {
+           "properties": {
+            "text": "Line 27",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 18,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "l28",
+          "content": {
+           "properties": {
+            "text": "Line 28",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 18,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "l29",
+          "content": {
+           "properties": {
+            "text": "Line 29",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 18,
+             "fontWeight": "regular",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         },
+         {
+          "type": "label",
+          "id": "last",
+          "content": {
+           "properties": {
+            "text": "LAST LINE \u2014 clears the bottom bar",
+            "numberOfLines": 0
+           },
+           "style": {
+            "text": {
+             "fontSize": 18,
+             "fontWeight": "bold",
+             "color": "#111111"
+            }
+           },
+           "layout": {
+            "constraints": [
+             {
+              "type": "leading",
+              "target": "superview",
+              "constant": 16
+             },
+             {
+              "type": "trailing",
+              "target": "superview",
+              "constant": -16
+             }
+            ]
+           }
+          }
+         }
+        ]
+       }
+      }
+     ]
+    }
+   }
+  ]
+ }
+}

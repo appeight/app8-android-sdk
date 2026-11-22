@@ -79,7 +79,12 @@ public data class TabBarStyle(
     val height: Double? = null,
     /** A component template that draws the whole bar; [variant] is then ignored. */
     val component: String? = null,
+    /** `floating` (platform shape) or `edge` (full-width square stripe, exact [height]). Since 0.7.11. */
+    val shape: Shape = Shape.floating,
 ) {
+    @Suppress("EnumEntryName")
+    public enum class Shape { floating, edge }
+
     @Suppress("EnumEntryName")
     public enum class Variant { system, text }
 
@@ -89,17 +94,24 @@ public data class TabBarStyle(
     /** The selection a text bar draws: [selection], else [Selection.capsule]. */
     val effectiveSelection: Selection get() = selection ?: Selection.capsule
 
+    /** True for `shape: edge`. */
+    val isEdge: Boolean get() = shape == Shape.edge
+
     /** True when the platform bar is drawn, exactly as without a `barStyle`. */
     val isSystem: Boolean get() = component == null && variant == Variant.system
 
     public companion object {
         public const val DEFAULT_UNSELECTED_OPACITY: Double = 0.5
         public const val MIN_HEIGHT: Double = 44.0
+        /** The least `height` of an `edge` stripe. */
+        public const val MIN_EDGE_HEIGHT: Double = 28.0
     }
 }
 
 internal fun decodeTabBarStyle(c: Cursor): TabBarStyle {
     c.obj()
+    val shape = c.attempt { it.optSafeEnum("shape", TabBarStyle.Shape.floating) } ?: TabBarStyle.Shape.floating
+    val minHeight = if (shape == TabBarStyle.Shape.edge) TabBarStyle.MIN_EDGE_HEIGHT else TabBarStyle.MIN_HEIGHT
     return TabBarStyle(
         variant = c.attempt { it.optSafeEnum("variant", TabBarStyle.Variant.system) } ?: TabBarStyle.Variant.system,
         background = c.attempt { it.optString("background") }?.trim()?.takeIf { it.isNotEmpty() },
@@ -108,8 +120,9 @@ internal fun decodeTabBarStyle(c: Cursor): TabBarStyle {
         selectedText = c.wrapped("selectedText", ::decodeTextModel),
         unselectedOpacity = (c.attempt { it.optDouble("unselectedOpacity") } ?: TabBarStyle.DEFAULT_UNSELECTED_OPACITY).coerceIn(0.0, 1.0),
         indicatorColor = c.attempt { it.optString("indicatorColor") },
-        height = c.attempt { it.optDouble("height") }?.coerceAtLeast(TabBarStyle.MIN_HEIGHT),
+        height = c.attempt { it.optDouble("height") }?.takeIf { it.isFinite() }?.coerceAtLeast(minHeight),
         component = c.attempt { it.optString("component") }?.trim()?.takeIf { it.isNotEmpty() },
+        shape = shape,
     )
 }
 

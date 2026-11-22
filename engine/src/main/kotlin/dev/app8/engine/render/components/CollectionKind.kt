@@ -149,7 +149,7 @@ internal object CollectionKind : ComponentKind {
                 var top = props?.contentInset?.top ?: 0.0
                 val frame = s.absolute[p.key]
                 val root = s.absolute[node.session.screenId]
-                if (props?.contentInsetAdjustment != dev.app8.engine.core.model.ScrollViewProperties.ContentInsetAdjustment.never && frame != null && root != null) {
+                if ((props?.contentInsetAdjustment ?: dev.app8.engine.core.model.ScrollViewProperties.ContentInsetAdjustment.automatic).adjustsTop && frame != null && root != null) {
                     top += (root.y + s.safeArea.top - (frame.y + outer)).coerceIn(0.0, frame.height)
                 }
                 return top + outer

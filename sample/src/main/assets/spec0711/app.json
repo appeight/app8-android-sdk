@@ -1,0 +1,34 @@
+{
+ "id": "spec0711-fixture",
+ "title": "0.7.11 fixture",
+ "defaultUserInterfaceStyle": "light",
+ "navigation": {
+  "startFlow": "main",
+  "flows": [
+   {
+    "id": "main",
+    "startScreen": "tabs"
+   }
+  ]
+ },
+ "variables": {
+  "cart": {
+   "type": "array",
+   "initialValue": [
+    "a",
+    "b"
+   ]
+  },
+  "pages": {
+   "type": "array",
+   "initialValue": [
+    {
+     "image": "p-item-a"
+    },
+    {
+     "image": "p-item-b"
+    }
+   ]
+  }
+ }
+}

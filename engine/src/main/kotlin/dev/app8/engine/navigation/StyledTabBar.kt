@@ -55,6 +55,7 @@ import dev.app8.engine.render.ScreenSession
 import dev.app8.engine.render.collection.Cell
 import dev.app8.engine.render.collection.CellView
 import dev.app8.engine.style.dslMaterial
+import dev.app8.engine.style.toColor
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlin.math.abs
@@ -297,12 +298,14 @@ internal fun indicatorColorFor(style: TabBarStyle, authored: Color?, tint: Color
 
 /**
  * `barStyle.background` behind the bar and the bottom safe area: `glass` (default) is the
- * Material 3 surface container, `solid` the screen background, else a fill / material style.
+ * Material 3 surface container, `solid` the screen background, a hex colour (`#000000`, the
+ * edge stripe's usual background, 0.7.11), else a fill / material style.
  */
 @Composable
-internal fun Modifier.tabBarBackground(background: String?, env: RenderEnv): Modifier = when (background) {
-    null, "glass" -> background(MaterialTheme.colorScheme.surfaceContainer)
-    "solid" -> background(MaterialTheme.colorScheme.surface)
+internal fun Modifier.tabBarBackground(background: String?, env: RenderEnv): Modifier = when {
+    background == null || background == "glass" -> background(MaterialTheme.colorScheme.surfaceContainer)
+    background == "solid" -> background(MaterialTheme.colorScheme.surface)
+    background.startsWith("#") && tabBarHexColor(background) != null -> background(tabBarHexColor(background)!!)
     else -> {
         val entity = env.runtime.styles.entity(background)
         val material = when (val c = entity?.content) {
@@ -322,3 +325,8 @@ internal fun Modifier.tabBarBackground(background: String?, env: RenderEnv): Mod
         }
     }
 }
+
+/** A `#RGB` / `#RRGGBB` / `#RRGGBBAA` bar background; null when it does not parse. */
+internal fun tabBarHexColor(raw: String): Color? =
+    raw.trim().takeIf { dev.app8.engine.core.model.style.ColorHex.isValidHexString(it) }
+        ?.let { runCatching { dev.app8.engine.core.model.style.ColorHex.parse(it) }.getOrNull()?.toColor() }

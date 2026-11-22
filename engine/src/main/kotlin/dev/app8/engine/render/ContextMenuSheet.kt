@@ -170,7 +170,8 @@ internal fun ContextMenuSheet(node: RenderNode, menu: ContextMenu, state: Contex
                     // Not interactive: any tap inside runs `onPreviewTap`.
                     Box(
                         Modifier.width(width.sizeDp).height(height.sizeDp)
-                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+                            // `preview.cornerRadius` (0.7.11; `0` for a square brand), else the sheet's 16dp.
+                            .clip(previewShape(p.cornerRadius))
                             .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
@@ -209,3 +210,12 @@ internal fun ContextMenuSheet(node: RenderNode, menu: ContextMenu, state: Contex
         }
     }
 }
+
+/** The preview platter's clip: `preview.cornerRadius` points, else [DEFAULT_PREVIEW_CORNER] dp; 0 is square. */
+internal fun previewShape(cornerRadius: Double?): androidx.compose.ui.graphics.Shape {
+    val r = cornerRadius?.takeIf { it.isFinite() && it >= 0.0 } ?: DEFAULT_PREVIEW_CORNER
+    return if (r == 0.0) androidx.compose.ui.graphics.RectangleShape else androidx.compose.foundation.shape.RoundedCornerShape(r.toFloat().dp)
+}
+
+/** Android's preview corner when `preview.cornerRadius` is unset (dp). */
+internal const val DEFAULT_PREVIEW_CORNER = 16.0
