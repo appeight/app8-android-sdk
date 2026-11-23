@@ -140,6 +140,9 @@ private const val MAX_LAYOUT_VALUE = 1e7
 /** Priority of a broken required constraint: above every other priority, below required. */
 private const val BROKEN_REQUIRED = 999.5
 
+/** A stack child's length relative to its stack along the axis: just under the default compression resistance (750). */
+private const val STACK_RELATIVE_DIMENSION = 749.0
+
 /**
  * Under-constrained views settle at zero size at the superview origin. Zero size wins
  * over the origin: a view pinned only by its bottom edge sits at that edge with height
@@ -493,7 +496,15 @@ private class LayoutPass(
                     continue
                 }
                 val anchors = resolveTarget(target, info, ignoresSafeArea = false) ?: continue
-                relate(info, c, anchors, c.constant)
+                // A length along the stack's axis relative to the stack's own length
+                // (`height >= superview + 36` in a vertical stack) is circular: the
+                // stack is as long as its children. It yields to the arrangement and
+                // to the children's content sizes instead of squeezing a sibling
+                // (iOS BaseView.makeConstraints, the web solver).
+                val main = if (parent.node.stack?.axis == StackAxis.HORIZONTAL) LayoutAttribute.WIDTH else LayoutAttribute.HEIGHT
+                val circular = target == ConstraintTarget.Superview && c.type == main &&
+                    (c.attribute ?: c.type) == main && priorityOf(c.priority) >= LayoutPriority.REQUIRED
+                relate(info, c, anchors, c.constant, if (circular) STACK_RELATIVE_DIMENSION else null)
             }
             return
         }
@@ -537,11 +548,11 @@ private class LayoutPass(
     }
 
     /** BaseView.makeRelation. */
-    private fun relate(info: NodeInfo, c: LayoutConstraint, target: Anchors, constant: Double) {
+    private fun relate(info: NodeInfo, c: LayoutConstraint, target: Anchors, constant: Double, priority: Double? = null) {
         val wanted = c.attribute ?: c.type
         val to = if (wanted in RELATION_PAIRS.getValue(c.type)) wanted else c.type
         val multiplier = if (c.type.isDimension) c.multiplier ?: 1.0 else 1.0
-        add(info.box.attr(c.type), c.op, target.attr(to) * multiplier + constant, priorityOf(c.priority))
+        add(info.box.attr(c.type), c.op, target.attr(to) * multiplier + constant, priority ?: priorityOf(c.priority))
     }
 
     /** BaseView.makeRelationToGuide (no multiplier). */

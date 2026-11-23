@@ -382,4 +382,32 @@ class StackViewLayoutTest {
         assertEquals(Frame(0.0, 56.0, 320.0, 20.0), r["b"])
         assertEquals(12.0, r["a-text"]!!.y)
     }
+
+    /**
+     * A title asking for `height >= superview + 36` inside its vertical stack: circular
+     * (the stack is as long as its children). It yields; the stack keeps its place under
+     * the photo and the price below the title keeps its height (0.7.12, as on iOS and web).
+     */
+    @Test
+    fun stackRelativeLengthYieldsWithoutSqueezingASibling() {
+        val photo = LayoutNode("photo", id = "photo", layout = Layout(leading = fixed(0), top = fixed(0), width = fixed(160), height = fixed(200)))
+        val info = LayoutNode(
+            "info", stack = StackSpec(StackAxis.VERTICAL, 6.0, StackAlignment.FILL),
+            layout = Layout(constraints = listOf(
+                c(LayoutAttribute.TOP, "sibling(photo)", attribute = LayoutAttribute.BOTTOM, constant = 12),
+                c(LayoutAttribute.LEADING, "superview"),
+                c(LayoutAttribute.WIDTH, constant = 160),
+            )),
+            children = listOf(
+                label("title", 100.0, 36.0, layout = Layout(constraints = listOf(
+                    c(LayoutAttribute.HEIGHT, "superview", constant = 36, op = LayoutRelation.GREATER_OR_EQUAL),
+                ))),
+                label("price", 50.0, 20.0),
+            ),
+        )
+        val r = solveLayout(screen(photo, info), PHONE)
+        assertFrame(frame(0, 212, 160, 62), r["info"], "info under the photo")
+        assertFrame(frame(0, 212, 160, 36), r["title"], "title")
+        assertFrame(frame(0, 254, 160, 20), r["price"], "price keeps its height")
+    }
 }
