@@ -110,14 +110,23 @@ class ColorHexTest {
     }
 
     @Test
-    fun themedDarkIsRequired() {
-        assertFailsWith<DslDecodingException> { themed("""{ "light": "#FFFFFF" }""") }
+    fun themedOneSideServesBoth() {
+        val light = themed("""{ "light": "#2E7D32" }""")
+        assertEquals("2E7D32", light.resolve(isDark = false).value)
+        assertEquals("2E7D32", light.resolve(isDark = true).value)
+        val dark = themed("""{ "dark": "#6A1B9A" }""")
+        assertEquals("6A1B9A", dark.resolve(isDark = false).value)
+        assertEquals("6A1B9A", dark.resolve(isDark = true).value)
+        val ref = themed("""{ "light": { "id": "tokenOrange" } }""")
+        assertEquals("tokenOrange", ref.lightRef)
+        assertNull(ref.darkRef)
+        assertFailsWith<DslDecodingException> { themed("""{ }""") }
         assertFailsWith<DslDecodingException> { themed("""{ "light": "#FFFFFF", "dark": "nope" }""") }
     }
 
     @Test
     fun fillDropsInvalidSolidInsteadOfFailing() {
-        val fill = DslDecoder().decode("""{ "solid": { "light": "#FFFFFF" } }""", ::decodeFill)
+        val fill = DslDecoder().decode("""{ "solid": { "light": "#FFFFFF", "dark": "nope" } }""", ::decodeFill)
         assertNull(fill.solid.value)
         assertEquals("ABCDEF", DslDecoder().decode("""{ "solid": "#abcdef" }""", ::decodeFill).solid.value?.light?.value)
     }
