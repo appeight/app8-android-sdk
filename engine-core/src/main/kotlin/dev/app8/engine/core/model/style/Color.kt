@@ -71,7 +71,8 @@ internal fun decodeColorHex(c: Cursor): ColorHex {
 
 /**
  * A theme-aware color (iOS `Style.Color.Themed`). A bare string is a single hex (invalid → clear);
- * an object needs both `light` and `dark`, each a hex or a `{ "id": … }` reference to another color style.
+ * an object has `light`, `dark` or both, each a hex or a `{ "id": … }` reference to a color style. One side
+ * serves both appearances; a reference naming no color style counts as absent.
  */
 public data class ThemedColor(
     val source: Source,
@@ -87,7 +88,8 @@ public data class ThemedColor(
 ) {
     public enum class Source { SINGLE_HEX, THEMED }
 
-    public fun resolve(isDark: Boolean): ColorHex = (if (isDark && dark != null) dark else light) ?: ColorHex.CLEAR
+    /** The appearance's side, else the other side (one side serves both); neither: clear. */
+    public fun resolve(isDark: Boolean): ColorHex = (if (isDark) dark ?: light else light ?: dark) ?: ColorHex.CLEAR
 
     public val isResolved: Boolean get() = light != null || dark != null
 
@@ -102,9 +104,10 @@ internal fun decodeThemedColor(c: Cursor): ThemedColor {
     }
     c.obj()
     fun ref(key: String): String? = c.attempt { it.req(key) { r -> r.obj(); r.reqString("id") } }
+    if (!c.hasNonNull("light") && !c.hasNonNull("dark")) c.fail("a themed color needs light or dark")
     val lightRef = ref("light")
-    val light = if (lightRef == null) c.req("light", ::decodeColorHex) else null
+    val light = if (lightRef == null) c.opt("light", ::decodeColorHex) else null
     val darkRef = ref("dark")
-    val dark = if (darkRef == null) c.req("dark", ::decodeColorHex) else null
+    val dark = if (darkRef == null) c.opt("dark", ::decodeColorHex) else null
     return ThemedColor(ThemedColor.Source.THEMED, light, dark, lightRef, darkRef)
 }
