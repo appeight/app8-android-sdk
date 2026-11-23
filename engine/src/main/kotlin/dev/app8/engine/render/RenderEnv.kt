@@ -8,6 +8,8 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
@@ -79,11 +81,30 @@ internal class RenderEnv(
                 softWrap = true,
             )
         }
-        val r = model.toResolvedText(appearance, fonts, sizer)
+        val r = model.toResolvedText(appearance, fonts, sizer, ::naturalLineHeightEm)
         return if (r.style.color == Color.Unspecified) r.copy(style = r.style.copy(color = defaultColor)) else r
     }
 
     fun textSize(points: Float) = sizer.size(points)
+
+    /**
+     * A bundle font's natural line height (UIFont.lineHeight: ascender + descender +
+     * leading) as a multiple of its size: one line laid out with no line height, at 100 sp
+     * without font scaling. Cached per family and weight.
+     */
+    private fun naturalLineHeightEm(family: FontFamily, weight: FontWeight): Float? =
+        naturalCache.getOrPut(family to weight) {
+            runCatching {
+                val unscaled = Density(density.density, 1f)
+                val r = measurer.measure(
+                    AnnotatedString("Hg"), TextStyle(fontFamily = family, fontWeight = weight, fontSize = 100.sp),
+                    maxLines = 1, density = unscaled,
+                )
+                (r.size.height / (100f * density.density)).takeIf { it in 0.5f..4f }
+            }.getOrNull()
+        }
+
+    private val naturalCache = HashMap<Pair<FontFamily, FontWeight>, Float?>()
 
     /**
      * UILabel `intrinsicContentSize` in points: the natural single-line size, or wrapped at

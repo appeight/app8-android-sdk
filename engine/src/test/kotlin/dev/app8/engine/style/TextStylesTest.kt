@@ -101,6 +101,21 @@ class TextStylesTest {
     }
 
     @Test
+    fun `a bundle font's multiplier line height multiplies its own natural height`() {
+        val brand = FontFamily.Serif
+        val provider = App8FontProvider { name, _ -> if (name == "Brand-Regular") brand else null }
+        // The measured natural height of the bundle font (UIFont.lineHeight / pointSize on iOS).
+        val natural: (FontFamily, FontWeight) -> Float? = { f, _ -> if (f == brand) 1.44f else null }
+        fun lh(font: String, json: String) =
+            TestStyles.text("""{ "fontSize": 10, $font"lineHeight": $json }""").toResolvedText(App8Appearance.Light, provider, naturalLineHeightEm = natural).style.lineHeight
+        assertEquals((1.44f * 1.4f).em, lh(""""fontFamily": "Brand-Regular", """, """{ "type": "multiplier", "value": 1.4 }"""))
+        assertEquals((10 * 1.44f + 4).sp.value, lh(""""fontFamily": "Brand-Regular", """, """{ "type": "interLineSpacing", "value": 4 }""").value, 1e-4f)
+        assertEquals(22.sp, lh(""""fontFamily": "Brand-Regular", """, """{ "type": "fixed", "value": 22 }"""))
+        // The system font keeps SF Pro's natural height.
+        assertEquals((IOS_NATURAL_LINE_HEIGHT_EM * 1.4f).em, lh("", """{ "type": "multiplier", "value": 1.4 }"""))
+    }
+
+    @Test
     fun `fonts resolve in iOS order and custom fonts never synthesize`() {
         val inter = FontFamily.SansSerif
         val brand = FontFamily.Serif
