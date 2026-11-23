@@ -139,7 +139,9 @@ internal fun TextModel.resolveFontFamily(fonts: App8FontProvider, weight: FontWe
  * - size and weight; a custom font keeps its own faces (no synthesized bold/italic),
  *   since iOS ignores `fontWeight` for a named font;
  * - `letterSpacing` fixed points (`.kern`) → em of the font size, so it scales with it;
- * - `lineHeight`: `fixed` = min = max line height; `multiplier` = natural × value;
+ * - `lineHeight`: `fixed` = min = max line height; `multiplier` = natural × value, the
+ *   natural height being the font's own ([naturalLineHeightEm] for a bundle font, SF Pro's
+ *   for the system font);
  *   `interLineSpacing` / `fontSizeFraction` = natural + value (resp. size × value). UIKit puts
  *   the extra height of a taller line above the glyphs, and paragraph spacing below a line;
  *   [LineHeightStyle] reproduces both;
@@ -151,12 +153,20 @@ internal fun TextModel.toResolvedText(
     appearance: App8Appearance,
     fonts: App8FontProvider = App8FontProvider.System,
     sizer: TextSizer = TextSizer.FollowSystem,
+    naturalLineHeightEm: (FontFamily, FontWeight) -> Float? = { _, _ -> null },
 ): ResolvedText {
     val size = fontSize.toFloat()
     val weight = (fontWeight ?: Font.Weight.regular).toFontWeight()
     val (family, custom) = resolveFontFamily(fonts, weight)
 
-    val (lineHeight, lineHeightStyle) = lineHeight(size, sizer)
+    // iOS's natural line height is the font's own (UIFont.lineHeight): a bundle font's
+    // measured one; the system font keeps SF Pro's, which Roboto stands in for.
+    val naturalEm = if (custom && lineHeight?.type?.let { it != TextModel.LineHeight.Type.auto && it != TextModel.LineHeight.Type.fixed } == true) {
+        naturalLineHeightEm(family, weight) ?: IOS_NATURAL_LINE_HEIGHT_EM
+    } else {
+        IOS_NATURAL_LINE_HEIGHT_EM
+    }
+    val (lineHeight, lineHeightStyle) = lineHeight(size, sizer, naturalEm)
 
     val letterSpacingEm = letterSpacing
         ?.takeIf { it.type == TextModel.LetterSpacing.Type.fixed && size > 0f }
@@ -208,15 +218,20 @@ private val ABOVE = LineHeightStyle(LineHeightStyle.Alignment.Bottom, LineHeight
 /** Spacing below each line but the last, like `NSParagraphStyle.lineSpacing`. */
 private val BETWEEN = LineHeightStyle(LineHeightStyle.Alignment.Top, LineHeightStyle.Trim.LastLineBottom)
 
-private fun TextModel.lineHeight(size: Float, sizer: TextSizer): Pair<TextUnit, LineHeightStyle?> {
+/**
+ * [naturalEm]: the font's natural line height (ascender + descender + leading) as a multiple
+ * of its size, which `multiplier` multiplies (styles.md, "LineHeight Types"; UIKit
+ * `lineHeightMultiple`).
+ */
+private fun TextModel.lineHeight(size: Float, sizer: TextSizer, naturalEm: Float = IOS_NATURAL_LINE_HEIGHT_EM): Pair<TextUnit, LineHeightStyle?> {
     val lh = lineHeight ?: return TextUnit.Unspecified to null
     val v = lh.value.toFloat()
-    val natural = size * IOS_NATURAL_LINE_HEIGHT_EM
+    val natural = size * naturalEm
     return when (lh.type) {
         TextModel.LineHeight.Type.auto -> TextUnit.Unspecified to null
         TextModel.LineHeight.Type.fixed -> sizer.size(v) to ABOVE
         // em is relative to the font size, so it follows any scaling of the size itself.
-        TextModel.LineHeight.Type.multiplier -> (IOS_NATURAL_LINE_HEIGHT_EM * v).em to ABOVE
+        TextModel.LineHeight.Type.multiplier -> (naturalEm * v).em to ABOVE
         TextModel.LineHeight.Type.interLineSpacing -> sizer.size(natural + v) to BETWEEN
         TextModel.LineHeight.Type.fontSizeFraction -> sizer.size(natural + size * v) to BETWEEN
     }
