@@ -258,11 +258,32 @@ public data class PageControlProperties(
     val currentPage: String? = null,
     val bindVariable: String? = null,
     val hidesForSinglePage: Boolean? = null,
-)
+    /** `style` (0.7.16): the capsule and default dot look. Missing or unknown: [Style.automatic]. */
+    val style: Style = Style.automatic,
+) {
+    /**
+     * `light`: light capsule, dark dots; `dark`: dark capsule, light dots; `automatic`: by the
+     * appearance the control renders in (the screen's `userInterfaceStyle`, else the app's).
+     */
+    @Suppress("EnumEntryName")
+    public enum class Style {
+        automatic, light, dark;
+
+        /** Whether the control draws dark (dark capsule, light dots) when the screen renders dark or not. */
+        public fun isDark(screenDark: Boolean): Boolean = when (this) {
+            light -> false
+            dark -> true
+            automatic -> screenDark
+        }
+    }
+}
 
 internal fun decodePageControlProperties(c: Cursor): PageControlProperties {
     c.obj()
-    return PageControlProperties(c.optScalar("numberOfPages"), c.optScalar("currentPage"), c.optString("bindVariable"), c.optBool("hidesForSinglePage"))
+    return PageControlProperties(
+        c.optScalar("numberOfPages"), c.optScalar("currentPage"), c.optString("bindVariable"), c.optBool("hidesForSinglePage"),
+        style = c.attempt { it.optSafeEnum("style", PageControlProperties.Style.automatic) } ?: PageControlProperties.Style.automatic,
+    )
 }
 
 public data class PickerProperties(
