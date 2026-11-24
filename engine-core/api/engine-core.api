@@ -3381,21 +3381,33 @@ public final class dev/app8/engine/core/model/NavigationBar$TopAppBarStyle : jav
 
 public final class dev/app8/engine/core/model/PageControlProperties {
 	public fun <init> ()V
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ldev/app8/engine/core/model/PageControlProperties$Style;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ldev/app8/engine/core/model/PageControlProperties$Style;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/lang/String;
 	public final fun component3 ()Ljava/lang/String;
 	public final fun component4 ()Ljava/lang/Boolean;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;)Ldev/app8/engine/core/model/PageControlProperties;
-	public static synthetic fun copy$default (Ldev/app8/engine/core/model/PageControlProperties;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;ILjava/lang/Object;)Ldev/app8/engine/core/model/PageControlProperties;
+	public final fun component5 ()Ldev/app8/engine/core/model/PageControlProperties$Style;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ldev/app8/engine/core/model/PageControlProperties$Style;)Ldev/app8/engine/core/model/PageControlProperties;
+	public static synthetic fun copy$default (Ldev/app8/engine/core/model/PageControlProperties;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;Ldev/app8/engine/core/model/PageControlProperties$Style;ILjava/lang/Object;)Ldev/app8/engine/core/model/PageControlProperties;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBindVariable ()Ljava/lang/String;
 	public final fun getCurrentPage ()Ljava/lang/String;
 	public final fun getHidesForSinglePage ()Ljava/lang/Boolean;
 	public final fun getNumberOfPages ()Ljava/lang/String;
+	public final fun getStyle ()Ldev/app8/engine/core/model/PageControlProperties$Style;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/app8/engine/core/model/PageControlProperties$Style : java/lang/Enum {
+	public static final field automatic Ldev/app8/engine/core/model/PageControlProperties$Style;
+	public static final field dark Ldev/app8/engine/core/model/PageControlProperties$Style;
+	public static final field light Ldev/app8/engine/core/model/PageControlProperties$Style;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun isDark (Z)Z
+	public static fun valueOf (Ljava/lang/String;)Ldev/app8/engine/core/model/PageControlProperties$Style;
+	public static fun values ()[Ldev/app8/engine/core/model/PageControlProperties$Style;
 }
 
 public final class dev/app8/engine/core/model/PickerProperties {

@@ -128,6 +128,25 @@ class NewComponentModelTest {
         assertEquals("0", p.currentPage)
     }
 
+    @Test
+    fun pageControlDecodesStyle() {
+        fun style(fragment: String) = props<PageControlProperties>("pageControl", """{ "numberOfPages": "3"$fragment }""").style
+        assertEquals(PageControlProperties.Style.automatic, style(""))
+        assertEquals(PageControlProperties.Style.automatic, style(""", "style": "automatic""""))
+        assertEquals(PageControlProperties.Style.light, style(""", "style": "light""""))
+        assertEquals(PageControlProperties.Style.dark, style(""", "style": "dark""""))
+        assertEquals(PageControlProperties.Style.automatic, style(""", "style": "sepia""""))
+        assertEquals(PageControlProperties.Style.automatic, style(""", "style": 3"""))
+    }
+
+    @Test
+    fun pageControlStyleResolvesAgainstScreenAppearance() {
+        assertEquals(true, PageControlProperties.Style.automatic.isDark(screenDark = true))
+        assertEquals(false, PageControlProperties.Style.automatic.isDark(screenDark = false))
+        assertEquals(false, PageControlProperties.Style.light.isDark(screenDark = true))
+        assertEquals(true, PageControlProperties.Style.dark.isDark(screenDark = false))
+    }
+
     // Picker
 
     @Test
