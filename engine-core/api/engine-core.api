@@ -15,10 +15,12 @@ public final class dev/app8/engine/core/expr/ExpressionEvaluator {
 	public final fun evaluate (Ldev/app8/engine/core/expr/ExpressionNode;Ldev/app8/engine/core/vars/VariableContext;)Ljava/lang/Object;
 	public final fun getClock ()Ljava/time/Clock;
 	public final fun getClockObserver ()Lkotlin/jvm/functions/Function0;
+	public final fun getFirstWeekdayLocale ()Ljava/util/Locale;
 	public final fun getLocale ()Ljava/util/Locale;
 	public final fun getTranslationLookup ()Lkotlin/jvm/functions/Function1;
 	public final fun setClock (Ljava/time/Clock;)V
 	public final fun setClockObserver (Lkotlin/jvm/functions/Function0;)V
+	public final fun setFirstWeekdayLocale (Ljava/util/Locale;)V
 	public final fun setLocale (Ljava/util/Locale;)V
 	public final fun setTranslationLookup (Lkotlin/jvm/functions/Function1;)V
 }

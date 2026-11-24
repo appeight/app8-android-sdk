@@ -29,6 +29,14 @@ public class ExpressionEvaluator {
      */
     public var locale: Locale = Locale.getDefault()
 
+    /**
+     * Locale whose first weekday drives `startOfWeek` / `weekdayIndex`. Null (the default)
+     * follows the device: the default FORMAT locale at call time (its region, and a `-u-fw-`
+     * first-day preference when present). Not [locale]: an app's language override must not
+     * move the week start away from the device's region. Tests set it (en-US, de-AT).
+     */
+    public var firstWeekdayLocale: Locale? = null
+
     /** Backs `i18n(key)`; a miss (or no lookup) returns the key itself. */
     public var translationLookup: ((String) -> String?)? = null
 
@@ -554,6 +562,21 @@ public class ExpressionEvaluator {
                 return Formatting.isoUtc(date.atZone(clock.zone).toLocalDate().atStartOfDay(clock.zone).toInstant())
             }
 
+            "startOfWeek", "weekdayIndex" -> {
+                // The week of the date in the device zone, starting on the locale's first weekday
+                // (weekdayIndex 0). startOfWeek keeps the input's shape like addDays: a date gives a
+                // date, a date-time the start of that day (startOfDay).
+                exactly(1, "$name() expects 1 argument")
+                val raw = arg(0)
+                val day = Formatting.parseDate(raw, clock.zone)?.atZone(clock.zone)?.toLocalDate() ?: return null
+                val first = Formatting.firstDayOfWeek(firstWeekdayLocale ?: Locale.getDefault(Locale.Category.FORMAT))
+                val index = ((day.dayOfWeek.value - first.value + 7) % 7).toLong()
+                if (name == "weekdayIndex") return index
+                val start = day.minusDays(index)
+                if (Formatting.parseLocalDate(raw) != null) return start.toString()
+                return Formatting.isoUtc(start.atStartOfDay(clock.zone).toInstant())
+            }
+
             // Formatting — number & currency
             "formatCurrency" -> {
                 between(1..2, "formatCurrency() expects 1 or 2 arguments")
@@ -763,6 +786,7 @@ public class ExpressionEvaluator {
             "prepend", "append", "uniqueBy", "remove",
             "sortBy", "merge",
             "now", "today", "addDays", "addHours", "startOfDay",
+            "startOfWeek", "weekdayIndex",
         )
 
         /**
