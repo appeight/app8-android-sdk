@@ -4,12 +4,14 @@ import java.math.BigDecimal
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.text.NumberFormat
+import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.time.temporal.WeekFields
 import java.util.Currency
 import java.util.Locale
 
@@ -143,6 +145,37 @@ internal object Formatting {
     /** ISO-8601 in UTC with `Z`, whole seconds (`2026-11-15T09:30:00Z`). */
     fun isoUtc(instant: Instant): String =
         DateTimeFormatter.ISO_INSTANT.format(instant.truncatedTo(java.time.temporal.ChronoUnit.SECONDS))
+
+    /**
+     * Likely region for a language-only locale, so `en` starts on Sunday and `de` on Monday as
+     * on iOS and the web (the JDK reads a region-less locale as the world default otherwise).
+     */
+    private val likelyRegion = mapOf(
+        "en" to "US", "de" to "DE", "fr" to "FR", "es" to "ES", "it" to "IT", "pt" to "BR",
+        "nl" to "NL", "sv" to "SE", "da" to "DK", "nb" to "NO", "no" to "NO", "fi" to "FI",
+        "pl" to "PL", "cs" to "CZ", "ru" to "RU", "uk" to "UA", "tr" to "TR", "el" to "GR",
+        "ja" to "JP", "zh" to "CN", "ko" to "KR", "ar" to "EG", "he" to "IL", "iw" to "IL",
+        "fa" to "IR", "hi" to "IN", "th" to "TH", "id" to "ID", "in" to "ID", "vi" to "VN",
+    )
+
+    /**
+     * The first day of the week for [locale]: a `-u-fw-` keyword (`en-US-u-fw-mon`, the
+     * Android 14+ "first day of week" preference) wins, else the region's (CLDR weekData).
+     */
+    fun firstDayOfWeek(locale: Locale): DayOfWeek {
+        when (locale.getUnicodeLocaleType("fw")?.lowercase(Locale.ROOT)) {
+            "mon" -> return DayOfWeek.MONDAY
+            "tue" -> return DayOfWeek.TUESDAY
+            "wed" -> return DayOfWeek.WEDNESDAY
+            "thu" -> return DayOfWeek.THURSDAY
+            "fri" -> return DayOfWeek.FRIDAY
+            "sat" -> return DayOfWeek.SATURDAY
+            "sun" -> return DayOfWeek.SUNDAY
+        }
+        val region = locale.country.ifEmpty { likelyRegion[locale.language] ?: "" }
+        val regional = if (region.isEmpty()) locale else Locale.Builder().setLanguage(locale.language).setRegion(region).build()
+        return WeekFields.of(regional).firstDayOfWeek
+    }
 
     /** A date-only string (`yyyy-MM-dd`) as a calendar date; null for anything else. */
     fun parseLocalDate(value: Any?): LocalDate? {
