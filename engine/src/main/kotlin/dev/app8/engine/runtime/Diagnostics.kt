@@ -20,6 +20,16 @@ internal class Diagnostics(var level: App8LogLevel) : VariableLogger {
         if (added && level >= App8LogLevel.WARNING) Log.w(TAG, line)
     }
 
+    /**
+     * A failure the user sees (a screen that does not open): always logged at error level,
+     * whatever [level] is. Before 0.7.17 it was a warning, silent in a release app.
+     */
+    fun critical(code: String, message: String) {
+        val line = "$code: $message"
+        synchronized(lock) { seen.add(line) }
+        Log.e(TAG, line)
+    }
+
     fun snapshot(): List<String> = synchronized(lock) { seen.toList() }
 
     fun clear() = synchronized(lock) { seen.clear() }

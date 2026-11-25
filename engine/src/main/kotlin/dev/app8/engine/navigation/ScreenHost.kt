@@ -104,7 +104,7 @@ internal fun ScreenHost(route: Route, navigator: StackNavigator, flow: FlowContr
                     try { ScreenSession.create(runtime, appScope, r.screenId, r.params) } finally { runtime.endWork() }
                 }
             }
-            value = load.await().onFailure { runtime.diagnostics.warn("screen", "'${route.screenId}': ${it.message}") }
+            value = load.await().onFailure { runtime.diagnostics.critical("screen.load.failed", "'${route.screenId}': ${it.message}") }
         }
         // `streaming: true`: live datasource / screen / style updates while shown.
         val initial = value?.getOrNull()

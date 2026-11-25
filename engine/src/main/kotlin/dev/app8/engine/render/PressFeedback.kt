@@ -70,7 +70,7 @@ internal object PressFeedback {
         val props = state.properties
         if (props != null && !(props is ViewProperties && props == ViewProperties(alpha = props.alpha))) return false
         val style = state.style
-        if (style != null && !(style is ViewStyle && style == ViewStyle(alpha = style.alpha))) return false
+        if (style != null && !(style is ViewStyle && style == ViewStyle(alpha = style.alpha, alphaExpression = style.alphaExpression))) return false
         return props != null || style != null
     }
 }

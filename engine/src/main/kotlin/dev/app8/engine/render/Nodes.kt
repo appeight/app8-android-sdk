@@ -96,7 +96,8 @@ internal fun NodeView(node: RenderNode) {
 
     // Animated alpha / transforms (view properties) on top of the static style values.
     // A `repeat` animation loops from the property's start value (see animatedDslFloat).
-    val styleAlpha = (style?.alpha ?: 1.0).toFloat()
+    // `style.alpha` may be an expression (since 0.7.17); it follows its variables like `properties.alpha`.
+    val styleAlpha = (style?.alpha ?: style?.alphaExpression?.let { node.number(it) }?.coerceIn(0.0, 1.0) ?: 1.0).toFloat()
     val alphaTarget = (props?.alpha?.let { node.number(it.value) } ?: 1.0).toFloat() * styleAlpha
     val alpha by animatedDslFloat(alphaTarget, props?.alpha?.animation, styleAlpha, node, "alpha")
     val styleScale = (style?.transform?.scale ?: 1.0).toFloat()
