@@ -227,7 +227,7 @@ internal fun <P : Any, S : Any> decodeContent(c: Cursor, spec: ContentSpec<P, S>
         streaming = c.optBool("streaming"),
         additionalSafeAreaInsets = c.opt("additionalSafeAreaInsets", ::decodeEdgeInsets),
         // New in DSL 0.6.1: decoded leniently so a malformed bar never rejects the screen.
-        bottomBar = c.attempt { it.opt("bottomBar", ::decodeBottomBar) },
+        bottomBar = c.optIgnoringValues("bottomBar", "BottomBar", ::decodeBottomBar),
         // New in DSL 0.7.10: an unknown value or type is ignored (follows the app), never an error.
         userInterfaceStyle = c.attempt { it.optString("userInterfaceStyle") }
             ?.let { s -> App.UserInterfaceStyle.entries.firstOrNull { it.name == s } },

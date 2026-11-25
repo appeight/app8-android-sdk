@@ -29,8 +29,9 @@ import kotlin.math.roundToLong
 //     (`trailing: -16` is 16pt in from the right); only fixed edges apply.
 //   - `ignoresSafeArea` shifts the top shorthand, and top constraints to the
 //     superview, up by the superview's top safe-area inset.
-//   - Unsupported anchor pairs fall back to like-to-like; multipliers only
-//     apply to width/height; safe-area guides ignore multipliers.
+//   - Unsupported anchor pairs fall back to like-to-like; a multiplier on a
+//     position scales it within the superview's bounds (since 0.7.17);
+//     safe-area guides ignore multipliers.
 //   - Inside a stack view only width/height shorthands and width/height
 //     constraints apply; the stack positions its arranged subviews.
 //   - Views with an intrinsic size get hugging (<=) and compression
@@ -218,6 +219,8 @@ private class KeyboardAnchors(
         LayoutAttribute.HEIGHT -> Expression(0.0)
     }
 }
+
+private val HORIZONTAL = setOf(LayoutAttribute.LEADING, LayoutAttribute.TRAILING, LayoutAttribute.CENTER_X)
 
 /** Anchor pairs BaseView.makeRelation supports; anything else relates like-to-like. */
 private val RELATION_PAIRS: Map<LayoutAttribute, Set<LayoutAttribute>> =
@@ -551,8 +554,19 @@ private class LayoutPass(
     private fun relate(info: NodeInfo, c: LayoutConstraint, target: Anchors, constant: Double, priority: Double? = null) {
         val wanted = c.attribute ?: c.type
         val to = if (wanted in RELATION_PAIRS.getValue(c.type)) wanted else c.type
-        val multiplier = if (c.type.isDimension) c.multiplier ?: 1.0 else 1.0
-        add(info.box.attr(c.type), c.op, target.attr(to) * multiplier + constant, priority ?: priorityOf(c.priority))
+        val multiplier = c.multiplier ?: 1.0
+        if (c.type.isDimension || multiplier == 1.0 || multiplier == 0.0 || !multiplier.isFinite()) {
+            // UIKit rejects a zero multiplier on a position: that one stays 1.
+            val m = if (c.type.isDimension) multiplier else 1.0
+            add(info.box.attr(c.type), c.op, target.attr(to) * m + constant, priority ?: priorityOf(c.priority))
+            return
+        }
+        // A position with a multiplier (since 0.7.17; ignored before) scales the target's position
+        // measured in the superview's bounds, as UIKit does: `centerX` × 2 of the superview is
+        // its trailing edge. The solver works in root coordinates, so measure from the origin.
+        val sv = info.parent!!.container
+        val origin = if (c.type in HORIZONTAL) sv.attr(LayoutAttribute.LEADING) else sv.attr(LayoutAttribute.TOP)
+        add(info.box.attr(c.type), c.op, target.attr(to) * multiplier + origin * (1.0 - multiplier) + constant, priority ?: priorityOf(c.priority))
     }
 
     /** BaseView.makeRelationToGuide (no multiplier). */

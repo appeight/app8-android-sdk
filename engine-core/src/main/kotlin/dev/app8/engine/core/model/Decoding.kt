@@ -266,6 +266,25 @@ internal inline fun <T> Cursor.decodeIgnoringValues(typeName: String, first: Exc
     return null
 }
 
+/**
+ * An optional object field decoded like an element of a lenient list ([decodeIgnoringValues]):
+ * a bad value inside it is dropped and recorded, and only an unusable root makes it null.
+ * For fields that used to be all-or-nothing (`bottomBar`): before 0.7.17 one mistyped
+ * style field in the bar's component dropped the whole bar without a word.
+ */
+internal inline fun <T> Cursor.optIgnoringValues(key: String, typeName: String, decode: (Cursor) -> T): T? {
+    val value = obj()[key] ?: return null
+    if (value is JsonNull) return null
+    val child = Cursor(value, childPath(key), options, componentDepth)
+    return try {
+        decode(child)
+    } catch (e: PlatformExcludedException) {
+        null
+    } catch (e: Exception) {
+        child.decodeIgnoringValues(typeName, e, decode)
+    }
+}
+
 /** Removing values from a JSON tree by decoder path (`content.children[2].style`). */
 internal object JsonPathEdit {
     const val MAX_DROPS: Int = 32

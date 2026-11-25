@@ -12,6 +12,8 @@ public interface BaseStyle {
     public val contentMode: ContentMode?
     public val material: Wrapped<Material>
     public val alpha: Double?
+    /** `alpha` written as an expression (`"{{ready ? 1 : 0.35}}"`), resolved per component (since 0.7.17). */
+    public val alphaExpression: String? get() = null
     public val transform: Transform?
     public val blendMode: BlendMode? get() = null
     /** Adaptive glass (styles.md): `auto` follows the content behind, `light` / `dark` pin it. View styles only. */
@@ -37,14 +39,21 @@ public enum class BlendMode {
     difference, exclusion, hue, saturation, color, luminosity,
 }
 
-private class Base(val contentMode: ContentMode?, val material: Wrapped<Material>, val alpha: Double?, val transform: Transform?)
+private class Base(val contentMode: ContentMode?, val material: Wrapped<Material>, val alpha: Double?, val alphaExpression: String?, val transform: Transform?)
 
 private fun decodeBase(c: Cursor): Base {
     c.obj()
+    // `alpha`: a number, a number in a string, or an expression (styles.md, since 0.7.17).
+    // Anything else is ignored, never fatal.
+    val number = c.attempt { it.optDouble("alpha") }
+    val text = if (number == null) c.attempt { it.optString("alpha") }?.trim() else null
+    val alpha = number ?: text?.toDoubleOrNull()
+    val alphaExpression = text?.takeIf { it.toDoubleOrNull() == null && it.contains("{{") }
     return Base(
         contentMode = c.optEnum<ContentMode>("contentMode"),
         material = c.wrapped("material", ::decodeMaterial),
-        alpha = c.optDouble("alpha"),
+        alpha = alpha,
+        alphaExpression = alphaExpression,
         transform = c.opt("transform", ::decodeTransform),
     )
 }
@@ -59,6 +68,7 @@ public data class ViewStyle(
     override val contentMode: ContentMode? = null,
     override val material: Wrapped<Material> = Wrapped.none(),
     override val alpha: Double? = null,
+    override val alphaExpression: String? = null,
     override val transform: Transform? = null,
     override val blendMode: BlendMode? = null,
     /** stackView only: insets of the arranged subviews. */
@@ -76,7 +86,7 @@ public data class LayoutMargins(
 
 internal fun decodeViewStyle(c: Cursor): ViewStyle {
     val b = decodeBase(c)
-    return ViewStyle(b.contentMode, b.material, b.alpha, b.transform, c.optSafeEnum("blendMode", BlendMode.normal), decodeLayoutMargins(c), c.optSafeEnum("glassAppearance", GlassAppearance.auto))
+    return ViewStyle(b.contentMode, b.material, b.alpha, b.alphaExpression, b.transform, c.optSafeEnum("blendMode", BlendMode.normal), decodeLayoutMargins(c), c.optSafeEnum("glassAppearance", GlassAppearance.auto))
 }
 
 /** Lenient: a malformed `layoutMargins` is ignored, like an unknown key. */
@@ -91,6 +101,7 @@ public data class ImageStyle(
     override val contentMode: ContentMode? = null,
     override val material: Wrapped<Material> = Wrapped.none(),
     override val alpha: Double? = null,
+    override val alphaExpression: String? = null,
     override val transform: Transform? = null,
     override val blendMode: BlendMode? = null,
     val tintColor: Wrapped<ThemedColor> = Wrapped.none(),
@@ -104,7 +115,7 @@ public data class ImageStyle(
 internal fun decodeImageStyle(c: Cursor): ImageStyle {
     val b = decodeBase(c)
     return ImageStyle(
-        b.contentMode, b.material, b.alpha, b.transform,
+        b.contentMode, b.material, b.alpha, b.alphaExpression, b.transform,
         blendMode = c.optSafeEnum("blendMode", BlendMode.normal),
         tintColor = c.wrapped("tintColor", ::decodeThemedColor),
         renderingMode = c.optSafeEnum("renderingMode", ImageStyle.RenderingMode.automatic),
@@ -116,19 +127,21 @@ public data class LabelStyle(
     override val contentMode: ContentMode? = null,
     override val material: Wrapped<Material> = Wrapped.none(),
     override val alpha: Double? = null,
+    override val alphaExpression: String? = null,
     override val transform: Transform? = null,
     val text: Wrapped<TextModel> = Wrapped.none(),
 ) : BaseStyle
 
 internal fun decodeLabelStyle(c: Cursor): LabelStyle {
     val b = decodeBase(c)
-    return LabelStyle(b.contentMode, b.material, b.alpha, b.transform, c.wrapped("text", ::decodeTextModel))
+    return LabelStyle(b.contentMode, b.material, b.alpha, b.alphaExpression, b.transform, c.wrapped("text", ::decodeTextModel))
 }
 
 public data class ButtonStyle(
     override val contentMode: ContentMode? = null,
     override val material: Wrapped<Material> = Wrapped.none(),
     override val alpha: Double? = null,
+    override val alphaExpression: String? = null,
     override val transform: Transform? = null,
     val text: Wrapped<TextModel> = Wrapped.none(),
     val system: Wrapped<SystemButtonStyle> = Wrapped.none(),
@@ -137,7 +150,7 @@ public data class ButtonStyle(
 internal fun decodeButtonStyle(c: Cursor): ButtonStyle {
     val b = decodeBase(c)
     return ButtonStyle(
-        b.contentMode, b.material, b.alpha, b.transform,
+        b.contentMode, b.material, b.alpha, b.alphaExpression, b.transform,
         text = c.wrapped("text", ::decodeTextModel),
         system = c.wrapped("system", ::decodeSystemButtonStyle),
     )
@@ -147,6 +160,7 @@ public data class IconStyle(
     override val contentMode: ContentMode? = null,
     override val material: Wrapped<Material> = Wrapped.none(),
     override val alpha: Double? = null,
+    override val alphaExpression: String? = null,
     override val transform: Transform? = null,
     val tint: Wrapped<ThemedColor> = Wrapped.none(),
     val renderingMode: RenderingMode? = null,
@@ -164,7 +178,7 @@ public data class IconStyle(
 internal fun decodeIconStyle(c: Cursor): IconStyle {
     val b = decodeBase(c)
     return IconStyle(
-        b.contentMode, b.material, b.alpha, b.transform,
+        b.contentMode, b.material, b.alpha, b.alphaExpression, b.transform,
         tint = c.wrapped("tint", ::decodeThemedColor),
         renderingMode = c.optEnum<IconStyle.RenderingMode>("renderingMode"),
         fontId = c.optString("fontId"),
@@ -179,31 +193,34 @@ public data class VideoStyle(
     override val contentMode: ContentMode? = null,
     override val material: Wrapped<Material> = Wrapped.none(),
     override val alpha: Double? = null,
+    override val alphaExpression: String? = null,
     override val transform: Transform? = null,
     val corner: Corner? = null,
 ) : BaseStyle
 
 internal fun decodeVideoStyle(c: Cursor): VideoStyle {
     val b = decodeBase(c)
-    return VideoStyle(b.contentMode, b.material, b.alpha, b.transform, c.opt("corner", ::decodeCorner))
+    return VideoStyle(b.contentMode, b.material, b.alpha, b.alphaExpression, b.transform, c.opt("corner", ::decodeCorner))
 }
 
 public data class ScrollViewStyle(
     override val contentMode: ContentMode? = null,
     override val material: Wrapped<Material> = Wrapped.none(),
     override val alpha: Double? = null,
+    override val alphaExpression: String? = null,
     override val transform: Transform? = null,
 ) : BaseStyle
 
 internal fun decodeScrollViewStyle(c: Cursor): ScrollViewStyle {
     val b = decodeBase(c)
-    return ScrollViewStyle(b.contentMode, b.material, b.alpha, b.transform)
+    return ScrollViewStyle(b.contentMode, b.material, b.alpha, b.alphaExpression, b.transform)
 }
 
 public data class ActivityIndicatorStyle(
     override val contentMode: ContentMode? = null,
     override val material: Wrapped<Material> = Wrapped.none(),
     override val alpha: Double? = null,
+    override val alphaExpression: String? = null,
     override val transform: Transform? = null,
     val indicatorStyle: IndicatorStyle? = null,
     val color: String? = null,
@@ -215,7 +232,7 @@ public data class ActivityIndicatorStyle(
 internal fun decodeActivityIndicatorStyle(c: Cursor): ActivityIndicatorStyle {
     val b = decodeBase(c)
     return ActivityIndicatorStyle(
-        b.contentMode, b.material, b.alpha, b.transform,
+        b.contentMode, b.material, b.alpha, b.alphaExpression, b.transform,
         indicatorStyle = c.optEnum<ActivityIndicatorStyle.IndicatorStyle>("indicatorStyle"),
         color = c.optString("color"),
     )
@@ -225,6 +242,7 @@ public data class CollectionStyle(
     override val contentMode: ContentMode? = null,
     override val material: Wrapped<Material> = Wrapped.none(),
     override val alpha: Double? = null,
+    override val alphaExpression: String? = null,
     override val transform: Transform? = null,
     val backgroundColor: String? = null,
     val separatorColor: String? = null,
@@ -234,7 +252,7 @@ public data class CollectionStyle(
 internal fun decodeCollectionStyle(c: Cursor): CollectionStyle {
     val b = decodeBase(c)
     return CollectionStyle(
-        b.contentMode, b.material, b.alpha, b.transform,
+        b.contentMode, b.material, b.alpha, b.alphaExpression, b.transform,
         backgroundColor = c.optString("backgroundColor"),
         separatorColor = c.optString("separatorColor"),
         separatorInset = c.optDouble("separatorInset"),
@@ -245,19 +263,21 @@ public data class DatePickerStyle(
     override val contentMode: ContentMode? = null,
     override val material: Wrapped<Material> = Wrapped.none(),
     override val alpha: Double? = null,
+    override val alphaExpression: String? = null,
     override val transform: Transform? = null,
     val tintColor: String? = null,
 ) : BaseStyle
 
 internal fun decodeDatePickerStyle(c: Cursor): DatePickerStyle {
     val b = decodeBase(c)
-    return DatePickerStyle(b.contentMode, b.material, b.alpha, b.transform, c.optString("tintColor"))
+    return DatePickerStyle(b.contentMode, b.material, b.alpha, b.alphaExpression, b.transform, c.optString("tintColor"))
 }
 
 public data class MapStyle(
     override val contentMode: ContentMode? = null,
     override val material: Wrapped<Material> = Wrapped.none(),
     override val alpha: Double? = null,
+    override val alphaExpression: String? = null,
     override val transform: Transform? = null,
     val corner: Corner? = null,
     val routeColor: String? = null,
@@ -268,7 +288,7 @@ public data class MapStyle(
 internal fun decodeMapStyle(c: Cursor): MapStyle {
     val b = decodeBase(c)
     return MapStyle(
-        b.contentMode, b.material, b.alpha, b.transform,
+        b.contentMode, b.material, b.alpha, b.alphaExpression, b.transform,
         corner = c.opt("corner", ::decodeCorner),
         routeColor = c.optString("routeColor"),
         routeWidth = c.optDouble("routeWidth"),
@@ -280,6 +300,7 @@ public data class PageControlStyle(
     override val contentMode: ContentMode? = null,
     override val material: Wrapped<Material> = Wrapped.none(),
     override val alpha: Double? = null,
+    override val alphaExpression: String? = null,
     override val transform: Transform? = null,
     val pageIndicatorTintColor: String? = null,
     val currentPageIndicatorTintColor: String? = null,
@@ -288,7 +309,7 @@ public data class PageControlStyle(
 internal fun decodePageControlStyle(c: Cursor): PageControlStyle {
     val b = decodeBase(c)
     return PageControlStyle(
-        b.contentMode, b.material, b.alpha, b.transform,
+        b.contentMode, b.material, b.alpha, b.alphaExpression, b.transform,
         c.optString("pageIndicatorTintColor"), c.optString("currentPageIndicatorTintColor"),
     )
 }
@@ -297,6 +318,7 @@ public data class PickerStyle(
     override val contentMode: ContentMode? = null,
     override val material: Wrapped<Material> = Wrapped.none(),
     override val alpha: Double? = null,
+    override val alphaExpression: String? = null,
     override val transform: Transform? = null,
     val text: Wrapped<TextModel> = Wrapped.none(),
     val selectedSegmentTintColor: String? = null,
@@ -315,7 +337,7 @@ public data class PickerStyle(
 internal fun decodePickerStyle(c: Cursor): PickerStyle {
     val b = decodeBase(c)
     return PickerStyle(
-        b.contentMode, b.material, b.alpha, b.transform,
+        b.contentMode, b.material, b.alpha, b.alphaExpression, b.transform,
         c.wrapped("text", ::decodeTextModel), c.optString("selectedSegmentTintColor"),
         c.wrapped("label", ::decodeTextModel), c.optString("indicator"), c.optString("indicatorColor"),
         c.optDouble("indicatorSize"), c.optDouble("indicatorSpacing"),
@@ -326,6 +348,7 @@ public data class SliderStyle(
     override val contentMode: ContentMode? = null,
     override val material: Wrapped<Material> = Wrapped.none(),
     override val alpha: Double? = null,
+    override val alphaExpression: String? = null,
     override val transform: Transform? = null,
     val minimumTrackTintColor: String? = null,
     val maximumTrackTintColor: String? = null,
@@ -335,7 +358,7 @@ public data class SliderStyle(
 internal fun decodeSliderStyle(c: Cursor): SliderStyle {
     val b = decodeBase(c)
     return SliderStyle(
-        b.contentMode, b.material, b.alpha, b.transform,
+        b.contentMode, b.material, b.alpha, b.alphaExpression, b.transform,
         c.optString("minimumTrackTintColor"), c.optString("maximumTrackTintColor"), c.optString("thumbTintColor"),
     )
 }
@@ -344,6 +367,7 @@ public data class ToggleStyle(
     override val contentMode: ContentMode? = null,
     override val material: Wrapped<Material> = Wrapped.none(),
     override val alpha: Double? = null,
+    override val alphaExpression: String? = null,
     override val transform: Transform? = null,
     val onTintColor: String? = null,
     val thumbTintColor: String? = null,
@@ -351,7 +375,7 @@ public data class ToggleStyle(
 
 internal fun decodeToggleStyle(c: Cursor): ToggleStyle {
     val b = decodeBase(c)
-    return ToggleStyle(b.contentMode, b.material, b.alpha, b.transform, c.optString("onTintColor"), c.optString("thumbTintColor"))
+    return ToggleStyle(b.contentMode, b.material, b.alpha, b.alphaExpression, b.transform, c.optString("onTintColor"), c.optString("thumbTintColor"))
 }
 
 /** Style of `textField` and `textView`. */
@@ -359,6 +383,7 @@ public data class TextInputStyle(
     override val contentMode: ContentMode? = null,
     override val material: Wrapped<Material> = Wrapped.none(),
     override val alpha: Double? = null,
+    override val alphaExpression: String? = null,
     override val transform: Transform? = null,
     val text: Wrapped<TextModel> = Wrapped.none(),
     val placeholder: Wrapped<TextModel> = Wrapped.none(),
@@ -377,7 +402,7 @@ public data class TextInputStyle(
 internal fun decodeTextInputStyle(c: Cursor): TextInputStyle {
     val b = decodeBase(c)
     return TextInputStyle(
-        b.contentMode, b.material, b.alpha, b.transform,
+        b.contentMode, b.material, b.alpha, b.alphaExpression, b.transform,
         text = c.wrapped("text", ::decodeTextModel),
         placeholder = c.wrapped("placeholder", ::decodeTextModel),
         tintColor = c.wrapped("tintColor", ::decodeThemedColor),
