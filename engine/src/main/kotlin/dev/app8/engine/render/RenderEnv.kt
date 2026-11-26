@@ -28,6 +28,8 @@ import dev.app8.engine.style.IosSystemColors
 import dev.app8.engine.style.ResolvedText
 import dev.app8.engine.style.TextSizer
 import dev.app8.engine.style.colorOrNull
+import dev.app8.engine.style.edgeLetterSpacing
+import dev.app8.engine.style.hasSpacedDecoration
 import dev.app8.engine.style.toResolvedText
 import kotlin.math.ceil
 
@@ -82,8 +84,28 @@ internal class RenderEnv(
             )
         }
         val r = model.toResolvedText(appearance, fonts, sizer, ::naturalLineHeightEm)
+            .let { if (it.style.hasSpacedDecoration) it.copy(decorationEdgeTrim = edgeSpacing(it.style)) else it }
         return if (r.style.color == Color.Unspecified) r.copy(style = r.style.copy(color = defaultColor)) else r
     }
+
+    /**
+     * What the platform adds outside the first and the last glyph of a line in [style], in
+     * pixels: half the spacing or nothing, decided by measuring one glyph with and without
+     * the letter spacing, since it depends on the Android version. Cached per font, size and
+     * spacing.
+     */
+    private fun edgeSpacing(style: TextStyle): Float =
+        edgeCache.getOrPut(listOf(style.fontFamily, style.fontWeight, style.fontSize, style.letterSpacing)) {
+            runCatching {
+                val probe = TextStyle(fontFamily = style.fontFamily, fontWeight = style.fontWeight, fontSynthesis = style.fontSynthesis, fontSize = style.fontSize)
+                fun width(s: TextStyle) = measurer.measure(AnnotatedString("H"), s, maxLines = 1, density = density).getLineRight(0)
+                // Letter spacing is em of the font size (TextStyles), which Compose scales as sp.
+                val spacingPx = with(density) { style.fontSize.toPx() } * style.letterSpacing.value
+                edgeLetterSpacing(width(probe.copy(letterSpacing = style.letterSpacing)), width(probe), spacingPx)
+            }.getOrDefault(0f)
+        }
+
+    private val edgeCache = HashMap<List<Any?>, Float>()
 
     fun textSize(points: Float) = sizer.size(points)
 
@@ -113,7 +135,10 @@ internal class RenderEnv(
     fun measure(text: AnnotatedString, style: ResolvedText, maxWidth: Double?): Size {
         if (text.isEmpty()) return Size(0.0, 0.0)
         val d = density.density
-        val constraints = if (maxWidth == null || style.maxLines == 1) Constraints() else Constraints(maxWidth = ceil(maxWidth * d - 0.01).toInt().coerceAtLeast(0))
+        // A trimmed decoration (ResolvedText.decorationEdgeTrim): the text is laid out that
+        // much wider on each side than the label, whose width is the text without it.
+        val trim = 2 * style.decorationEdgeTrim
+        val constraints = if (maxWidth == null || style.maxLines == 1) Constraints() else Constraints(maxWidth = ceil(maxWidth * d + trim - 0.01).toInt().coerceAtLeast(0))
         val r: TextLayoutResult = measurer.measure(
             text, style.style, overflow = style.overflow, softWrap = style.softWrap && style.maxLines != 1,
             maxLines = style.maxLines, constraints = constraints, density = density,
@@ -124,7 +149,7 @@ internal class RenderEnv(
             for (i in 0 until r.lineCount) max = maxOf(max, r.getLineRight(i) - r.getLineLeft(i))
             ceil(max).toInt()
         }
-        return Size(ceil(w.toDouble()) / d, ceil(r.size.height.toDouble()) / d)
+        return Size(ceil((w - trim).coerceAtLeast(0f).toDouble()) / d, ceil(r.size.height.toDouble()) / d)
     }
 }
 

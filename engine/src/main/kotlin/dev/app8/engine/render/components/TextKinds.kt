@@ -6,9 +6,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.ClipOp
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
@@ -18,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -43,6 +51,8 @@ import dev.app8.engine.render.string
 import dev.app8.engine.render.tapModifier
 import dev.app8.engine.style.IosSystemColors
 import dev.app8.engine.style.ResolvedText
+import dev.app8.engine.style.edgeSpacingStrips
+import kotlin.math.roundToInt
 
 /** `label` (UILabel): system 17pt, one line, unless the DSL gives a text style. */
 internal object LabelKind : ComponentKind {
@@ -95,10 +105,45 @@ internal object LabelKind : ComponentKind {
 
 @Composable
 internal fun DslText(text: AnnotatedString, style: ResolvedText, modifier: Modifier = Modifier) {
+    val trim = style.decorationEdgeTrim
+    if (trim <= 0f) {
+        BasicText(
+            text = text,
+            modifier = modifier.then(PixelSlack),
+            style = style.style,
+            overflow = style.overflow,
+            softWrap = style.softWrap && style.maxLines != 1,
+            maxLines = style.maxLines,
+        )
+        return
+    }
+    // Underlined or struck-through text on a platform that puts letter spacing outside the
+    // first and the last glyph of a line: lay the text out that much wider than the label on
+    // each side and do not draw there, so the line ends where the text ends.
+    val laidOut = remember { arrayOfNulls<TextLayoutResult>(1) }
+    val pad = trim.roundToInt()
     BasicText(
         text = text,
-        modifier = modifier.then(PixelSlack),
+        modifier = modifier.pixelSlack(pad).drawWithContent {
+            val lines = laidOut[0]
+            if (lines == null) {
+                drawContent()
+                return@drawWithContent
+            }
+            val edges = Path()
+            for (i in 0 until lines.lineCount) {
+                for ((from, to) in edgeSpacingStrips(lines.getLineLeft(i), lines.getLineRight(i), trim)) {
+                    edges.addRect(Rect(from, lines.getLineTop(i), to, lines.getLineBottom(i)))
+                }
+            }
+            // Truncated text is clipped to its bounds, which are wider than the label here.
+            val (from, to) = if (lines.hasVisualOverflow) pad.toFloat() to size.width - pad else -1e5f to 1e5f
+            clipRect(left = from, top = -1e5f, right = to, bottom = 1e5f) {
+                clipPath(edges, ClipOp.Difference) { this@drawWithContent.drawContent() }
+            }
+        },
         style = style.style,
+        onTextLayout = { laidOut[0] = it },
         overflow = style.overflow,
         softWrap = style.softWrap && style.maxLines != 1,
         maxLines = style.maxLines,
@@ -110,14 +155,17 @@ internal fun DslText(text: AnnotatedString, style: ResolvedText, modifier: Modif
  * narrower than the text's measured width; lay text out 2px wider (centered on the frame)
  * so that rounding never truncates or wraps it.
  */
-private val PixelSlack = Modifier.layout { measurable, constraints ->
+private val PixelSlack = Modifier.pixelSlack(0)
+
+/** [PixelSlack], with the text also [extra] px wider than its frame on each side (a trimmed decoration). */
+private fun Modifier.pixelSlack(extra: Int): Modifier = layout { measurable, constraints ->
     if (!constraints.hasBoundedWidth) {
         val p = measurable.measure(constraints)
-        return@layout layout(p.width, p.height) { p.place(0, 0) }
+        return@layout layout((p.width - 2 * extra).coerceAtLeast(0), p.height) { p.place(-extra, 0) }
     }
     val w = constraints.maxWidth
-    val p = measurable.measure(constraints.copy(minWidth = w + 2, maxWidth = w + 2))
-    layout(w, p.height.coerceIn(constraints.minHeight, constraints.maxHeight)) { p.place(-1, 0) }
+    val p = measurable.measure(constraints.copy(minWidth = w + 2 + 2 * extra, maxWidth = w + 2 + 2 * extra))
+    layout(w, p.height.coerceIn(constraints.minHeight, constraints.maxHeight)) { p.place(-1 - extra, 0) }
 }
 
 /**
