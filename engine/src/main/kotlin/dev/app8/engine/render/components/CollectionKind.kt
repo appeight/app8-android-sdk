@@ -575,12 +575,9 @@ internal object CollectionKind : ComponentKind {
         val left = insets?.left ?: 0.0
         val right = insets?.right ?: 0.0
         val spacing = config?.itemSpacing ?: 0.0
-        val frame = if (height.isFinite()) height else 0.0
-        val itemH = when {
-            config?.itemHeightFill == true -> (frame - top - bottom).coerceAtLeast(1.0)
-            config?.itemHeight != null -> config.itemHeight!!.coerceAtLeast(1.0)
-            else -> frame.coerceAtLeast(1.0)
-        }
+        // From the frame of this very pass: a frame that changes later (insets arriving after
+        // the first composition, a sibling above growing) resizes every page with it.
+        val itemH = CollectionPlan.feedPageHeight(config, height)
         val pageVariable = config?.currentPageVariable
         val state = rememberPagerState(initialPage = initialPage(model, pageVariable, items.size)) { items.size }
         PageVariable(
