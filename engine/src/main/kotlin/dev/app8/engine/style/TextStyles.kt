@@ -99,37 +99,50 @@ internal data class ResolvedText(
     val minimumScaleFactor: Float = 0.5f,
     /**
      * Pixels of letter spacing the platform puts outside the first and the last glyph of a
-     * line (see [edgeLetterSpacing]), for underlined or struck-through text only: the label
-     * is that much narrower on each side and the decoration is not drawn there, so the line
-     * is as wide as the text (styles.md "Underline"). 0 leaves layout and drawing untouched.
+     * line (see [edgeLetterSpacing]), for underlined or struck-through text drawn as a label
+     * (`DslText`) only: the label is that much narrower on each side and its decoration ends
+     * there, so both are as wide as the text (styles.md "Underline"). Negative for negative
+     * letter spacing, where the glyphs reach beyond the line: label and decoration are then
+     * that much wider. 0 leaves the layout untouched.
      */
     val decorationEdgeTrim: Float = 0f,
 )
 
-/** Underlined or struck-through text with positive letter spacing: the only text that is trimmed. */
+/** Underlined or struck-through text. */
+internal val TextStyle.isDecorated: Boolean
+    get() = textDecoration.let { it != null && it != TextDecoration.None }
+
+/** Decorated text with letter spacing, positive or negative: the only text whose label is trimmed. */
 internal val TextStyle.hasSpacedDecoration: Boolean
-    get() = textDecoration.let { it != null && it != TextDecoration.None } &&
-        letterSpacing != TextUnit.Unspecified && letterSpacing.value > 0f
+    get() = isDecorated && letterSpacing != TextUnit.Unspecified && letterSpacing.value.let { it != 0f && it.isFinite() }
 
 /**
  * The letter spacing the platform adds at each end of a line, in pixels, for a letter
- * spacing of [spacingPx]. Up to Android 14 half the spacing goes before and half after every
- * glyph, so a line carries half a spacing beyond its ink at both ends (and its underline with
- * it); Android 15 and later add spacing between glyphs only. Which one applies is measured,
- * not assumed: [spacedWidth] and [plainWidth] are the widths of the same single glyph with
- * and without the spacing (a lone glyph gains the whole spacing in the first case, nothing
- * in the second; the widths are whole pixels, so they only decide the case).
+ * spacing of [spacingPx] (negative spacing gives a negative result: the line is shorter than
+ * its glyphs). Up to Android 14 half the spacing goes before and half after every glyph, so
+ * a line carries half a spacing beyond its glyphs at both ends (and its underline with it);
+ * Android 15 and later add spacing between glyphs only. Which one applies is measured, not
+ * assumed: [spacedWidth] and [plainWidth] are the widths of the same single glyph with and
+ * without the spacing (a lone glyph gains the whole spacing in the first case, nothing in
+ * the second).
  */
-internal fun edgeLetterSpacing(spacedWidth: Float, plainWidth: Float, spacingPx: Float): Float =
-    if (spacingPx > 0f && spacingPx.isFinite() && spacedWidth - plainWidth > spacingPx / 2f) spacingPx / 2f else 0f
+internal fun edgeLetterSpacing(spacedWidth: Float, plainWidth: Float, spacingPx: Float): Float {
+    if (spacingPx == 0f || !spacingPx.isFinite()) return 0f
+    val gained = (spacedWidth - plainWidth) / spacingPx
+    return if (gained > 0.5f) spacingPx / 2f else 0f
+}
 
 /**
- * The horizontal strips of a line (`left..right`) that carry only edge letter spacing, as
- * `start to end` pairs: where a decoration must not be drawn. Empty when there is nothing to
- * trim or the line is too short to keep any ink.
+ * Where the decoration of one line runs, as `start to end`: from the first glyph to the end
+ * of the last one. [left] and [right] are the edges of the line's text as laid out, which
+ * carry [trim] of letter spacing outside the glyphs at both ends (negative: the glyphs reach
+ * that far beyond the edges). `null` when nothing is left to decorate.
  */
-internal fun edgeSpacingStrips(left: Float, right: Float, trim: Float): List<Pair<Float, Float>> =
-    if (trim <= 0f || right - left <= 2f * trim) emptyList() else listOf(left to left + trim, right - trim to right)
+internal fun decorationRange(left: Float, right: Float, trim: Float): Pair<Float, Float>? {
+    val from = left + trim
+    val to = right - trim
+    return if (to > from) from to to else null
+}
 
 /** iOS `Font.Weight` → CSS-style weights (`ultraLight` 100 … `black` 900), as the DSL docs list them. */
 internal fun Font.Weight.toFontWeight(): FontWeight = when (this) {

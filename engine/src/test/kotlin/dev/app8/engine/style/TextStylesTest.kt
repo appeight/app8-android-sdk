@@ -177,17 +177,21 @@ class TextStylesTest {
     }
 
     @Test
-    fun `only decorated text with positive letter spacing is trimmed at the line ends`() {
+    fun `only decorated text with letter spacing is trimmed at the line ends`() {
         fun style(json: String) = TestStyles.text(json).toResolvedText(App8Appearance.Light)
         assertEquals(true, style("""{ "fontSize": 16, "letterSpacing": 4, "underline": true }""").style.hasSpacedDecoration)
         assertEquals(true, style("""{ "fontSize": 16, "letterSpacing": 1.5, "strikethrough": true }""").style.hasSpacedDecoration)
+        // Negative spacing too: the glyphs then reach beyond the line.
+        assertEquals(true, style("""{ "fontSize": 16, "letterSpacing": -1, "underline": true }""").style.hasSpacedDecoration)
         // No decoration: the label keeps its width, whatever the spacing.
         assertEquals(false, style("""{ "fontSize": 16, "letterSpacing": 4 }""").style.hasSpacedDecoration)
         assertEquals(false, style("""{ "fontSize": 16, "letterSpacing": 4, "underline": false }""").style.hasSpacedDecoration)
-        // No (or negative) spacing: nothing lies outside the glyphs.
+        assertEquals(false, style("""{ "fontSize": 16, "letterSpacing": 4 }""").style.isDecorated)
+        // No spacing: nothing lies outside the glyphs.
         assertEquals(false, style("""{ "fontSize": 16, "underline": true }""").style.hasSpacedDecoration)
-        assertEquals(false, style("""{ "fontSize": 16, "letterSpacing": -1, "underline": true }""").style.hasSpacedDecoration)
-        // The trim itself is measured by the renderer; the style alone never trims.
+        assertEquals(false, style("""{ "fontSize": 16, "letterSpacing": 0, "underline": true }""").style.hasSpacedDecoration)
+        assertEquals(true, style("""{ "fontSize": 16, "underline": true }""").style.isDecorated)
+        // The trim itself is measured by the renderer, for labels; the style alone never trims.
         assertEquals(0f, style("""{ "fontSize": 16, "letterSpacing": 4, "underline": true }""").decorationEdgeTrim, 0f)
     }
 
@@ -196,20 +200,25 @@ class TextStylesTest {
         // Up to Android 14: a lone glyph of 30 px measures 41 px with 10.5 px of letter spacing
         // (whole pixels), so each end of a line carries 5.25 px.
         assertEquals(5.25f, edgeLetterSpacing(spacedWidth = 41f, plainWidth = 30f, spacingPx = 10.5f), 0f)
+        // Negative spacing there: the glyph loses it, each end of a line is 2 px short of its glyphs.
+        assertEquals(-2f, edgeLetterSpacing(spacedWidth = 26f, plainWidth = 30f, spacingPx = -4f), 0f)
         // Android 15 and later: spacing between glyphs only, a lone glyph gains nothing.
         assertEquals(0f, edgeLetterSpacing(spacedWidth = 30f, plainWidth = 30f, spacingPx = 10.5f), 0f)
         assertEquals(0f, edgeLetterSpacing(spacedWidth = 31f, plainWidth = 30f, spacingPx = 10.5f), 0f)
+        assertEquals(0f, edgeLetterSpacing(spacedWidth = 30f, plainWidth = 30f, spacingPx = -4f), 0f)
         assertEquals(0f, edgeLetterSpacing(41f, 30f, spacingPx = 0f), 0f)
         assertEquals(0f, edgeLetterSpacing(Float.NaN, 30f, 10.5f), 0f)
     }
 
     @Test
-    fun `a decoration is cut by the edge spacing at both ends of a line`() {
-        // A line from 100 to 517 px with 5.25 px of spacing outside its first and last glyph:
-        // the underline runs 105.25 .. 511.75, as wide as the text.
-        assertEquals(listOf(100f to 105.25f, 511.75f to 517f), edgeSpacingStrips(left = 100f, right = 517f, trim = 5.25f))
-        assertEquals(emptyList<Pair<Float, Float>>(), edgeSpacingStrips(100f, 517f, 0f))
-        // Nothing would be left of a line this short: draw it as it is.
-        assertEquals(emptyList<Pair<Float, Float>>(), edgeSpacingStrips(100f, 110f, 5.25f))
+    fun `a decoration runs from the first glyph of a line to the end of the last`() {
+        // A line from 100 to 517 px with 5.25 px of spacing outside its first and last glyph.
+        assertEquals(105.25f to 511.75f, decorationRange(left = 100f, right = 517f, trim = 5.25f))
+        assertEquals(100f to 517f, decorationRange(100f, 517f, 0f))
+        // Negative spacing: the glyphs reach 2 px beyond the line at both ends.
+        assertEquals(98f to 519f, decorationRange(100f, 517f, -2f))
+        // An empty line, or one with nothing left: no decoration.
+        assertEquals(null, decorationRange(100f, 100f, 0f))
+        assertEquals(null, decorationRange(100f, 110f, 5.25f))
     }
 }

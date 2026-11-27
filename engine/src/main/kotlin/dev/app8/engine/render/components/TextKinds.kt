@@ -11,10 +11,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.ClipOp
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -24,10 +20,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFontFamilyResolver
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.app8.engine.core.layout.AxisValues
 import dev.app8.engine.core.layout.IntrinsicMeasure
@@ -51,7 +50,7 @@ import dev.app8.engine.render.string
 import dev.app8.engine.render.tapModifier
 import dev.app8.engine.style.IosSystemColors
 import dev.app8.engine.style.ResolvedText
-import dev.app8.engine.style.edgeSpacingStrips
+import dev.app8.engine.style.isDecorated
 import kotlin.math.roundToInt
 
 /** `label` (UILabel): system 17pt, one line, unless the DSL gives a text style. */
@@ -63,7 +62,7 @@ internal object LabelKind : ComponentKind {
     private fun resolve(node: RenderNode, env: RenderEnv): Resolved {
         val props = node.content.properties as? LabelProperties ?: LabelProperties()
         val model = env.textModel((node.content.style as? LabelStyle)?.text, node)
-        var style = env.text(model, 17f, env.labelColor, defaultLines = 1)
+        var style = env.labelText(model, 17f, env.labelColor, defaultLines = 1)
         props.numberOfLines?.let { n -> style = style.copy(maxLines = if (n <= 0) Int.MAX_VALUE else n) }
         // A one-line UILabel draws only the first line of multi-line text, without an ellipsis.
         val raw = node.localized(props.text).let { if (style.maxLines == 1) it.substringBefore('\n') else it }
@@ -103,10 +102,16 @@ internal object LabelKind : ComponentKind {
     }
 }
 
+/**
+ * Draws a label's or a button title's text. Underlined or struck-through text gets its
+ * decoration from [decorationSegments] instead of the platform, so that it ends with the last
+ * glyph of every line; with [ResolvedText.decorationEdgeTrim] the text is also laid out that
+ * much wider than the label on each side (see `RenderEnv.labelText`). The glyphs are drawn by
+ * the platform, unclipped, in both cases.
+ */
 @Composable
 internal fun DslText(text: AnnotatedString, style: ResolvedText, modifier: Modifier = Modifier) {
-    val trim = style.decorationEdgeTrim
-    if (trim <= 0f) {
+    if (!style.style.isDecorated) {
         BasicText(
             text = text,
             modifier = modifier.then(PixelSlack),
@@ -117,37 +122,46 @@ internal fun DslText(text: AnnotatedString, style: ResolvedText, modifier: Modif
         )
         return
     }
-    // Underlined or struck-through text on a platform that puts letter spacing outside the
-    // first and the last glyph of a line: lay the text out that much wider than the label on
-    // each side and do not draw there, so the line ends where the text ends.
-    val laidOut = remember { arrayOfNulls<TextLayoutResult>(1) }
+    val trim = style.decorationEdgeTrim
     val pad = trim.roundToInt()
+    val fonts = LocalFontFamilyResolver.current
+    val density = LocalDensity.current
+    val plain = remember(style.style) { style.style.copy(textDecoration = TextDecoration.None) }
+    val metrics = remember(fonts, density, plain) { decorationMetrics(fonts, plain, density) }
+    val slack = if (pad == 0) PixelSlack else remember(pad) { Modifier.pixelSlack(pad) }
+    // Segments of the current layout: computed once per layout, read when drawing.
+    val laidOut = remember { DecorationLayout() }
+    val decoration = style.style.textDecoration ?: TextDecoration.None
+    val clipX = style.overflow == TextOverflow.Clip
     BasicText(
         text = text,
-        modifier = modifier.pixelSlack(pad).drawWithContent {
-            val lines = laidOut[0]
-            if (lines == null) {
+        modifier = modifier.then(slack).drawWithContent {
+            if (!laidOut.overflows) {
                 drawContent()
+                drawDecorations(laidOut.segments, metrics, decoration, plain.color)
                 return@drawWithContent
             }
-            val edges = Path()
-            for (i in 0 until lines.lineCount) {
-                for ((from, to) in edgeSpacingStrips(lines.getLineLeft(i), lines.getLineRight(i), trim)) {
-                    edges.addRect(Rect(from, lines.getLineTop(i), to, lines.getLineBottom(i)))
-                }
-            }
-            // Truncated text is clipped to its bounds, which are wider than the label here.
-            val (from, to) = if (lines.hasVisualOverflow) pad.toFloat() to size.width - pad else -1e5f to 1e5f
-            clipRect(left = from, top = -1e5f, right = to, bottom = 1e5f) {
-                clipPath(edges, ClipOp.Difference) { this@drawWithContent.drawContent() }
-            }
+            // Text that does not fit is clipped to its bounds; with a trim they differ from
+            // the label's, and the decoration is not part of the text any more.
+            val from = if (clipX) pad.toFloat() else -1e5f
+            val to = if (clipX) size.width - pad else 1e5f
+            if (clipX && pad != 0) clipRect(left = from, top = -1e5f, right = to, bottom = 1e5f) { this@drawWithContent.drawContent() } else drawContent()
+            clipRect(left = from, top = 0f, right = to, bottom = size.height) { drawDecorations(laidOut.segments, metrics, decoration, plain.color) }
         },
-        style = style.style,
-        onTextLayout = { laidOut[0] = it },
+        style = plain,
+        onTextLayout = {
+            laidOut.segments = decorationSegments(it, text, trim)
+            laidOut.overflows = it.hasVisualOverflow
+        },
         overflow = style.overflow,
         softWrap = style.softWrap && style.maxLines != 1,
         maxLines = style.maxLines,
     )
+}
+
+private class DecorationLayout {
+    var segments: List<DecorationSegment> = emptyList()
+    var overflows: Boolean = false
 }
 
 /**
@@ -157,16 +171,23 @@ internal fun DslText(text: AnnotatedString, style: ResolvedText, modifier: Modif
  */
 private val PixelSlack = Modifier.pixelSlack(0)
 
-/** [PixelSlack], with the text also [extra] px wider than its frame on each side (a trimmed decoration). */
+/**
+ * [PixelSlack], with the text also [extra] px wider than its frame on each side (a trimmed
+ * decoration; narrower for a negative trim).
+ */
 private fun Modifier.pixelSlack(extra: Int): Modifier = layout { measurable, constraints ->
     if (!constraints.hasBoundedWidth) {
         val p = measurable.measure(constraints)
         return@layout layout((p.width - 2 * extra).coerceAtLeast(0), p.height) { p.place(-extra, 0) }
     }
     val w = constraints.maxWidth
-    val p = measurable.measure(constraints.copy(minWidth = w + 2 + 2 * extra, maxWidth = w + 2 + 2 * extra))
+    val inner = slackWidth(w, extra)
+    val p = measurable.measure(constraints.copy(minWidth = inner, maxWidth = inner))
     layout(w, p.height.coerceIn(constraints.minHeight, constraints.maxHeight)) { p.place(-1 - extra, 0) }
 }
+
+/** The width text is laid out at in a frame [frame] px wide: [PixelSlack] plus [extra] px on each side. */
+internal fun slackWidth(frame: Int, extra: Int): Int = (frame + 2 + 2 * extra).coerceAtLeast(0)
 
 /**
  * `button`. Without `style.system`: UIButton with a title (15pt, tint color, ripple instead
@@ -215,10 +236,10 @@ internal object ButtonKind : ComponentKind {
         val model = env.textModel(style?.text, node)
         val title = node.string(props.text) ?: ""
         return if (system == null) {
-            Resolved(title, env.text(model, 15f, IosSystemColors.of("systemBlue", env.appearance), 1).copy(maxLines = 1), null, 0.0, 6.0)
+            Resolved(title, env.labelText(model, 15f, IosSystemColors.of("systemBlue", env.appearance), 1).copy(maxLines = 1), null, 0.0, 6.0)
         } else {
             val (h, v) = systemInsets(system.size)
-            val t = env.text(model, systemFontSize(system.size), foreground(system, env, node), 1).copy(maxLines = 1)
+            val t = env.labelText(model, systemFontSize(system.size), foreground(system, env, node), 1).copy(maxLines = 1)
             Resolved(title, t, system, h, v)
         }
     }
