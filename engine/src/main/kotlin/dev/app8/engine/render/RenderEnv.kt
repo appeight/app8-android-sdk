@@ -28,6 +28,8 @@ import dev.app8.engine.style.IosSystemColors
 import dev.app8.engine.style.ResolvedText
 import dev.app8.engine.style.TextSizer
 import dev.app8.engine.style.colorOrNull
+import dev.app8.engine.style.edgeLetterSpacing
+import dev.app8.engine.style.hasSpacedDecoration
 import dev.app8.engine.style.toResolvedText
 import kotlin.math.ceil
 
@@ -85,6 +87,35 @@ internal class RenderEnv(
         return if (r.style.color == Color.Unspecified) r.copy(style = r.style.copy(color = defaultColor)) else r
     }
 
+    /**
+     * [text] for text that is drawn by `DslText` (labels, button titles): underlined or
+     * struck-through text with letter spacing also gets its [ResolvedText.decorationEdgeTrim],
+     * which [measure] takes off the width and `DslText` lays out around. Controls that draw
+     * their text themselves (pickers, text fields) use [text]: their frame is the whole line.
+     */
+    fun labelText(model: TextModel?, defaultSize: Float, defaultColor: Color, defaultLines: Int): ResolvedText =
+        text(model, defaultSize, defaultColor, defaultLines)
+            .let { if (it.style.hasSpacedDecoration) it.copy(decorationEdgeTrim = edgeSpacing(it.style)) else it }
+
+    /**
+     * What the platform adds outside the first and the last glyph of a line in [style], in
+     * pixels: half the spacing (negative for negative spacing) or nothing, decided by measuring one glyph with and without
+     * the letter spacing, since it depends on the Android version. Cached per font, size and
+     * spacing.
+     */
+    private fun edgeSpacing(style: TextStyle): Float =
+        edgeCache.getOrPut(listOf(style.fontFamily, style.fontWeight, style.fontSize, style.letterSpacing)) {
+            runCatching {
+                val probe = TextStyle(fontFamily = style.fontFamily, fontWeight = style.fontWeight, fontSynthesis = style.fontSynthesis, fontSize = style.fontSize)
+                fun width(s: TextStyle) = measurer.measure(AnnotatedString("H"), s, maxLines = 1, density = density).getLineRight(0)
+                // Letter spacing is em of the font size (TextStyles), which Compose scales as sp.
+                val spacingPx = with(density) { style.fontSize.toPx() } * style.letterSpacing.value
+                edgeLetterSpacing(width(probe.copy(letterSpacing = style.letterSpacing)), width(probe), spacingPx)
+            }.getOrDefault(0f)
+        }
+
+    private val edgeCache = HashMap<List<Any?>, Float>()
+
     fun textSize(points: Float) = sizer.size(points)
 
     /**
@@ -113,18 +144,25 @@ internal class RenderEnv(
     fun measure(text: AnnotatedString, style: ResolvedText, maxWidth: Double?): Size {
         if (text.isEmpty()) return Size(0.0, 0.0)
         val d = density.density
-        val constraints = if (maxWidth == null || style.maxLines == 1) Constraints() else Constraints(maxWidth = ceil(maxWidth * d - 0.01).toInt().coerceAtLeast(0))
+        // A trimmed decoration (ResolvedText.decorationEdgeTrim): the text is laid out that
+        // much wider on each side than the label (narrower for negative letter spacing),
+        // whose width is the text from its first glyph to the end of its last.
+        val trim = 2 * style.decorationEdgeTrim
+        val constraints = if (maxWidth == null || style.maxLines == 1) Constraints() else Constraints(maxWidth = ceil(maxWidth * d + trim - 0.01).toInt().coerceAtLeast(0))
         val r: TextLayoutResult = measurer.measure(
             text, style.style, overflow = style.overflow, softWrap = style.softWrap && style.maxLines != 1,
             maxLines = style.maxLines, constraints = constraints, density = density,
         )
-        val w = if (maxWidth == null || style.maxLines == 1) r.size.width else {
-            // The widest line, not the constraint (UILabel hugs its text).
+        val hug = maxWidth != null && style.maxLines != 1
+        val w: Float = if (!hug && trim == 0f) r.size.width.toFloat() else {
+            // The widest line, not the constraint (UILabel hugs its text); for a trimmed label
+            // always, unrounded, so that taking the trim off stays exact.
             var max = 0f
             for (i in 0 until r.lineCount) max = maxOf(max, r.getLineRight(i) - r.getLineLeft(i))
-            ceil(max).toInt()
+            // Never beyond the layout: a truncated line can report more than it draws.
+            if (hug) minOf(ceil(max), r.size.width.toFloat()) else max
         }
-        return Size(ceil(w.toDouble()) / d, ceil(r.size.height.toDouble()) / d)
+        return Size(ceil((w - trim).coerceAtLeast(0f).toDouble() - 0.01) / d, ceil(r.size.height.toDouble()) / d)
     }
 }
 

@@ -217,4 +217,30 @@ class CollectionPlanTest {
         val st = CollectionPlan.topLevelStyle(CollectionLayout(type = CollectionLayout.LayoutType.vertical, itemHeight = 300.0), hasHeader = false)
         assertEquals(300.0, st.itemHeight)
     }
+
+    /**
+     * `feedPageHeight` only, as a pure function of the frame it is given. That the feed calls it
+     * with the pager's current frame on every pass is not covered here (no composition test).
+     */
+    @Test
+    fun `feedPageHeight is the given frame, less the insets for fill, or the fixed item height`() {
+        val fill = CollectionLayout(type = CollectionLayout.LayoutType.vertical, pagingStyle = CollectionLayout.PagingStyle.paging, itemHeightFill = true)
+        assertTrue(CollectionPlan.usesVerticalPaging(fill, mixed = false, swipe = false))
+        // The whole frame, whatever its height: a full screen (844 pt), under a band (733 pt),
+        // or under a band and above the bottom safe area (699 pt). No safe area is taken off.
+        for (frame in listOf(844.0, 733.0, 699.0)) assertEquals(frame, CollectionPlan.feedPageHeight(fill, frame))
+        // Content insets shorten a "fill" page, and only a "fill" page.
+        val inset = fill.copy(contentInsets = EdgeInsets(12.0, 0.0, 8.0, 0.0))
+        assertEquals(679.0, CollectionPlan.feedPageHeight(inset, 699.0))
+        assertEquals(699.0, CollectionPlan.feedPageHeight(inset.copy(itemHeightFill = false), 699.0))
+        // A fixed item height is the page, whatever the frame; self-sizing items page by the frame.
+        assertEquals(400.0, CollectionPlan.feedPageHeight(fill.copy(itemHeightFill = false, itemHeight = 400.0), 699.0))
+        assertEquals(699.0, CollectionPlan.feedPageHeight(fill.copy(itemHeightFill = false), 699.0))
+        assertEquals(699.0, CollectionPlan.feedPageHeight(null, 699.0))
+        // No usable frame yet, or insets larger than the frame: 1 pt, never zero or negative.
+        assertEquals(1.0, CollectionPlan.feedPageHeight(fill, Double.POSITIVE_INFINITY))
+        assertEquals(1.0, CollectionPlan.feedPageHeight(fill, Double.NaN))
+        assertEquals(1.0, CollectionPlan.feedPageHeight(fill, 0.0))
+        assertEquals(1.0, CollectionPlan.feedPageHeight(inset, 15.0))
+    }
 }

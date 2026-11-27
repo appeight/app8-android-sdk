@@ -59,6 +59,8 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.core)
+    // Real text layout and drawing on the JVM (native graphics), for the rendered text tests.
+    testImplementation(libs.robolectric)
     // The sample's journeys produce this library's Baseline Profile (shipped in the AAR).
     baselineProfile(project(":benchmark"))
 }

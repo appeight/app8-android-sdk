@@ -113,6 +113,22 @@ internal object CollectionPlan {
     fun usesVerticalPaging(config: CollectionLayout?, mixed: Boolean, swipe: Boolean): Boolean =
         plainVertical(config, mixed, swipe) && config?.pagingStyle == CollectionLayout.PagingStyle.paging
 
+    /**
+     * The page height of a vertical feed whose frame is [frame] points tall, wherever that
+     * frame sits on the screen (under a band, inside the safe area): the frame minus the
+     * vertical content insets for `itemHeight: "fill"`, a fixed `itemHeight`, else the frame.
+     * A page of the frame's height rests flush on every page: page n starts n pages down.
+     */
+    fun feedPageHeight(config: CollectionLayout?, frame: Double): Double {
+        val f = if (frame.isFinite()) frame else 0.0
+        val insets = config?.contentInsets
+        return when {
+            config?.itemHeightFill == true -> f - (insets?.top ?: 0.0) - (insets?.bottom ?: 0.0)
+            config?.itemHeight != null -> config.itemHeight!!
+            else -> f
+        }.coerceAtLeast(1.0)
+    }
+
     /** Pages or `itemHeight: "fill"` items: the collection's frame is the page, no safe-area insets. */
     fun verticalFullFrame(config: CollectionLayout?, mixed: Boolean, swipe: Boolean): Boolean =
         plainVertical(config, mixed, swipe) &&

@@ -97,7 +97,52 @@ internal data class ResolvedText(
     val softWrap: Boolean,
     val adjustsFontSizeToFitWidth: Boolean = false,
     val minimumScaleFactor: Float = 0.5f,
+    /**
+     * Pixels of letter spacing the platform puts outside the first and the last glyph of a
+     * line (see [edgeLetterSpacing]), for underlined or struck-through text drawn as a label
+     * (`DslText`) only: the label is that much narrower on each side and its decoration ends
+     * there, so both are as wide as the text (styles.md "Underline"). Negative for negative
+     * letter spacing, where the glyphs reach beyond the line: label and decoration are then
+     * that much wider. 0 leaves the layout untouched.
+     */
+    val decorationEdgeTrim: Float = 0f,
 )
+
+/** Underlined or struck-through text. */
+internal val TextStyle.isDecorated: Boolean
+    get() = textDecoration.let { it != null && it != TextDecoration.None }
+
+/** Decorated text with letter spacing, positive or negative: the only text whose label is trimmed. */
+internal val TextStyle.hasSpacedDecoration: Boolean
+    get() = isDecorated && letterSpacing != TextUnit.Unspecified && letterSpacing.value.let { it != 0f && it.isFinite() }
+
+/**
+ * The letter spacing the platform adds at each end of a line, in pixels, for a letter
+ * spacing of [spacingPx] (negative spacing gives a negative result: the line is shorter than
+ * its glyphs). Up to Android 14 half the spacing goes before and half after every glyph, so
+ * a line carries half a spacing beyond its glyphs at both ends (and its underline with it);
+ * Android 15 and later add spacing between glyphs only. Which one applies is measured, not
+ * assumed: [spacedWidth] and [plainWidth] are the widths of the same single glyph with and
+ * without the spacing (a lone glyph gains the whole spacing in the first case, nothing in
+ * the second).
+ */
+internal fun edgeLetterSpacing(spacedWidth: Float, plainWidth: Float, spacingPx: Float): Float {
+    if (spacingPx == 0f || !spacingPx.isFinite()) return 0f
+    val gained = (spacedWidth - plainWidth) / spacingPx
+    return if (gained > 0.5f) spacingPx / 2f else 0f
+}
+
+/**
+ * Where the decoration of one line runs, as `start to end`: from the first glyph to the end
+ * of the last one. [left] and [right] are the edges of the line's text as laid out, which
+ * carry [trim] of letter spacing outside the glyphs at both ends (negative: the glyphs reach
+ * that far beyond the edges). `null` when nothing is left to decorate.
+ */
+internal fun decorationRange(left: Float, right: Float, trim: Float): Pair<Float, Float>? {
+    val from = left + trim
+    val to = right - trim
+    return if (to > from) from to to else null
+}
 
 /** iOS `Font.Weight` → CSS-style weights (`ultraLight` 100 … `black` 900), as the DSL docs list them. */
 internal fun Font.Weight.toFontWeight(): FontWeight = when (this) {
@@ -142,9 +187,12 @@ internal fun TextModel.resolveFontFamily(fonts: App8FontProvider, weight: FontWe
  * - `lineHeight`: `fixed` = min = max line height; `multiplier` = natural × value, the
  *   natural height being the font's own ([naturalLineHeightEm] for a bundle font, SF Pro's
  *   for the system font);
- *   `interLineSpacing` / `fontSizeFraction` = natural + value (resp. size × value). UIKit puts
- *   the extra height of a taller line above the glyphs, and paragraph spacing below a line;
- *   [LineHeightStyle] reproduces both;
+ *   `interLineSpacing` / `fontSizeFraction` = natural + value (resp. size × value). A `fixed`
+ *   line splits its leading evenly above and below the glyphs; a `multiplier` line has its
+ *   extra height above them and paragraph spacing goes below a line, as in UIKit;
+ *   [LineHeightStyle] reproduces all three;
+ *   a `fixed` line is exactly its value, also below the font's own height ([naturalLineHeightEm]
+ *   tells): the glyphs then overflow the line evenly;
  * - alignment, underline / strikethrough, `numberOfLines` (0 = unlimited), `lineBreakMode`.
  *
  * [color] `null` leaves the color unspecified (the component decides).
@@ -166,7 +214,10 @@ internal fun TextModel.toResolvedText(
     } else {
         IOS_NATURAL_LINE_HEIGHT_EM
     }
-    val (lineHeight, lineHeightStyle) = lineHeight(size, sizer, naturalEm)
+    // A `fixed` line below the font's own height on this platform (ascent + descent, what
+    // Compose centres on) needs its own style, see [TIGHT].
+    val fontEm = if (lineHeight?.type == TextModel.LineHeight.Type.fixed) naturalLineHeightEm(family, weight) else null
+    val (lineHeight, lineHeightStyle) = lineHeight(size, sizer, naturalEm, fontEm)
 
     val letterSpacingEm = letterSpacing
         ?.takeIf { it.type == TextModel.LetterSpacing.Type.fixed && size > 0f }
@@ -212,7 +263,25 @@ internal fun TextModel.toResolvedText(
     )
 }
 
-/** Extra height above the glyphs, like UIKit's min/max line height and line height multiple. */
+/**
+ * A `fixed` line height: the difference to the font's own height is split evenly above and
+ * below the glyphs (half-leading, styles.md "LineHeight Types"). The centre is the font's
+ * ascent + descent, which is also the height of a line without a line height, so a centred
+ * one-line label draws its glyphs where the same label without a line height does, for the
+ * system font and for a bundle font alike (no natural-height reference is involved).
+ */
+private val CENTERED = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.None)
+
+/**
+ * A `fixed` line height below the font's own height. [CENTERED] would keep the font's ascent
+ * on the first line and its descent on the last (Compose pads them against clipping), so a
+ * block of n lines would be taller than n × value. Trimming both in [LineHeightStyle.Mode.Tight]
+ * makes every line the value; the glyphs overflow it by the same amount above and below.
+ * Only for lines below the font's height: on a taller line this trim would remove the leading.
+ */
+private val TIGHT = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.Both, LineHeightStyle.Mode.Tight)
+
+/** Extra height above the glyphs, like UIKit's line height multiple. */
 private val ABOVE = LineHeightStyle(LineHeightStyle.Alignment.Bottom, LineHeightStyle.Trim.None)
 
 /** Spacing below each line but the last, like `NSParagraphStyle.lineSpacing`. */
@@ -221,15 +290,21 @@ private val BETWEEN = LineHeightStyle(LineHeightStyle.Alignment.Top, LineHeightS
 /**
  * [naturalEm]: the font's natural line height (ascender + descender + leading) as a multiple
  * of its size, which `multiplier` multiplies (styles.md, "LineHeight Types"; UIKit
- * `lineHeightMultiple`).
+ * `lineHeightMultiple`). [fontEm]: the height of one line of the resolved font on this
+ * platform, as a multiple of its size (`null` = unknown, taken as not above a `fixed` value).
  */
-private fun TextModel.lineHeight(size: Float, sizer: TextSizer, naturalEm: Float = IOS_NATURAL_LINE_HEIGHT_EM): Pair<TextUnit, LineHeightStyle?> {
+private fun TextModel.lineHeight(
+    size: Float,
+    sizer: TextSizer,
+    naturalEm: Float = IOS_NATURAL_LINE_HEIGHT_EM,
+    fontEm: Float? = null,
+): Pair<TextUnit, LineHeightStyle?> {
     val lh = lineHeight ?: return TextUnit.Unspecified to null
     val v = lh.value.toFloat()
     val natural = size * naturalEm
     return when (lh.type) {
         TextModel.LineHeight.Type.auto -> TextUnit.Unspecified to null
-        TextModel.LineHeight.Type.fixed -> sizer.size(v) to ABOVE
+        TextModel.LineHeight.Type.fixed -> sizer.size(v) to if (fontEm != null && v < size * fontEm) TIGHT else CENTERED
         // em is relative to the font size, so it follows any scaling of the size itself.
         TextModel.LineHeight.Type.multiplier -> (naturalEm * v).em to ABOVE
         TextModel.LineHeight.Type.interLineSpacing -> sizer.size(natural + v) to BETWEEN

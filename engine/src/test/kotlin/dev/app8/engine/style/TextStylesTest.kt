@@ -63,8 +63,14 @@ class TextStylesTest {
         fun lh(json: String) = TestStyles.text("""{ "fontSize": 10, "lineHeight": $json }""").toResolvedText(App8Appearance.Light).style
         val fixed = lh("""{ "type": "fixed", "value": 22 }""")
         assertEquals(22.sp, fixed.lineHeight)
-        assertEquals(LineHeightStyle.Alignment.Bottom, fixed.lineHeightStyle?.alignment)
-        assertEquals((IOS_NATURAL_LINE_HEIGHT_EM * 1.5f).em, lh("""{ "type": "multiplier", "value": 1.5 }""").lineHeight)
+        // Half-leading: a fixed line centres the glyphs, first and last line included.
+        assertEquals(LineHeightStyle.Alignment.Center, fixed.lineHeightStyle?.alignment)
+        assertEquals(LineHeightStyle.Trim.None, fixed.lineHeightStyle?.trim)
+        assertEquals(LineHeightStyle.Mode.Fixed, fixed.lineHeightStyle?.mode)
+        val multiplier = lh("""{ "type": "multiplier", "value": 1.5 }""")
+        assertEquals((IOS_NATURAL_LINE_HEIGHT_EM * 1.5f).em, multiplier.lineHeight)
+        assertEquals(LineHeightStyle.Alignment.Bottom, multiplier.lineHeightStyle?.alignment)
+        assertEquals(LineHeightStyle.Mode.Fixed, multiplier.lineHeightStyle?.mode)
         val spacing = lh("""{ "type": "interLineSpacing", "value": 4 }""")
         assertEquals((10 * IOS_NATURAL_LINE_HEIGHT_EM + 4).sp.value, spacing.lineHeight.value, 1e-4f)
         assertEquals(LineHeightStyle.Trim.LastLineBottom, spacing.lineHeightStyle?.trim)
@@ -144,5 +150,75 @@ class TextStylesTest {
         assertEquals("İSTANBUL", TextTransform.Uppercase.apply("istanbul", Locale.forLanguageTag("tr")))
         assertEquals("Hello Big World", TextTransform.Capitalize.apply("hello big world"))
         assertEquals("abc", TextTransform.Lowercase.apply("ABC"))
+    }
+
+    @Test
+    fun `a fixed line below the font's own height is the value on every line`() {
+        // The resolved font is 1.17 × its size tall on this platform (ascent + descent).
+        fun fixed(size: Int, value: Int, em: Float? = 1.17f) =
+            TestStyles.text("""{ "fontSize": $size, "lineHeight": { "type": "fixed", "value": $value } }""")
+                .toResolvedText(App8Appearance.Light, naturalLineHeightEm = { _, _ -> em }).style
+        // 40 pt on a 36 pt line (font height 46.8): first and last line are trimmed too, so n
+        // lines are n × 36 and the glyphs overflow by the same amount above and below.
+        val tight = fixed(40, 36)
+        assertEquals(36.sp, tight.lineHeight)
+        assertEquals(LineHeightStyle.Alignment.Center, tight.lineHeightStyle?.alignment)
+        assertEquals(LineHeightStyle.Trim.Both, tight.lineHeightStyle?.trim)
+        assertEquals(LineHeightStyle.Mode.Tight, tight.lineHeightStyle?.mode)
+        // A line above the font's height keeps its leading on the first and the last line.
+        for ((size, value) in listOf(14 to 22, 12 to 20, 17 to 28, 11 to 24, 40 to 47)) {
+            val roomy = fixed(size, value)
+            assertEquals(LineHeightStyle.Alignment.Center, roomy.lineHeightStyle?.alignment)
+            assertEquals(LineHeightStyle.Trim.None, roomy.lineHeightStyle?.trim)
+            assertEquals(LineHeightStyle.Mode.Fixed, roomy.lineHeightStyle?.mode)
+        }
+        // Font height unknown: never trims.
+        assertEquals(LineHeightStyle.Trim.None, fixed(40, 36, em = null).lineHeightStyle?.trim)
+    }
+
+    @Test
+    fun `only decorated text with letter spacing is trimmed at the line ends`() {
+        fun style(json: String) = TestStyles.text(json).toResolvedText(App8Appearance.Light)
+        assertEquals(true, style("""{ "fontSize": 16, "letterSpacing": 4, "underline": true }""").style.hasSpacedDecoration)
+        assertEquals(true, style("""{ "fontSize": 16, "letterSpacing": 1.5, "strikethrough": true }""").style.hasSpacedDecoration)
+        // Negative spacing too: the glyphs then reach beyond the line.
+        assertEquals(true, style("""{ "fontSize": 16, "letterSpacing": -1, "underline": true }""").style.hasSpacedDecoration)
+        // No decoration: the label keeps its width, whatever the spacing.
+        assertEquals(false, style("""{ "fontSize": 16, "letterSpacing": 4 }""").style.hasSpacedDecoration)
+        assertEquals(false, style("""{ "fontSize": 16, "letterSpacing": 4, "underline": false }""").style.hasSpacedDecoration)
+        assertEquals(false, style("""{ "fontSize": 16, "letterSpacing": 4 }""").style.isDecorated)
+        // No spacing: nothing lies outside the glyphs.
+        assertEquals(false, style("""{ "fontSize": 16, "underline": true }""").style.hasSpacedDecoration)
+        assertEquals(false, style("""{ "fontSize": 16, "letterSpacing": 0, "underline": true }""").style.hasSpacedDecoration)
+        assertEquals(true, style("""{ "fontSize": 16, "underline": true }""").style.isDecorated)
+        // The trim itself is measured by the renderer, for labels; the style alone never trims.
+        assertEquals(0f, style("""{ "fontSize": 16, "letterSpacing": 4, "underline": true }""").decorationEdgeTrim, 0f)
+    }
+
+    @Test
+    fun `edge letter spacing is half the spacing where one glyph gains it, and none elsewhere`() {
+        // Up to Android 14: a lone glyph of 30 px measures 41 px with 10.5 px of letter spacing
+        // (whole pixels), so each end of a line carries 5.25 px.
+        assertEquals(5.25f, edgeLetterSpacing(spacedWidth = 41f, plainWidth = 30f, spacingPx = 10.5f), 0f)
+        // Negative spacing there: the glyph loses it, each end of a line is 2 px short of its glyphs.
+        assertEquals(-2f, edgeLetterSpacing(spacedWidth = 26f, plainWidth = 30f, spacingPx = -4f), 0f)
+        // Android 15 and later: spacing between glyphs only, a lone glyph gains nothing.
+        assertEquals(0f, edgeLetterSpacing(spacedWidth = 30f, plainWidth = 30f, spacingPx = 10.5f), 0f)
+        assertEquals(0f, edgeLetterSpacing(spacedWidth = 31f, plainWidth = 30f, spacingPx = 10.5f), 0f)
+        assertEquals(0f, edgeLetterSpacing(spacedWidth = 30f, plainWidth = 30f, spacingPx = -4f), 0f)
+        assertEquals(0f, edgeLetterSpacing(41f, 30f, spacingPx = 0f), 0f)
+        assertEquals(0f, edgeLetterSpacing(Float.NaN, 30f, 10.5f), 0f)
+    }
+
+    @Test
+    fun `a decoration runs from the first glyph of a line to the end of the last`() {
+        // A line from 100 to 517 px with 5.25 px of spacing outside its first and last glyph.
+        assertEquals(105.25f to 511.75f, decorationRange(left = 100f, right = 517f, trim = 5.25f))
+        assertEquals(100f to 517f, decorationRange(100f, 517f, 0f))
+        // Negative spacing: the glyphs reach 2 px beyond the line at both ends.
+        assertEquals(98f to 519f, decorationRange(100f, 517f, -2f))
+        // An empty line, or one with nothing left: no decoration.
+        assertEquals(null, decorationRange(100f, 100f, 0f))
+        assertEquals(null, decorationRange(100f, 110f, 5.25f))
     }
 }
