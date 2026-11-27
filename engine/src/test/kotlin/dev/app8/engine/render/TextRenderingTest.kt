@@ -215,10 +215,7 @@ class TextRenderingTest {
                 IntArray(image.width * image.height).also { image.asAndroidBitmap().getPixels(it, 0, image.width, 0, 0, image.width, image.height) }
             }
             assertTrue(theirs.indices.count { theirs[it] != plain[it] } > 50, "the platform drew no $decoration")
-            // The platform reports a line's width in whole pixels, so the bar drawn here can end a
-            // fraction of a pixel after the platform's: the last column is left out.
-            val width = measurer.measure(text, style.style, maxLines = 1).size.width
-            val worst = ours.indices.filter { it % width < width - 1 }.maxOf { abs((ours[it] ushr 24) - (theirs[it] ushr 24)) }
+            val worst = ours.indices.maxOf { abs((ours[it] ushr 24) - (theirs[it] ushr 24)) }
             assertTrue(worst <= 2, "$decoration differs from the platform's by up to $worst / 255 alpha")
         }
     }

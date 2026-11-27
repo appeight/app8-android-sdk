@@ -19,6 +19,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import dev.app8.engine.style.decorationRange
+import kotlin.math.abs
 import kotlin.math.max
 
 /**
@@ -76,13 +77,25 @@ internal fun decorationSegments(layout: TextLayoutResult, text: AnnotatedString,
         var right = layout.getLineRight(line)
         val start = layout.getLineStart(line)
         val end = layout.getLineEnd(line, visibleEnd = true)
+        val ltr = layout.getParagraphDirection(start) == ResolvedTextDirection.Ltr
+        if (ltr && end > start) {
+            // The line's edges are reported in whole pixels (and its left edge rounded another
+            // way than the glyphs are placed when it is centred); the positions of its first
+            // and last character are where the platform draws. Taken only when they are that
+            // same edge, less than a pixel or so away (not in a bidirectional line, nor at the
+            // end of a line broken inside a word, which is the start of the next line).
+            left = exact(left, layout.getHorizontalPosition(start, usePrimaryDirection = true))
+            // The right edge is rounded up: only ever moved back (before a space, the position
+            // also carries the letter spacing in front of that space).
+            right = minOf(right, exact(right, layout.getHorizontalPosition(end, usePrimaryDirection = true)))
+        }
         if (tail && layout.isLineEllipsized(line) && end + 1 <= text.length) {
             // The characters behind the ellipsis have no width, but where the platform puts
             // letter spacing around every glyph each still takes one (or gives one back, for
             // negative spacing): the line's edge counts them. The ink ends with the ellipsis,
             // which stands where the first hidden character was.
             val afterEllipsis = layout.getHorizontalPosition(end + 1, usePrimaryDirection = true)
-            if (layout.getParagraphDirection(start) == ResolvedTextDirection.Ltr) right = afterEllipsis else left = afterEllipsis
+            if (ltr) right = afterEllipsis else left = afterEllipsis
         }
         val (from, to) = decorationRange(left, right, trim) ?: continue
         val baseline = layout.getLineBaseline(line)
@@ -106,6 +119,8 @@ internal fun decorationSegments(layout: TextLayoutResult, text: AnnotatedString,
     }
     return out
 }
+
+private fun exact(reported: Float, position: Float): Float = if (abs(position - reported) <= 1.5f) position else reported
 
 /** Draws [segments] as the platform draws a decoration: a filled bar at least one pixel thick. */
 internal fun DrawScope.drawDecorations(segments: List<DecorationSegment>, metrics: DecorationMetrics, decoration: TextDecoration, color: Color) {
